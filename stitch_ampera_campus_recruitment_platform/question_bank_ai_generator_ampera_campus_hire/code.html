@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-tertiary":"#ffffff","primary-fixed-dim":"#b6c4ff","tertiary":"#190093","on-secondary-container":"#006f64","outline-variant":"#c5c5d3","on-secondary-fixed-variant":"#005048","on-tertiary-container":"#a5a2ff","on-background":"#0b1c30","secondary":"#006b5f","primary-container":"#1e3a8a","secondary-fixed-dim":"#4fdbc8","tertiary-fixed":"#e2dfff","tertiary-fixed-dim":"#c3c0ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#3323cc","surface":"#f8f9ff","error":"#ba1a1a","on-secondary":"#ffffff","inverse-surface":"#213145","primary":"#00236f","on-primary-container":"#90a8ff","primary-fixed":"#dce1ff","surface-bright":"#f8f9ff","background":"#f8f9ff","outline":"#757682","on-surface-variant":"#444651","on-primary":"#ffffff","surface-container-lowest":"#ffffff","secondary-fixed":"#71f8e4","surface-container":"#e5eeff","on-surface":"#0b1c30","surface-variant":"#d3e4fe","secondary-container":"#6df5e1","inverse-on-surface":"#eaf1ff","on-primary-fixed":"#00164e","surface-container-highest":"#d3e4fe","inverse-primary":"#b6c4ff","surface-container-high":"#dce9ff","on-tertiary-fixed":"#0f0069","on-secondary-fixed":"#00201c","tertiary-container":"#2b15c6","surface-container-low":"#eff4ff","on-primary-fixed-variant":"#264191","on-error-container":"#93000a","error-container":"#ffdad6","surface-tint":"#4059aa","surface-dim":"#cbdbf5"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin":"2rem","space-md":"1rem","space-xl":"2rem","space-xs":"0.25rem","space-sm":"0.5rem","gutter":"1.5rem","space-lg":"1.5rem"},"fontFamily":{"code-sm":["Inter"],"headline-md":["Inter"],"headline-sm":["Inter"],"label-sm":["Inter"],"headline-lg":["Inter"],"body-sm":["Inter"],"display":["Inter"],"label-md":["Inter"],"body-md":["Inter"],"body-lg":["Inter"]},"fontSize":{"code-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-sm":["18px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"600"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"display":["36px",{"lineHeight":"44px","letterSpacing":"-0.025em","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"20px","fontWeight":"500"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest z-50 flex flex-col shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-space-lg flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[22px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary leading-none">Ampera</span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium tracking-wide">Campus Hire</span></div></div><div class="px-space-md py-space-sm"><div class="px-space-sm py-space-xs rounded bg-surface-container-low flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant">Active Portal</span><span class="font-label-sm text-label-sm text-secondary font-semibold">Recruiter HQ</span></div></div><nav class="flex-1 px-space-md py-space-sm flex flex-col gap-space-xs overflow-y-auto" data-active-classes="bg-primary-container text-on-primary font-label-md rounded-lg shadow-sm"><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="super-admin-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span>Dashboard</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="drives-overview" href="#"><span class="material-symbols-outlined text-[20px]">campaign</span>Drives Overview</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="candidates-pipeline" href="#"><span class="material-symbols-outlined text-[20px]">group</span>Candidates</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="interviews-portal" href="#"><span class="material-symbols-outlined text-[20px]">video_call</span>Interviews</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="question-bank" href="#"><span class="material-symbols-outlined text-[20px]">quiz</span>Question Bank</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="partner-colleges" href="#"><span class="material-symbols-outlined text-[20px]">school</span>Colleges</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="offers-management" href="#"><span class="material-symbols-outlined text-[20px]">verified</span>Offers</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="ai-settings-and-matching" href="#"><span class="material-symbols-outlined text-[20px]">psychology</span>AI Settings</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="audit-logs-and-reports" href="#"><span class="material-symbols-outlined text-[20px]">analytics</span>Audit &amp; Reports</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="system-settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span>Settings</a></nav><div class="p-space-md mt-auto"><div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-2 h-2 rounded-full bg-secondary-fixed-dim"></div><span class="font-label-sm text-label-sm text-on-surface-variant">Ampera AI Engine</span></div><span class="font-label-sm text-label-sm text-secondary font-semibold">v2.4</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md flex-1 max-w-xl"><div class="relative w-full"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span><input class="w-full h-10 pl-10 pr-12 rounded-lg bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-1 focus:ring-secondary-fixed-dim" placeholder="Search candidates, universities, or drive IDs..." type="text"/><div class="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-surface-container font-code-sm text-code-sm text-on-surface-variant">⌘K</div></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-container-low"><span class="font-label-sm text-label-sm text-on-surface-variant">Drive:</span><span class="font-label-sm text-label-sm font-semibold text-primary truncate max-w-[140px]">Fall Campus 2025</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-space-md"><button class="relative p-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div class="h-6 w-px bg-surface-container-high"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right hidden sm:flex"><span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">Priya Sharma</span><span class="font-label-sm text-label-sm text-on-surface-variant">Campus Talent Lead</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 px-space-xl pb-space-xl bg-surface min-h-screen"><div class="flex flex-col w-full gap-space-lg">
+<!-- Dynamic Operational Header & Action Rail -->
+<div class="flex flex-col xl:flex-row xl:items-end justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs max-w-3xl">
+<div class="flex items-center gap-space-xs text-secondary font-label-sm">
+<span class="material-symbols-outlined text-[16px]">psychology_alt</span>
+<span class="tracking-wide uppercase font-code-sm">Item Calibration &amp; Synthetics Engine</span>
+<span class="mx-1 text-outline-variant">•</span>
+<span class="text-on-surface-variant font-code-sm">Q3 Academic Year 2025</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-primary tracking-tight">Assessment Question Bank &amp; AI Generator</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Curate, calibrate, and synthesize standardized test items across campus cohorts with psychometric validity tracking.</p>
+</div>
+<!-- Action Toolbar -->
+<div class="flex flex-wrap items-center gap-space-sm">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-lowest text-on-surface font-label-md flex items-center gap-space-xs shadow-sm hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">file_upload</span>
+<span>Import QTI/CSV</span>
+</button>
+<button class="h-10 px-space-md rounded-lg bg-surface-container-lowest text-on-surface font-label-md flex items-center gap-space-xs shadow-sm hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">add</span>
+<span>+ Add Question Manually</span>
+</button>
+<button class="h-10 px-space-md rounded-lg bg-gradient-to-r from-secondary to-primary-container text-on-primary font-label-md flex items-center gap-space-xs shadow-md shadow-secondary/20 hover:shadow-lg hover:shadow-secondary/30 hover:brightness-105 transition-all" id="open-ai-modal">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span>Generate with AI</span>
+</button>
+</div>
+</div>
+<!-- Perspective Tabs -->
+<div class="flex items-center justify-between overflow-x-auto pb-1">
+<div class="flex items-center gap-space-xs p-1 rounded-xl bg-surface-container-low shadow-sm">
+<button class="px-space-md py-space-xs rounded-lg font-label-md text-on-primary bg-primary shadow-sm flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">code</span>
+<span>Coding Challenges</span>
+<span class="ml-1 px-1.5 py-0.5 rounded-full bg-primary-container text-on-primary text-[10px] font-semibold">248</span>
+</button>
+<button class="px-space-md py-space-xs rounded-lg font-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest transition-all flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">rule</span>
+<span>Aptitude &amp; MCQs</span>
+<span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-[10px] font-medium">160</span>
+</button>
+<button class="px-space-md py-space-xs rounded-lg font-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest transition-all flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+<span>System Design Scenarios</span>
+<span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-[10px] font-medium">42</span>
+</button>
+<button class="px-space-md py-space-xs rounded-lg font-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-lowest transition-all flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">fact_check</span>
+<span>HR Rubrics</span>
+<span class="ml-1 px-1.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant text-[10px] font-medium">30</span>
+</button>
+</div>
+<div class="hidden lg:flex items-center gap-space-sm text-on-surface-variant font-label-sm">
+<span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-secondary"></span> Auto-sync to Active Drives</span>
+<span class="text-outline-variant">|</span>
+<button class="text-primary hover:underline flex items-center gap-1">Bulk Calibrate <span class="material-symbols-outlined text-[16px]">sync</span></button>
+</div>
+</div>
+<!-- Metrics Ribbon: Asymmetric High-Density Stat Row -->
+<div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-space-md">
+<!-- Stat 1 -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-primary/5 transition-transform group-hover:scale-125"></div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm">Total Question Pool</span>
+<span class="material-symbols-outlined text-[20px] text-primary">inventory_2</span>
+</div>
+<div class="mt-space-sm flex items-baseline gap-space-xs">
+<span class="font-display text-display text-primary leading-none">480</span>
+<span class="font-label-sm text-secondary font-semibold">+18 this cycle</span>
+</div>
+<div class="mt-space-xs flex items-center gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
+<span>384 verified production</span>
+<span>•</span>
+<span>96 AI draft sandbox</span>
+</div>
+</div>
+<!-- Stat 2 -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-secondary/10 transition-transform group-hover:scale-125"></div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm">Cohorts Tested</span>
+<span class="material-symbols-outlined text-[20px] text-secondary">groups</span>
+</div>
+<div class="mt-space-sm flex items-baseline gap-space-xs">
+<span class="font-display text-display text-on-surface leading-none">12,400</span>
+<span class="font-label-sm text-on-surface-variant">candidates</span>
+</div>
+<div class="mt-space-xs flex items-center gap-space-xs font-body-sm text-body-sm text-secondary">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span class="font-medium">28 Top Tier-1 &amp; Tier-2 Institutions</span>
+</div>
+</div>
+<!-- Stat 3 -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-primary-container/10 transition-transform group-hover:scale-125"></div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm">AI Psychometric Validity</span>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-primary font-code-sm text-code-sm">
+<span class="material-symbols-outlined text-[12px]">verified</span>
+<span>Ampera Calibrated</span>
+</div>
+</div>
+<div class="mt-space-sm flex items-baseline gap-space-xs">
+<span class="font-display text-display text-secondary leading-none">98.4%</span>
+<span class="font-label-sm text-on-surface-variant">correlation index</span>
+</div>
+<div class="mt-space-xs w-full bg-surface-container-low rounded-full h-1.5 overflow-hidden">
+<div class="bg-gradient-to-r from-secondary to-primary-container h-full rounded-full" style="width: 98.4%;"></div>
+</div>
+</div>
+<!-- Stat 4 -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between relative overflow-hidden group">
+<div class="absolute -right-4 -bottom-4 w-24 h-24 rounded-full bg-surface-container transition-transform group-hover:scale-125"></div>
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="font-label-sm">Most Utilized Category</span>
+<span class="material-symbols-outlined text-[20px] text-tertiary">data_object</span>
+</div>
+<div class="mt-space-sm flex items-baseline gap-space-xs">
+<span class="font-headline-lg text-headline-lg text-primary truncate leading-tight">Data Structures</span>
+</div>
+<div class="mt-space-xs flex items-center justify-between font-body-sm text-body-sm text-on-surface-variant">
+<span>32% allocation quota</span>
+<span class="font-code-sm text-code-sm text-primary font-medium">154 Items</span>
+</div>
+</div>
+</div>
+<!-- Search & Filter Operational Bar -->
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-space-md">
+<!-- Search Query Input -->
+<div class="relative flex-1 min-w-[280px]">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full h-10 pl-11 pr-24 rounded-lg bg-surface-container-low text-body-md font-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:bg-surface-container-lowest transition-all" placeholder="Filter questions by prompt text, signature, algorithmic concept, or drive ID..." type="text" value="Concurrency &amp; Distributed"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 font-code-sm text-code-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">
+<span>4 results</span>
+</div>
+</div>
+<!-- Multi-Filter Dropdowns -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<!-- Track Filter -->
+<div class="relative">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md flex items-center gap-space-xs transition-all">
+<span class="text-on-surface-variant font-normal">Track:</span>
+<span class="font-medium text-primary">Backend</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">keyboard_arrow_down</span>
+</button>
+</div>
+<!-- Difficulty Filter -->
+<div class="relative">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md flex items-center gap-space-xs transition-all">
+<span class="text-on-surface-variant font-normal">Difficulty:</span>
+<span class="font-medium text-primary">All Levels</span>
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">keyboard_arrow_down</span>
+</button>
+</div>
+<!-- Tags Filter -->
+<div class="relative">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-label-md flex items-center gap-space-xs transition-all">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">label</span>
+<span class="font-medium text-on-surface">Tags</span>
+<span class="w-5 h-5 rounded-full bg-primary text-on-primary text-[10px] flex items-center justify-center font-bold">4</span>
+</button>
+</div>
+<div class="h-6 w-px bg-surface-container-high mx-1 hidden sm:block"></div>
+<!-- View Switcher -->
+<div class="flex items-center rounded-lg bg-surface-container-low p-0.5">
+<button class="w-9 h-9 flex items-center justify-center rounded-md bg-surface-container-lowest text-primary shadow-xs">
+<span class="material-symbols-outlined text-[20px]">view_agenda</span>
+</button>
+<button class="w-9 h-9 flex items-center justify-center rounded-md text-on-surface-variant hover:text-on-surface">
+<span class="material-symbols-outlined text-[20px]">table_rows</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Active Filter Pill Badges -->
+<div class="flex flex-wrap items-center gap-space-xs -mt-space-sm px-1">
+<span class="font-label-sm text-on-surface-variant">Active criteria:</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container font-label-sm text-primary">
+<span>Tag: Concurrency</span>
+<button class="hover:text-error text-on-surface-variant flex items-center"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container font-label-sm text-primary">
+<span>Tag: Dynamic Programming</span>
+<button class="hover:text-error text-on-surface-variant flex items-center"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container font-label-sm text-primary">
+<span>Tag: SQL</span>
+<button class="hover:text-error text-on-surface-variant flex items-center"><span class="material-symbols-outlined text-[14px]">close</span></button>
+</span>
+<button class="font-label-sm text-secondary hover:underline ml-1">Clear all filters</button>
+</div>
+<!-- Primary Content Grid: Standardized Problem Cards -->
+<div class="grid grid-cols-1 gap-space-md">
+<!-- Problem Card 1 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-space-md group">
+<div class="flex flex-col lg:flex-row lg:items-start justify-between gap-space-md">
+<!-- Title & Metadata -->
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[24px]">terminal</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-code-sm text-code-sm text-on-surface-variant font-mono">ITEM-7402</span>
+<span class="px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">Hard</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-secondary/15 to-primary-container/15 text-primary font-label-sm">
+<span class="material-symbols-outlined text-[14px] text-secondary">arrow_back_ios_new</span>
+<span>AI Validated</span>
+</span>
+<span class="text-on-surface-variant text-[12px]">•</span>
+<span class="font-label-sm text-on-surface-variant">Last modified 2 days ago by Priya Sharma</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary group-hover:text-secondary transition-colors">Distributed Token Bucket Rate Limiter</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-4xl line-clamp-2">
+              Implement a concurrent sliding-window token bucket algorithm capable of coordinating request throttle boundaries across asynchronous distributed client instances using atomic CAS primitives.
+            </p>
+</div>
+</div>
+<!-- Success & Calibration Mini-Viz -->
+<div class="flex items-center gap-space-lg self-end lg:self-center shrink-0 bg-surface-container-low p-space-sm rounded-xl">
+<div class="flex items-center gap-space-sm">
+<!-- Circular Progress SVG -->
+<div class="relative w-12 h-12 flex items-center justify-center">
+<svg class="w-12 h-12 -rotate-90" viewbox="0 0 36 36">
+<circle class="text-surface-variant" cx="18" cy="18" fill="none" r="15" stroke="currentColor" stroke-width="3"></circle>
+<circle class="text-error" cx="18" cy="18" fill="none" r="15" stroke="currentColor" stroke-dasharray="100" stroke-dashoffset="66" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<span class="absolute font-code-sm text-code-sm font-bold text-on-surface">34%</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Success Rate</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">420 of 1,235 cleared</span>
+</div>
+</div>
+<div class="h-8 w-px bg-surface-container-highest"></div>
+<div class="flex flex-col text-right">
+<span class="font-label-sm text-on-surface-variant">Cohort Target</span>
+<span class="font-code-sm text-code-sm font-semibold text-primary">Senior Staff / L3</span>
+</div>
+</div>
+</div>
+<!-- Problem Meta Badges & Cohort Footprint -->
+<div class="flex flex-wrap items-center justify-between gap-space-md pt-space-sm bg-surface-container-lowest">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">Concurrency</span>
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">System Design</span>
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">Go / Java</span>
+<span class="text-outline-variant">|</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span class="font-medium text-on-surface">10 Test Cases</span>
+<span class="text-on-surface-variant">(4 hidden edge)</span>
+</div>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">campaign</span>
+<span>Active in <strong class="text-on-surface font-semibold">4 Drives</strong> (IIT Delhi, BITS Pilani, NITK, VIT)</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+<span>Preview Testbench</span>
+</button>
+<button class="px-space-sm py-1.5 rounded-lg text-primary hover:bg-primary/10 font-label-md flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+<span>Configure</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Problem Card 2 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-space-md group">
+<div class="flex flex-col lg:flex-row lg:items-start justify-between gap-space-md">
+<!-- Title & Metadata -->
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[24px]">query_stats</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-code-sm text-code-sm text-on-surface-variant font-mono">ITEM-6190</span>
+<span class="px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">Hard</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-secondary/15 to-primary-container/15 text-primary font-label-sm">
+<span class="material-symbols-outlined text-[14px] text-secondary">arrow_back_ios_new</span>
+<span>AI Validated</span>
+</span>
+<span class="text-on-surface-variant text-[12px]">•</span>
+<span class="font-label-sm text-on-surface-variant">Last modified 1 week ago by Algorithmic Review Board</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary group-hover:text-secondary transition-colors">Order Matching Engine for High-Frequency Trading</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-4xl line-clamp-2">
+              Construct an in-memory double auction continuous limit order book (LOB) matching engine. Efficiently execute limit &amp; market orders while maintaining price-time priority guarantees under strict sub-millisecond memory constraints.
+            </p>
+</div>
+</div>
+<!-- Success & Calibration Mini-Viz -->
+<div class="flex items-center gap-space-lg self-end lg:self-center shrink-0 bg-surface-container-low p-space-sm rounded-xl">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex items-center justify-center">
+<svg class="w-12 h-12 -rotate-90" viewbox="0 0 36 36">
+<circle class="text-surface-variant" cx="18" cy="18" fill="none" r="15" stroke="currentColor" stroke-width="3"></circle>
+<circle class="text-error" cx="18" cy="18" fill="none" r="15" stroke="currentColor" stroke-dasharray="100" stroke-dashoffset="72" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<span class="absolute font-code-sm text-code-sm font-bold text-on-surface">28%</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Success Rate</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">196 of 700 cleared</span>
+</div>
+</div>
+<div class="h-8 w-px bg-surface-container-highest"></div>
+<div class="flex flex-col text-right">
+<span class="font-label-sm text-on-surface-variant">Discrimination Index</span>
+<span class="font-code-sm text-code-sm font-semibold text-secondary">0.78 (Elite Tier)</span>
+</div>
+</div>
+</div>
+<!-- Problem Meta Badges & Cohort Footprint -->
+<div class="flex flex-wrap items-center justify-between gap-space-md pt-space-sm bg-surface-container-lowest">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">Data Structures</span>
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">Priority Queues</span>
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">C++</span>
+<span class="text-outline-variant">|</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span class="font-medium text-on-surface">14 Test Cases</span>
+<span class="text-on-surface-variant">(6 volume stress cases)</span>
+</div>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">campaign</span>
+<span>Active in <strong class="text-on-surface font-semibold">2 Drives</strong> (Quant Track Fall 2025)</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+<span>Preview Testbench</span>
+</button>
+<button class="px-space-sm py-1.5 rounded-lg text-primary hover:bg-primary/10 font-label-md flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+<span>Configure</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Problem Card 3 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-space-md group">
+<div class="flex flex-col lg:flex-row lg:items-start justify-between gap-space-md">
+<!-- Title & Metadata -->
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest text-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[24px]">sync_alt</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-code-sm text-code-sm text-on-surface-variant font-mono">ITEM-4419</span>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold">Medium</span>
+<span class="text-on-surface-variant text-[12px]">•</span>
+<span class="font-label-sm text-on-surface-variant">Validated against 3,100 submissions</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary group-hover:text-secondary transition-colors">Real-time Collaborative Document Sync</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-4xl line-clamp-2">
+              Design a conflict-free replicated data type (CRDT) sequence model for rich text editor operations. Guarantee eventual consistency across concurrent remote character insertions and deletions without central lock arbitration.
+            </p>
+</div>
+</div>
+<!-- Success & Calibration Mini-Viz -->
+<div class="flex items-center gap-space-lg self-end lg:self-center shrink-0 bg-surface-container-low p-space-sm rounded-xl">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex items-center justify-center">
+<svg class="w-12 h-12 -rotate-90" viewbox="0 0 36 36">
+<circle class="text-surface-variant" cx="18" cy="18" fill="none" r="15" stroke="currentColor" stroke-width="3"></circle>
+<circle class="text-secondary" cx="18" cy="18" fill="none" r="15" stroke="currentColor" stroke-dasharray="100" stroke-dashoffset="48" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<span class="absolute font-code-sm text-code-sm font-bold text-on-surface">52%</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Success Rate</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">1,612 of 3,100 cleared</span>
+</div>
+</div>
+<div class="h-8 w-px bg-surface-container-highest"></div>
+<div class="flex flex-col text-right">
+<span class="font-label-sm text-on-surface-variant">Cohort Target</span>
+<span class="font-code-sm text-code-sm font-semibold text-primary">Full Stack Campus</span>
+</div>
+</div>
+</div>
+<!-- Problem Meta Badges & Cohort Footprint -->
+<div class="flex flex-wrap items-center justify-between gap-space-md pt-space-sm bg-surface-container-lowest">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">CRDT</span>
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">Trees</span>
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">JavaScript / TypeScript</span>
+<span class="text-outline-variant">|</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span class="font-medium text-on-surface">8 Test Cases</span>
+<span class="text-on-surface-variant">(2 partition simulations)</span>
+</div>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">campaign</span>
+<span>Active in <strong class="text-on-surface font-semibold">6 Drives</strong> (Pan-India Virtual Assessment)</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+<span>Preview Testbench</span>
+</button>
+<button class="px-space-sm py-1.5 rounded-lg text-primary hover:bg-primary/10 font-label-md flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+<span>Configure</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Problem Card 4 -->
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex flex-col justify-between gap-space-md group">
+<div class="flex flex-col lg:flex-row lg:items-start justify-between gap-space-md">
+<!-- Title & Metadata -->
+<div class="flex items-start gap-space-md">
+<div class="w-12 h-12 rounded-xl bg-surface-container-highest text-primary flex items-center justify-center shrink-0 shadow-sm">
+<span class="material-symbols-outlined text-[24px]">database</span>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="font-code-sm text-code-sm text-on-surface-variant font-mono">ITEM-3801</span>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold">Medium</span>
+<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-secondary/15 to-primary-container/15 text-primary font-label-sm">
+<span class="material-symbols-outlined text-[14px] text-secondary">arrow_back_ios_new</span>
+<span>AI Validated</span>
+</span>
+<span class="text-on-surface-variant text-[12px]">•</span>
+<span class="font-label-sm text-on-surface-variant">Recommended for Cloud Infrastructure Tracks</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-primary group-hover:text-secondary transition-colors">Multi-tenant Database Connection Pooler</h3>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-4xl line-clamp-2">
+              Build a resilient connection manager that handles maximum tenant isolation, connection checkout timeouts, health-check evictions, and graceful scale-down under sudden traffic spikes.
+            </p>
+</div>
+</div>
+<!-- Success & Calibration Mini-Viz -->
+<div class="flex items-center gap-space-lg self-end lg:self-center shrink-0 bg-surface-container-low p-space-sm rounded-xl">
+<div class="flex items-center gap-space-sm">
+<div class="relative w-12 h-12 flex items-center justify-center">
+<svg class="w-12 h-12 -rotate-90" viewbox="0 0 36 36">
+<circle class="text-surface-variant" cx="18" cy="18" fill="none" r="15" stroke="currentColor" stroke-width="3"></circle>
+<circle class="text-secondary" cx="18" cy="18" fill="none" r="15" stroke="currentColor" stroke-dasharray="100" stroke-dashoffset="54" stroke-linecap="round" stroke-width="3"></circle>
+</svg>
+<span class="absolute font-code-sm text-code-sm font-bold text-on-surface">46%</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Success Rate</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">828 of 1,800 cleared</span>
+</div>
+</div>
+<div class="h-8 w-px bg-surface-container-highest"></div>
+<div class="flex flex-col text-right">
+<span class="font-label-sm text-on-surface-variant">Avg. Time to Solve</span>
+<span class="font-code-sm text-code-sm font-semibold text-primary">38m 14s</span>
+</div>
+</div>
+</div>
+<!-- Problem Meta Badges & Cohort Footprint -->
+<div class="flex flex-wrap items-center justify-between gap-space-md pt-space-sm bg-surface-container-lowest">
+<div class="flex flex-wrap items-center gap-space-xs">
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">Networking</span>
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">Resource Management</span>
+<span class="px-2.5 py-1 rounded bg-surface-container text-on-surface font-code-sm text-code-sm">Java / Python / Go</span>
+<span class="text-outline-variant">|</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified_user</span>
+<span class="font-medium text-on-surface">12 Test Cases</span>
+<span class="text-on-surface-variant">(Leak detection enabled)</span>
+</div>
+<span class="text-outline-variant">•</span>
+<div class="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[16px] text-primary">campaign</span>
+<span>Active in <strong class="text-on-surface font-semibold">3 Drives</strong> (Site Reliability Hiring 2025)</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-label-md flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+<span>Preview Testbench</span>
+</button>
+<button class="px-space-sm py-1.5 rounded-lg text-primary hover:bg-primary/10 font-label-md flex items-center gap-1 transition-all">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+<span>Configure</span>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination & Calibration Summary Bar -->
+<div class="flex flex-col sm:flex-row items-center justify-between gap-space-sm py-space-sm px-space-md rounded-xl bg-surface-container-lowest shadow-sm">
+<div class="flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm">
+<span>Showing <strong class="text-on-surface font-medium">1 - 4</strong> of <strong class="text-on-surface font-medium">480</strong> curated assessment problems</span>
+<span class="text-outline-variant mx-1">•</span>
+<span class="text-secondary flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">bolt</span> Automated plagiarism hash: Active</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm hover:bg-surface-container transition-all">Previous</button>
+<button class="w-8 h-8 rounded-lg bg-primary text-on-primary text-label-sm font-label-sm font-semibold">1</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface text-label-sm font-label-sm hover:bg-surface-container transition-all">2</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface text-label-sm font-label-sm hover:bg-surface-container transition-all">3</button>
+<span class="text-on-surface-variant px-1">...</span>
+<button class="w-8 h-8 rounded-lg bg-surface-container-low text-on-surface text-label-sm font-label-sm hover:bg-surface-container transition-all">120</button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-low text-on-surface-variant text-label-sm font-label-sm hover:bg-surface-container transition-all">Next</button>
+</div>
+</div>
+<!-- AI Synthesizer Slide-over / Modal Dialog Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-on-surface/40 backdrop-blur-sm transition-opacity duration-300" id="ai-generator-modal">
+<!-- Modal Card -->
+<div class="w-full max-w-5xl max-h-[921px] rounded-2xl bg-surface-container-lowest shadow-2xl flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+<!-- Modal Header -->
+<div class="px-space-xl py-space-lg bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-secondary to-primary-container text-on-primary flex items-center justify-center shadow-md">
+<span class="material-symbols-outlined text-[22px]">auto_awesome</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-primary">Ampera AI Question Synthesizer</h2>
+<span class="px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-code-sm text-code-sm font-bold">GPT-4.5 Reasoning</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Synthesize calibrated coding items with auto-compiled testbenches tuned for high-volume campus cohorts.</p>
+</div>
+</div>
+<button class="w-9 h-9 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface flex items-center justify-center transition-all" id="close-ai-modal">
+<span class="material-symbols-outlined text-[22px]">close</span>
+</button>
+</div>
+<!-- Modal Body (Two-Column Split Workflow) -->
+<div class="flex-1 overflow-y-auto p-space-xl grid grid-cols-1 lg:grid-cols-12 gap-space-xl">
+<!-- Left Column: Generator Parameters Form (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-primary font-semibold">Synthesis Configuration</span>
+<span class="text-secondary font-code-sm text-code-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">tune</span> Adaptive Profile
+            </span>
+</div>
+<!-- Field 1: Role Target -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface font-medium">Role Target</label>
+<div class="relative">
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low font-body-md text-body-md text-on-surface focus:outline-none cursor-default" readonly="" type="text" value="Backend Systems Engineer (L3/Campus)"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">verified</span>
+</div>
+</div>
+<!-- Field 2: Core Competency / Topic -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface font-medium">Core Competency / Topic</label>
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-lowest font-body-md text-body-md text-on-surface shadow-xs focus:outline-none focus:ring-1 focus:ring-secondary transition-all" type="text" value="High concurrency &amp; thread safety"/>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Suggested: Atomic ring buffers, latch primitives, actors</span>
+</div>
+<!-- Field 3: Difficulty Segmented Control -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface font-medium">Difficulty Calibration</label>
+<div class="grid grid-cols-4 p-1 rounded-lg bg-surface-container-low gap-1 text-center font-label-sm">
+<button class="py-1.5 rounded-md text-on-surface-variant hover:text-on-surface" type="button">Easy</button>
+<button class="py-1.5 rounded-md text-on-surface-variant hover:text-on-surface" type="button">Medium</button>
+<button class="py-1.5 rounded-md bg-surface-container-lowest text-primary font-semibold shadow-xs" type="button">Hard</button>
+<button class="py-1.5 rounded-md text-on-surface-variant hover:text-on-surface" type="button">Expert</button>
+</div>
+</div>
+<!-- Field 4: Number of Questions & Execution Engine -->
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface font-medium">Batch Volume</label>
+<div class="relative">
+<select class="w-full h-10 pl-3 pr-8 rounded-lg bg-surface-container-low font-body-md text-body-md text-on-surface appearance-none focus:outline-none">
+<option selected="">2 problems</option>
+<option>1 problem</option>
+<option>4 problems</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-sm text-label-sm text-on-surface font-medium">Primary Runtime</label>
+<div class="relative">
+<select class="w-full h-10 pl-3 pr-8 rounded-lg bg-surface-container-low font-body-md text-body-md text-on-surface appearance-none focus:outline-none">
+<option selected="">C++20 / Rust</option>
+<option>Java 21</option>
+<option>Go 1.22</option>
+<option>Python 3.12</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Field 5: Automated Test Suite Toggle Checked -->
+<div class="p-space-sm rounded-xl bg-surface-container-low flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-lowest text-secondary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">science</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Include Automated Test Suite</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Generates visible, hidden &amp; edge stress test suites</span>
+</div>
+</div>
+<!-- Checkbox Custom Styled Toggle -->
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+<!-- Prompt Seed Helper -->
+<div class="flex items-center justify-between text-on-surface-variant font-label-sm pt-2">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px] text-secondary">memory</span> Temperature: 0.35 (Rigorous)</span>
+<button class="text-primary hover:underline flex items-center gap-1">Reset Defaults</button>
+</div>
+<button class="w-full h-11 rounded-lg bg-primary-container text-on-primary font-label-md flex items-center justify-center gap-space-xs shadow-sm hover:brightness-110 transition-all mt-auto">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+<span>Regenerate Variant (Shift+R)</span>
+</button>
+</div>
+<!-- Right Column: AI Live Preview Panel (7 Cols) -->
+<div class="lg:col-span-7 flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-primary font-semibold">Synthesized Item Preview</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-primary font-code-sm text-code-sm">Item 1 of 2</span>
+</div>
+<div class="flex items-center gap-1 font-label-sm text-secondary">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Zero Plagiarism Matches</span>
+</div>
+</div>
+<!-- Generated Card Preview -->
+<div class="rounded-xl bg-surface-container-low p-space-md flex flex-col gap-space-md shadow-xs">
+<!-- Header of Synthesized Card -->
+<div class="flex items-start justify-between gap-space-sm pb-space-sm bg-surface-container-low">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-xs">
+<span class="px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-label-sm text-label-sm font-semibold">Hard</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant font-mono">SYNTH-881</span>
+<span class="text-outline-variant">•</span>
+<span class="font-code-sm text-code-sm text-secondary font-semibold">98.9% Psychometric Score</span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface">Lock-free Ring Buffer Queue in C++/Rust</h4>
+</div>
+<div class="px-2.5 py-1 rounded-full bg-surface-container-lowest text-primary font-code-sm text-code-sm shadow-xs flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">timer</span> 45 mins
+              </div>
+</div>
+<!-- Problem Summary -->
+<div class="flex flex-col gap-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-code-sm">Problem Specification</span>
+<p class="font-body-md text-body-md text-on-surface">
+                Design and implement a single-producer single-consumer (SPSC) lock-free bounded ring buffer. The queue must support concurrent <code class="font-code-sm bg-surface-container px-1 py-0.5 rounded text-primary">enqueue()</code> and <code class="font-code-sm bg-surface-container px-1 py-0.5 rounded text-primary">dequeue()</code> without lock contention, utilizing relaxed and release memory order semantics to prevent false sharing cache line degradation.
+              </p>
+</div>
+<!-- Code Boilerplate Snippet -->
+<div class="rounded-lg bg-inverse-surface p-space-md text-inverse-on-surface font-mono text-[13px] leading-relaxed overflow-x-auto shadow-inner">
+<div class="flex items-center justify-between text-on-surface-variant text-[11px] pb-2 mb-2">
+<span>template &lt;typename T, size_t Capacity&gt;</span>
+<span class="text-secondary-fixed">C++20 • Memory Order Acquire-Release</span>
+</div>
+<pre class="font-code-sm text-code-sm"><code><span class="text-tertiary-fixed">template</span> &lt;<span class="text-secondary-fixed">typename</span> T, <span class="text-secondary-fixed">size_t</span> Capacity&gt;
+<span class="text-secondary-fixed">class</span> <span class="text-primary-fixed">LockFreeRingBuffer</span> {
+<span class="text-secondary-fixed">private:</span>
+    <span class="text-outline-variant">alignas(64)</span> std::atomic&lt;size_t&gt; head_{0};
+    <span class="text-outline-variant">alignas(64)</span> std::atomic&lt;size_t&gt; tail_{0};
+    <span class="text-outline-variant">alignas(64)</span> std::array&lt;T, Capacity&gt; storage_;
+
+<span class="text-secondary-fixed">public:</span>
+    <span class="text-secondary-fixed">bool</span> <span class="text-primary-fixed">try_enqueue</span>(<span class="text-secondary-fixed">const</span> T&amp; item) <span class="text-outline-variant">noexcept</span>;
+    <span class="text-secondary-fixed">bool</span> <span class="text-primary-fixed">try_dequeue</span>(T&amp; out_item) <span class="text-outline-variant">noexcept</span>;
+};</code></pre>
+</div>
+<!-- Automated Test Suite Breakdown Banner -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-secondary text-[22px]">fact_check</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">12 Automated Test Cases Generated</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Includes 4 race condition stresses, 2 memory leak checks, 6 boundary unit tests</span>
+</div>
+</div>
+<span class="px-2.5 py-1 rounded bg-secondary/10 text-secondary font-label-sm font-semibold">100% Ready</span>
+</div>
+</div>
+<!-- Inner Action Buttons -->
+<div class="flex items-center justify-between gap-space-sm mt-auto pt-2">
+<button class="px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface-variant hover:text-on-surface font-label-md flex items-center gap-space-xs transition-all shadow-xs">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span>Edit Prompt</span>
+</button>
+<div class="flex items-center gap-space-sm">
+<button class="px-space-md py-2 rounded-lg bg-surface-container text-on-surface font-label-md hover:bg-surface-container-high transition-all">
+                Discard Item
+              </button>
+<button class="px-space-lg py-2 rounded-lg bg-gradient-to-r from-secondary to-primary-container text-on-primary font-label-md font-semibold flex items-center gap-space-xs shadow-md shadow-secondary/20 hover:brightness-105 transition-all">
+<span class="material-symbols-outlined text-[18px]">library_add</span>
+<span>Accept &amp; Add to Bank</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer Utility Bar -->
+<div class="px-space-xl py-space-sm bg-surface-container-lowest flex flex-col sm:flex-row items-center justify-between gap-space-xs text-on-surface-variant font-code-sm text-code-sm">
+<div class="flex items-center gap-space-sm">
+<span>Telemetry Session: <strong class="text-on-surface font-mono">AMP-GEN-9941</strong></span>
+<span class="text-outline-variant">•</span>
+<span>Target Batch: Fall Campus 2025 Standardized Battery</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">verified</span>
+<span>Verified against Bias &amp; Inclusivity Policy v2.4</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Simple client-side toggling for the modal presentation demo
+  const modal = document.getElementById('ai-generator-modal');
+  const openBtn = document.getElementById('open-ai-modal');
+  const closeBtn = document.getElementById('close-ai-modal');
+
+  if (openBtn && modal && closeBtn) {
+    openBtn.addEventListener('click', () => {
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    });
+
+    closeBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    });
+
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    });
+  }
+</script></main></div></body></html>

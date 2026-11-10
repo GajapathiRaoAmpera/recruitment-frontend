@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"outline":"#757682","on-secondary-container":"#006f64","inverse-surface":"#213145","on-tertiary-fixed-variant":"#3323cc","primary":"#00236f","primary-fixed-dim":"#b6c4ff","on-background":"#0b1c30","secondary-fixed-dim":"#4fdbc8","on-surface-variant":"#444651","on-tertiary":"#ffffff","on-primary-fixed":"#00164e","on-primary-container":"#90a8ff","tertiary-fixed":"#e2dfff","surface-container-high":"#dce9ff","background":"#f8f9ff","primary-fixed":"#dce1ff","on-surface":"#0b1c30","inverse-primary":"#b6c4ff","primary-container":"#1e3a8a","surface-container-highest":"#d3e4fe","on-tertiary-fixed":"#0f0069","on-error":"#ffffff","error-container":"#ffdad6","on-error-container":"#93000a","secondary-fixed":"#71f8e4","inverse-on-surface":"#eaf1ff","surface-container-lowest":"#ffffff","on-primary":"#ffffff","surface":"#f8f9ff","surface-container":"#e5eeff","surface-container-low":"#eff4ff","on-secondary":"#ffffff","surface-tint":"#4059aa","tertiary-container":"#2b15c6","outline-variant":"#c5c5d3","secondary":"#006b5f","surface-dim":"#cbdbf5","secondary-container":"#6df5e1","surface-bright":"#f8f9ff","tertiary-fixed-dim":"#c3c0ff","on-secondary-fixed-variant":"#005048","on-primary-fixed-variant":"#264191","on-secondary-fixed":"#00201c","surface-variant":"#d3e4fe","error":"#ba1a1a","tertiary":"#190093","on-tertiary-container":"#a5a2ff"},borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},spacing:{"gutter":"1.5rem","margin":"2rem","space-xs":"0.25rem","space-xl":"2rem","space-md":"1rem","space-sm":"0.5rem","space-lg":"1.5rem"},fontFamily:{"body-lg":["Inter"],"body-sm":["Inter"],"headline-sm":["Inter"],"label-sm":["Inter"],"headline-md":["Inter"],"headline-lg":["Inter"],"label-md":["Inter"],"body-md":["Inter"],"code-sm":["Inter"],"display":["Inter"]},fontSize:{"body-lg":["16px",{lineHeight:"24px",fontWeight:"400"}],"body-sm":["12px",{lineHeight:"16px",fontWeight:"400"}],"headline-sm":["18px",{lineHeight:"24px",letterSpacing:"-0.01em",fontWeight:"600"}],"label-sm":["12px",{lineHeight:"16px",letterSpacing:"0.01em",fontWeight:"600"}],"headline-md":["22px",{lineHeight:"28px",letterSpacing:"-0.015em",fontWeight:"600"}],"headline-lg":["28px",{lineHeight:"36px",letterSpacing:"-0.02em",fontWeight:"600"}],"label-md":["14px",{lineHeight:"20px",fontWeight:"500"}],"body-md":["14px",{lineHeight:"20px",fontWeight:"400"}],"code-sm":["12px",{lineHeight:"16px",letterSpacing:"0.02em",fontWeight:"500"}],"display":["36px",{lineHeight:"44px",letterSpacing:"-0.025em",fontWeight:"700"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 w-full max-w-7xl mx-auto px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-md"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary-container flex items-center justify-center text-on-primary font-headline-sm text-headline-sm">A</div><div class="flex flex-col"><span class="font-headline-sm text-label-md text-on-surface leading-tight tracking-tight">Ampera</span><span class="font-label-sm text-code-sm text-on-surface-variant leading-none">Undergraduate Recruiting Portal</span></div></div><div class="hidden md:flex items-center gap-space-xs px-space-sm py-1 rounded-full bg-secondary-container/15 text-on-surface font-label-sm text-code-sm"><span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span><span>Aarav Sharma • BITS Pilani • CS '27</span></div></div><nav class="hidden lg:flex items-center gap-space-md" data-active-classes="bg-primary-container text-on-primary font-label-md rounded-lg"><a aria-current="page" class="transition-colors bg-primary-container text-on-primary font-label-md rounded-lg" data-path="candidate-assessment-hub" href="#">Assessment Hub</a><a class="text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" data-path="coding-interview-session" href="#">Live Interview</a><a class="text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-colors" data-path="application-status-&amp;-offer" href="#">My Status &amp; Offer</a></nav><div class="flex items-center gap-space-sm"><button class="h-9 px-space-sm rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-label-md flex items-center gap-space-xs" type="button"><span class="material-symbols-outlined text-[18px]">help</span><span class="hidden sm:inline">Support &amp; FAQ</span></button><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 bg-surface"><div class="flex flex-col w-full">
+<!-- Hero Section -->
+<section class="relative w-full bg-surface-container-low overflow-hidden pb-12 pt-8 sm:pt-12 px-space-md sm:px-space-lg lg:px-space-xl">
+<!-- Ambient Accent Gradients (Decorative) -->
+<div class="absolute -top-24 right-10 w-96 h-96 rounded-full bg-gradient-to-br from-secondary/15 via-primary/10 to-transparent blur-3xl pointer-events-none"></div>
+<div class="absolute top-1/2 -left-20 w-80 h-80 rounded-full bg-gradient-to-tr from-secondary-container/30 via-surface-container-high/40 to-transparent blur-2xl pointer-events-none"></div>
+<div class="relative max-w-7xl mx-auto flex flex-col gap-space-lg">
+<!-- Breadcrumb & Badge line -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex items-center gap-2">
+<span class="px-3 py-1 rounded-full bg-primary-container text-on-primary font-label-sm text-label-sm flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[15px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+            Official University Drive
+          </span>
+<span class="hidden sm:inline text-on-surface-variant font-code-sm text-code-sm font-medium">Batch of 2027 • On-Campus Early Access</span>
+</div>
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-lowest text-on-surface font-code-sm text-code-sm shadow-sm">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary animate-ping"></span>
+<span class="font-semibold text-secondary">Applications Open</span>
+<span class="text-on-surface-variant">• Closes Sep 10, 23:59 IST</span>
+</div>
+</div>
+<!-- Main Headline & Quick Snapshot Bento -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg items-start">
+<div class="lg:col-span-8 flex flex-col gap-space-md">
+<div class="flex items-center gap-2">
+<span class="text-secondary font-label-md text-label-md tracking-wider uppercase font-semibold">Engineering Early Career Track</span>
+<span class="text-outline-variant">•</span>
+<span class="text-on-surface-variant font-label-sm text-label-sm">Req ID: AMP-CAMPUS-27-SWE</span>
+</div>
+<h1 class="font-display text-display text-on-surface tracking-tight leading-tight">
+            Ampera Campus Hiring 2027
+            <span class="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Software Engineer (Core Platform)
+            </span>
+</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl leading-relaxed">
+            Join the autonomous compute architecture division at Ampera. You will build high-throughput distributed microservices, low-latency consensus systems, and next-generation developer telemetry handling petabytes of mission-critical event streams.
+          </p>
+<!-- Core Metas -->
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-space-sm pt-2">
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-1">
+<span class="text-on-surface-variant font-code-sm text-code-sm uppercase tracking-wider">Annual CTC Range</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold text-primary">₹24.5 – ₹28.0 LPA</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">+ Retention bonus &amp; stock units</span>
+</div>
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-1">
+<span class="text-on-surface-variant font-code-sm text-code-sm uppercase tracking-wider">Work Location</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">BLR / HYD</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">Hybrid (3 days office / 2 remote)</span>
+</div>
+<div class="col-span-2 sm:col-span-1 bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-1">
+<span class="text-on-surface-variant font-code-sm text-code-sm uppercase tracking-wider">Target Cohort</span>
+<span class="font-headline-md text-headline-md text-on-surface font-bold">CS / IT / ECE</span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">CGPA ≥ 7.50 without active backlogs</span>
+</div>
+</div>
+</div>
+<!-- Right Quick Info Card with AI Match preview banner -->
+<div class="lg:col-span-4 bg-surface-container-lowest p-space-lg rounded-2xl shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-sm">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-secondary-container/40 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">insights</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface">Candidate Digest</span>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-code-sm text-code-sm font-semibold">Tier 1 Target</span>
+</div>
+<div class="space-y-3 font-body-md text-body-md text-on-surface-variant">
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">school</span>
+<span><strong>Eligible Degrees:</strong> B.Tech, Dual Degree, or M.Tech graduating between May &amp; July 2027.</span>
+</div>
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">bolt</span>
+<span><strong>Primary Stack:</strong> Go, Rust, Modern C++, Kubernetes, Kafka, Distributed DBs.</span>
+</div>
+<div class="flex items-start gap-2.5">
+<span class="material-symbols-outlined text-secondary text-[20px] shrink-0 mt-0.5">psychology</span>
+<span><strong>Evaluation:</strong> Autonomous real-world coding sandbox + in-person architecture defense.</span>
+</div>
+</div>
+<!-- Image Asset representing campus tech environment -->
+<div class="relative w-full h-32 rounded-xl overflow-hidden shadow-sm mt-1">
+<img class="w-full h-full object-cover" data-alt="High-tech engineering campus workspace with modern glass partition, warm soft ambient light, collaborative software engineers coding on multi-monitor terminals, deep enterprise blue and teal illumination, professional and crisp corporate university recruitment atmosphere" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXinYF9m7Iu4UnZeDZ0bYUjs3cHApH_K7SJGUrEXCm0_oMiWf_mElaMNUv8VflKqLlKu5OnyM6s1cgv_FYulsBulVtktSTUk8AVsHIhni4H7GINg42GZ4D8lImxIvot6HRQYYCsvixNNRwPk3uwE_kkV8PTgv2mxSDAlAwGFrGV4ABoPL9MNonwV9Gh33l5ePI2MwZ7xYJzI13f-GfdhF1riexuRS352imSyz6avdV"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent flex items-end p-3">
+<span class="text-on-primary font-label-sm text-label-sm font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">location_city</span>
+                Ampera Technology Labs • Innovation Quarter
+              </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Stage Timeline Bar -->
+<section class="w-full bg-surface-container py-8 px-space-md sm:px-space-lg lg:px-space-xl">
+<div class="max-w-7xl mx-auto flex flex-col gap-6">
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Drive Timeline &amp; Selection Stages</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Strict chronological milestones. All rounds are evaluated with automated AI benchmark reports.</p>
+</div>
+<div class="flex items-center gap-2 text-on-surface-variant font-code-sm text-code-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-primary-container"></span> Current Phase: Active Registration
+        </div>
+</div>
+<!-- Timeline Track -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+<!-- Stage 1 -->
+<div class="relative bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-2 ring-2 ring-secondary/50">
+<div class="flex items-center justify-between">
+<span class="w-7 h-7 rounded-full bg-secondary text-on-secondary font-code-sm text-code-sm flex items-center justify-center font-bold">01</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-code-sm text-code-sm font-semibold">Active</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface">Registration</div>
+<div class="font-code-sm text-code-sm text-primary font-semibold">Aug 15 – Sep 10</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">Portal profile freeze, resume AI parsing &amp; eligibility check.</p>
+</div>
+<!-- Stage 2 -->
+<div class="relative bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm flex items-center justify-center font-bold">02</span>
+<span class="text-on-surface-variant font-code-sm text-code-sm">Proctored</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface">R1 Aptitude &amp; CS</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant font-semibold">Sep 14, 2025</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">60-minute quantitative logic, OS, DBMS &amp; networking tests.</p>
+</div>
+<!-- Stage 3 -->
+<div class="relative bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm flex items-center justify-center font-bold">03</span>
+<span class="text-on-surface-variant font-code-sm text-code-sm">Live Sandbox</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface">R2 Coding Sandbox</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant font-semibold">Sep 20, 2025</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">90-minute complex algorithmic &amp; system concurrency tasks.</p>
+</div>
+<!-- Stage 4 -->
+<div class="relative bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm flex items-center justify-center font-bold">04</span>
+<span class="text-on-surface-variant font-code-sm text-code-sm">Dual Panel</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface">R3 Tech &amp; Systems</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant font-semibold">Sep 26, 2025</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">1:1 deep-dive into code design, architecture, and live debugging.</p>
+</div>
+<!-- Stage 5 -->
+<div class="relative bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface-variant font-code-sm text-code-sm flex items-center justify-center font-bold">05</span>
+<span class="text-secondary font-code-sm text-code-sm font-semibold">Final Round</span>
+</div>
+<div>
+<div class="font-headline-sm text-headline-sm text-on-surface">Formal Offers</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant font-semibold">Oct 02, 2025</div>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-snug">Letters released through university TPO with onboarding pack.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Main Registration Area -->
+<section class="w-full max-w-7xl mx-auto py-10 px-space-md sm:px-space-lg lg:px-space-xl">
+<form class="flex flex-col gap-space-lg" id="amperaRegistrationForm" onsubmit="event.preventDefault(); handleFormSubmission();">
+<!-- Outer Card -->
+<div class="bg-surface-container-lowest rounded-2xl shadow-md p-space-md sm:p-space-xl flex flex-col gap-space-lg">
+<!-- Header of Form -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 bg-surface-container-low -mx-space-md sm:-mx-space-xl -mt-space-md sm:-mt-space-xl p-space-lg rounded-t-2xl">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary-container text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[24px]">assignment_ind</span>
+</div>
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Candidate Application Dossier</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Review pre-populated institutional credentials and verify all attachments.</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-3 py-1 rounded-full bg-secondary-container/30 text-on-secondary-container font-code-sm text-code-sm font-medium flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-secondary">shield</span>
+              BITS Pilani Campus Single-Sign-On Verified
+            </span>
+</div>
+</div>
+<!-- 2-Column Responsive Layout -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-xl">
+<!-- LEFT COLUMN: Academic & Contact Profile -->
+<div class="lg:col-span-6 flex flex-col gap-space-md">
+<div class="flex items-center gap-2 pb-1">
+<span class="text-primary font-headline-sm text-headline-sm">Section 1:</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Identity &amp; Academic Information</span>
+</div>
+<!-- Full Name -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between" for="fullName">
+<span>Full Legal Name <span class="text-error">*</span></span>
+<span class="text-on-surface-variant font-code-sm text-code-sm">As per Passport / Aadhaar</span>
+</label>
+<input class="h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary transition-all" id="fullName" required="" type="text" value="Aarav Sharma"/>
+</div>
+<!-- Email & Phone Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between" for="instituteEmail">
+<span>Institute Email <span class="text-error">*</span></span>
+<span class="text-secondary font-code-sm text-code-sm">.edu / campus</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 pl-9 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary transition-all" id="instituteEmail" required="" type="email" value="f20230489@pilani.bits-pilani.ac.in"/>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant absolute left-2.5 top-2.5">mail</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="phone">
+                  Contact Phone (WhatsApp) <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 pl-9 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary transition-all" id="phone" required="" type="tel" value="+91 98765 43210"/>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant absolute left-2.5 top-2.5">call</span>
+</div>
+</div>
+</div>
+<!-- College Selector Dropdown -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="college">
+                College / Institute Affiliation <span class="text-error">*</span>
+</label>
+<div class="relative">
+<select class="w-full h-10 px-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary appearance-none transition-all" id="college">
+<option selected="" value="BITS_Pilani">BITS Pilani (Pilani Campus)</option>
+<option value="BITS_Goa">BITS Pilani (K.K. Birla Goa Campus)</option>
+<option value="BITS_Hyd">BITS Pilani (Hyderabad Campus)</option>
+<option value="IIT_Bombay">Indian Institute of Technology (IIT) Bombay</option>
+<option value="IIT_Delhi">Indian Institute of Technology (IIT) Delhi</option>
+<option value="IIT_Madras">Indian Institute of Technology (IIT) Madras</option>
+<option value="NIT_Trichy">National Institute of Technology (NIT) Trichy</option>
+<option value="NIT_Surathkal">National Institute of Technology (NIT) Surathkal</option>
+<option value="Other">Other Invited Partner Institution</option>
+</select>
+<span class="material-symbols-outlined text-[20px] text-on-surface-variant absolute right-2.5 top-2.5 pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Branch & Specialization -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="branch">
+                Degree &amp; Branch of Study <span class="text-error">*</span>
+</label>
+<input class="h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary transition-all" id="branch" required="" type="text" value="B.Tech Computer Science and Engineering"/>
+</div>
+<!-- CGPA & Grad Year -->
+<div class="grid grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between" for="cgpa">
+<span>Current Cumulative CGPA <span class="text-error">*</span></span>
+<span class="text-secondary font-code-sm text-code-sm">Min 7.50</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 pl-9 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary transition-all" id="cgpa" max="10" min="7.5" required="" step="0.01" type="number" value="8.92"/>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant absolute left-2.5 top-2.5">grade</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="gradYear">
+                  Year of Graduation <span class="text-error">*</span>
+</label>
+<input class="h-10 px-3 rounded-lg bg-surface-container text-on-surface font-body-md text-body-md cursor-not-allowed opacity-90 font-semibold" id="gradYear" readonly="" type="text" value="2027"/>
+</div>
+</div>
+<!-- Minor Alert banner for CGPA check -->
+<div class="bg-secondary-container/20 p-3 rounded-xl flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-[22px]">check_circle</span>
+<p class="font-body-sm text-body-sm text-on-surface">
+                Academic standing verified against BITS ERP database. Your CGPA (8.92) exceeds the cutoff threshold of 7.50.
+              </p>
+</div>
+</div>
+<!-- RIGHT COLUMN: Resume, Links & Parsed Skills -->
+<div class="lg:col-span-6 flex flex-col gap-space-md">
+<div class="flex items-center gap-2 pb-1">
+<span class="text-primary font-headline-sm text-headline-sm">Section 2:</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Portfolio, Codebases &amp; Resume</span>
+</div>
+<!-- Resume Drag & Drop Upload Container -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between">
+<span>Resume Document <span class="text-error">*</span></span>
+<span class="text-on-surface-variant font-code-sm text-code-sm">PDF only, max 5MB</span>
+</label>
+<!-- Uploaded Box / Interactive drop zone -->
+<div class="bg-surface-container-low rounded-xl p-space-md flex flex-col gap-3 transition-colors hover:bg-surface-container" id="dropZone">
+<!-- Current File Preview Card -->
+<div class="bg-surface-container-lowest p-space-sm rounded-lg shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-10 h-10 rounded-lg bg-error-container/40 text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[24px]">picture_as_pdf</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-md text-label-md text-on-surface truncate font-semibold">Aarav_Sharma_Resume_2025.pdf</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">248 KB • Uploaded today at 10:14 AM</span>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0">
+<button class="p-1.5 text-on-surface-variant hover:text-primary rounded-md transition-colors" title="View PDF Preview" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+<button class="p-1.5 text-on-surface-variant hover:text-error rounded-md transition-colors" title="Replace File" type="button">
+<span class="material-symbols-outlined text-[20px]">sync</span>
+</button>
+</div>
+</div>
+<!-- AI Parsed Keywords Preview -->
+<div class="bg-surface-container-high/40 p-space-sm rounded-lg flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">auto_awesome</span>
+                      Ampera AI Extraction Matrix
+                    </span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-code-sm text-code-sm font-semibold">94% Role Fit</span>
+</div>
+<div class="flex flex-wrap gap-1.5 pt-1">
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface font-code-sm text-code-sm font-medium shadow-sm">Go / Golang</span>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface font-code-sm text-code-sm font-medium shadow-sm">Python 3.12</span>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface font-code-sm text-code-sm font-medium shadow-sm">Distributed Systems</span>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface font-code-sm text-code-sm font-medium shadow-sm">Raft Consensus</span>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface font-code-sm text-code-sm font-medium shadow-sm">PostgreSQL</span>
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container-lowest text-on-surface font-code-sm text-code-sm font-medium shadow-sm">Docker / K8s</span>
+</div>
+</div>
+</div>
+</div>
+<!-- GitHub Profile URL -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between" for="githubUrl">
+<span>GitHub Profile URL <span class="text-error">*</span></span>
+<span class="text-on-surface-variant font-code-sm text-code-sm">Must include public repos</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 pl-9 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary transition-all" id="githubUrl" required="" type="url" value="https://github.com/aaravsharma-bits"/>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant absolute left-2.5 top-2.5">code</span>
+</div>
+</div>
+<!-- LinkedIn Profile URL -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface" for="linkedinUrl">
+                LinkedIn Profile URL <span class="text-error">*</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 pl-9 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary transition-all" id="linkedinUrl" required="" type="url" value="https://linkedin.com/in/aarav-sharma-cs"/>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant absolute left-2.5 top-2.5">business</span>
+</div>
+</div>
+<!-- Portfolio or Codeforces link -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface flex items-center justify-between" for="portfolioUrl">
+<span>Portfolio or Competitive Profile (Codeforces / LeetCode)</span>
+<span class="text-secondary font-code-sm text-code-sm">Optional boost</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 pl-9 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-secondary transition-all" id="portfolioUrl" type="url" value="https://codeforces.com/profile/aarav_bits"/>
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant absolute left-2.5 top-2.5">terminal</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Section 3: Mandatory Compliance & Proctoring Agreement -->
+<div class="bg-surface-container-low p-space-md sm:p-space-lg rounded-xl flex flex-col gap-3">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[22px]">policy</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Mandatory Compliance &amp; Integrity Declarations</span>
+</div>
+<div class="space-y-3 pt-1">
+<label class="flex items-start gap-3 cursor-pointer group">
+<input checked="" class="mt-1 w-4 h-4 rounded text-secondary focus:ring-secondary accent-secondary cursor-pointer" required="" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface leading-snug group-hover:text-primary transition-colors">
+                I consent to autonomous AI resume matching, algorithmic skill graph mapping, and psychometric evaluation calibration conducted by Ampera Talent Technologies.
+              </span>
+</label>
+<label class="flex items-start gap-3 cursor-pointer group">
+<input checked="" class="mt-1 w-4 h-4 rounded text-secondary focus:ring-secondary accent-secondary cursor-pointer" required="" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface leading-snug group-hover:text-primary transition-colors">
+                I agree to mandatory dual-camera/webcam proctoring, secondary mobile vantage monitoring, and ambient sound telemetry during all online assessment stages.
+              </span>
+</label>
+<label class="flex items-start gap-3 cursor-pointer group">
+<input checked="" class="mt-1 w-4 h-4 rounded text-secondary focus:ring-secondary accent-secondary cursor-pointer" required="" type="checkbox"/>
+<span class="font-body-md text-body-md text-on-surface leading-snug group-hover:text-primary transition-colors">
+                I solemnly confirm that all academic records, CGPA statements, project disclosures, and honor code declarations submitted herein are authentic and verifiably documented.
+              </span>
+</label>
+</div>
+</div>
+<!-- Action Buttons Footer -->
+<div class="flex flex-col-reverse sm:flex-row items-center justify-between gap-space-md pt-2">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary flex items-center gap-1.5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">menu_book</span>
+<span>Recruitment FAQs, Syllabus &amp; Test Guide</span>
+</a>
+<div class="flex items-center gap-space-md w-full sm:w-auto">
+<button class="w-full sm:w-auto h-11 px-space-lg rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-colors font-label-md text-label-md font-medium" onclick="saveDraftNotification()" type="button">
+              Save Draft
+            </button>
+<button class="w-full sm:w-auto h-11 px-space-xl rounded-lg bg-primary-container text-on-primary hover:bg-primary transition-all font-label-md text-label-md font-semibold flex items-center justify-center gap-2 shadow-sm" id="submitBtn" type="submit">
+<span>Complete &amp; Submit Application</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+</form>
+<!-- Success Feedback Modal (Hidden by Default) -->
+<div class="hidden mt-6 bg-surface-container-lowest p-space-lg rounded-2xl shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4" id="confirmationBanner">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-secondary-container text-on-secondary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[28px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Application Successfully Submitted!</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Application ID: <strong class="text-on-surface font-code-sm">AMP27-CS-89240</strong> • Verification packet dispatched to <span class="font-code-sm">f20230489@pilani.bits-pilani.ac.in</span>.
+          </p>
+</div>
+</div>
+<div class="flex items-center gap-3 w-full md:w-auto">
+<a class="h-10 px-4 rounded-lg bg-primary-container text-on-primary font-label-md text-label-md font-medium flex items-center justify-center gap-1.5 transition-colors" href="#">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+          Practice in Sandbox
+        </a>
+</div>
+</div>
+</section>
+<!-- Interactive JavaScript logic -->
+<script>
+    function handleFormSubmission() {
+      const submitBtn = document.getElementById('submitBtn');
+      const confirmationBanner = document.getElementById('confirmationBanner');
+
+      submitBtn.disabled = true;
+      submitBtn.classList.add('opacity-75');
+      submitBtn.innerHTML = `
+        <span class="w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full animate-spin"></span>
+        <span>Validating with BITS Registry...</span>
+      `;
+
+      setTimeout(() => {
+        submitBtn.innerHTML = `
+          <span class="material-symbols-outlined text-[18px]">done_all</span>
+          <span>Application Confirmed</span>
+        `;
+        submitBtn.classList.remove('bg-primary-container');
+        submitBtn.classList.add('bg-secondary', 'text-on-secondary');
+
+        if (confirmationBanner) {
+          confirmationBanner.classList.remove('hidden');
+          confirmationBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }, 1100);
+    }
+
+    function saveDraftNotification() {
+      alert('Draft state saved locally! Your entered data will persist for this session.');
+    }
+  </script>
+</div></main><footer class="w-full bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] py-space-md mt-space-xl"><div class="max-w-7xl mx-auto px-space-lg flex flex-col sm:flex-row items-center justify-between gap-space-sm font-body-sm text-code-sm text-on-surface-variant"><div>© 2025 Ampera Talent Technologies. All rights reserved.</div><div class="flex items-center gap-space-md"><span>AI Proctoring Secured</span><span>Privacy Policy</span><span>Terms of Service</span></div></div></footer></body></html>

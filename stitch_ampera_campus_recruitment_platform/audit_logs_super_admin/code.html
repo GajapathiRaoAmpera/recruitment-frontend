@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-tertiary":"#ffffff","primary-fixed-dim":"#b6c4ff","tertiary":"#190093","on-secondary-container":"#006f64","outline-variant":"#c5c5d3","on-secondary-fixed-variant":"#005048","on-tertiary-container":"#a5a2ff","on-background":"#0b1c30","secondary":"#006b5f","primary-container":"#1e3a8a","secondary-fixed-dim":"#4fdbc8","tertiary-fixed":"#e2dfff","tertiary-fixed-dim":"#c3c0ff","on-error":"#ffffff","on-tertiary-fixed-variant":"#3323cc","surface":"#f8f9ff","error":"#ba1a1a","on-secondary":"#ffffff","inverse-surface":"#213145","primary":"#00236f","on-primary-container":"#90a8ff","primary-fixed":"#dce1ff","surface-bright":"#f8f9ff","background":"#f8f9ff","outline":"#757682","on-surface-variant":"#444651","on-primary":"#ffffff","surface-container-lowest":"#ffffff","secondary-fixed":"#71f8e4","surface-container":"#e5eeff","on-surface":"#0b1c30","surface-variant":"#d3e4fe","secondary-container":"#6df5e1","inverse-on-surface":"#eaf1ff","on-primary-fixed":"#00164e","surface-container-highest":"#d3e4fe","inverse-primary":"#b6c4ff","surface-container-high":"#dce9ff","on-tertiary-fixed":"#0f0069","on-secondary-fixed":"#00201c","tertiary-container":"#2b15c6","surface-container-low":"#eff4ff","on-primary-fixed-variant":"#264191","on-error-container":"#93000a","error-container":"#ffdad6","surface-tint":"#4059aa","surface-dim":"#cbdbf5"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"margin":"2rem","space-md":"1rem","space-xl":"2rem","space-xs":"0.25rem","space-sm":"0.5rem","gutter":"1.5rem","space-lg":"1.5rem"},"fontFamily":{"code-sm":["Inter"],"headline-md":["Inter"],"headline-sm":["Inter"],"label-sm":["Inter"],"headline-lg":["Inter"],"body-sm":["Inter"],"display":["Inter"],"label-md":["Inter"],"body-md":["Inter"],"body-lg":["Inter"]},"fontSize":{"code-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-sm":["18px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"600"}],"headline-lg":["28px",{"lineHeight":"36px","letterSpacing":"-0.02em","fontWeight":"600"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"display":["36px",{"lineHeight":"44px","letterSpacing":"-0.025em","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"20px","fontWeight":"500"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-64 bg-surface-container-lowest z-50 flex flex-col shadow-[0_1px_8px_rgba(0,0,0,0.04)]"><div class="h-16 px-space-lg flex items-center gap-space-sm"><div class="w-9 h-9 rounded-lg bg-primary-container flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[22px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm text-primary leading-none">Ampera</span><span class="font-label-sm text-label-sm text-on-surface-variant font-medium tracking-wide">Campus Hire</span></div></div><div class="px-space-md py-space-sm"><div class="px-space-sm py-space-xs rounded bg-surface-container-low flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface-variant">Active Portal</span><span class="font-label-sm text-label-sm text-secondary font-semibold">Recruiter HQ</span></div></div><nav class="flex-1 px-space-md py-space-sm flex flex-col gap-space-xs overflow-y-auto" data-active-classes="bg-primary-container text-on-primary font-label-md rounded-lg shadow-sm"><a aria-current="page" class="flex items-center gap-space-sm px-space-md py-space-sm transition-all bg-primary-container text-on-primary font-label-md rounded-lg shadow-sm" data-path="super-admin-dashboard" href="#"><span class="material-symbols-outlined text-[20px]">grid_view</span>Dashboard</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="drives-overview" href="#"><span class="material-symbols-outlined text-[20px]">campaign</span>Drives Overview</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="candidates-pipeline" href="#"><span class="material-symbols-outlined text-[20px]">group</span>Candidates</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="interviews-portal" href="#"><span class="material-symbols-outlined text-[20px]">video_call</span>Interviews</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="question-bank" href="#"><span class="material-symbols-outlined text-[20px]">quiz</span>Question Bank</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="partner-colleges" href="#"><span class="material-symbols-outlined text-[20px]">school</span>Colleges</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="offers-management" href="#"><span class="material-symbols-outlined text-[20px]">verified</span>Offers</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="ai-settings-and-matching" href="#"><span class="material-symbols-outlined text-[20px]">psychology</span>AI Settings</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="audit-logs-and-reports" href="#"><span class="material-symbols-outlined text-[20px]">analytics</span>Audit &amp; Reports</a><a class="flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-md text-label-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="system-settings" href="#"><span class="material-symbols-outlined text-[20px]">settings</span>Settings</a></nav><div class="p-space-md mt-auto"><div class="p-space-sm rounded-lg bg-surface-container-low flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-2 h-2 rounded-full bg-secondary-fixed-dim"></div><span class="font-label-sm text-label-sm text-on-surface-variant">Ampera AI Engine</span></div><span class="font-label-sm text-label-sm text-secondary font-semibold">v2.4</span></div></div></aside><div class="pl-64"><header class="fixed top-0 left-64 right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center gap-space-md flex-1 max-w-xl"><div class="relative w-full"><span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span><input class="w-full h-10 pl-10 pr-12 rounded-lg bg-surface-container-lowest font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-1 focus:ring-secondary-fixed-dim" placeholder="Search candidates, universities, or drive IDs..." type="text"/><div class="absolute right-3 top-1/2 -translate-y-1/2 px-1.5 py-0.5 rounded bg-surface-container font-code-sm text-code-sm text-on-surface-variant">⌘K</div></div><div class="hidden lg:flex items-center gap-space-xs px-space-sm py-space-xs rounded-lg bg-surface-container-low"><span class="font-label-sm text-label-sm text-on-surface-variant">Drive:</span><span class="font-label-sm text-label-sm font-semibold text-primary truncate max-w-[140px]">Fall Campus 2025</span><span class="material-symbols-outlined text-[18px] text-on-surface-variant">arrow_drop_down</span></div></div><div class="flex items-center gap-space-md"><button class="relative p-space-xs rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-error"></span></button><div class="h-6 w-px bg-surface-container-high"></div><div class="flex items-center gap-space-sm"><div class="flex flex-col text-right hidden sm:flex"><span class="font-label-md text-label-md font-semibold text-on-surface leading-tight">Priya Sharma</span><span class="font-label-sm text-label-sm text-on-surface-variant">Campus Talent Lead</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-16 px-space-xl pb-space-xl bg-surface min-h-screen"><div class="flex flex-col w-full">
+<!-- Top Headline & Ledger Context -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md mb-space-lg">
+<div>
+<div class="flex items-center gap-space-sm mb-space-xs">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Immutable Ledger v4.11-SEC
+        </span>
+<span class="text-on-surface-variant font-code-sm text-code-sm">SHA-256 Digest Synced</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Security &amp; AI Decision Audit Logs</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-0.5">Immutable governance ledger tracking model inference, manual score overrides, and credentialed actions.</p>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<button class="flex items-center gap-space-xs px-space-md py-space-sm rounded-lg bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface-container transition-all font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-secondary">verified_user</span>
+        Verify Merkle Proof
+      </button>
+<button class="flex items-center gap-space-xs px-space-md py-space-sm rounded-lg bg-primary-container text-on-primary shadow-sm hover:bg-primary transition-all font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">download</span>
+        Export Audit Log (CSV / JSON)
+      </button>
+</div>
+</div>
+<!-- KPI Metric Overview Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-space-lg">
+<!-- Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Total Audited Events</span>
+<div class="font-headline-lg text-headline-lg text-on-surface font-bold mt-1">14,892</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[22px]">database</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 mt-space-md text-secondary font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+<span>+842 in last 24h</span>
+<span class="text-on-surface-variant ml-auto font-code-sm text-code-sm">100% Retained</span>
+</div>
+</div>
+<!-- Card 2: Marked Warning -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm relative overflow-hidden flex flex-col justify-between">
+<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-amber-600"></div>
+<div class="flex items-start justify-between">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-on-surface-variant">AI Score Overrides</span>
+<span class="material-symbols-outlined text-amber-600 text-[16px]">warning</span>
+</div>
+<div class="font-headline-lg text-headline-lg text-on-surface font-bold mt-1 flex items-baseline gap-2">
+            142
+            <span class="text-label-sm font-label-sm font-normal text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">Elevated Rate</span>
+</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center text-amber-700">
+<span class="material-symbols-outlined text-[22px]">tune</span>
+</div>
+</div>
+<div class="flex items-center gap-1 mt-space-md text-on-surface-variant font-label-sm text-label-sm">
+<span class="text-amber-800 font-semibold">0.95%</span> of all candidates evaluated
+        <span class="ml-auto text-amber-700 font-semibold cursor-pointer hover:underline" onclick="focusOverrideRow()">Inspect</span>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Privileged Role Actions</span>
+<div class="font-headline-lg text-headline-lg text-on-surface font-bold mt-1">38</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[22px]">shield_person</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 mt-space-md text-on-surface-variant font-label-sm text-label-sm">
+<span class="inline-block w-2 h-2 rounded-full bg-secondary"></span>
+<span>All hardware token signed</span>
+<span class="text-primary ml-auto font-code-sm text-code-sm">0 Denials</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Candidate Data Exports</span>
+<div class="font-headline-lg text-headline-lg text-on-surface font-bold mt-1">12</div>
+</div>
+<div class="w-10 h-10 rounded-lg bg-error-container/40 flex items-center justify-center text-error">
+<span class="material-symbols-outlined text-[22px]">lock_reset</span>
+</div>
+</div>
+<div class="flex items-center gap-1.5 mt-space-md text-on-surface-variant font-label-sm text-label-sm">
+<span class="font-semibold text-error">PII Obfuscation Active</span>
+<span class="text-on-surface-variant ml-auto font-code-sm text-code-sm">GDPR / DPDPA</span>
+</div>
+</div>
+</div>
+<!-- Interactive Filter Controls Bar -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm mb-space-lg flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex flex-wrap items-center gap-space-sm flex-1">
+<!-- Date Range Selector -->
+<div class="flex items-center gap-2 bg-surface-container-low px-space-md py-space-xs rounded-lg text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">calendar_today</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Range:</span>
+<select class="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none cursor-pointer pr-2">
+<option>Last 30 Days (Feb 26 - Mar 27)</option>
+<option>Last 7 Days</option>
+<option>Current Active Drive (Fall '25)</option>
+<option>Custom Ledger Window</option>
+</select>
+</div>
+<!-- Actor Role Filter -->
+<div class="flex items-center gap-2 bg-surface-container-low px-space-md py-space-xs rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">manage_accounts</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Actor:</span>
+<select class="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none cursor-pointer pr-2">
+<option>All Actors &amp; Agents</option>
+<option>Super Admin</option>
+<option>HR Admin</option>
+<option>Technical Interviewer</option>
+<option>AI Core Engine</option>
+</select>
+</div>
+<!-- Action Type Filter -->
+<div class="flex items-center gap-2 bg-surface-container-low px-space-md py-space-xs rounded-lg">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">filter_list</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">Event Type:</span>
+<select class="bg-transparent font-label-md text-label-md text-on-surface focus:outline-none cursor-pointer pr-2">
+<option>All Audited Actions</option>
+<option selected="">AI Overrides &amp; Discrepancies</option>
+<option>Result &amp; Cutoff Publishing</option>
+<option>Offer Dispatch Batches</option>
+<option>Security &amp; PII Access</option>
+</select>
+</div>
+</div>
+<!-- Right Controls Quick Search & Clear -->
+<div class="flex items-center gap-space-sm">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-64 h-9 pl-9 pr-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-on-surface-variant font-body-sm text-body-sm focus:outline-none focus:ring-1 focus:ring-secondary-fixed-dim" placeholder="Filter by Hash, Candidate, or IP..." type="text"/>
+</div>
+<button class="p-2 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant" title="Refresh Feed">
+<span class="material-symbols-outlined text-[18px]">refresh</span>
+</button>
+</div>
+</div>
+<!-- Main Split Layout: Ledger Table (Left/Center) + Forensic Drilldown Inspector (Right) -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-gutter items-start">
+<!-- Ledger Table Container (8 Cols) -->
+<div class="xl:col-span-8 bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden flex flex-col">
+<div class="p-space-md flex items-center justify-between bg-surface-container-low/50">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary animate-pulse"></span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Live Event Stream</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant bg-surface-container px-2 py-0.5 rounded">Block #8,419,204</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Showing 4 of 14,892 records</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low font-label-sm text-label-sm text-on-surface-variant">
+<th class="py-space-sm px-space-md font-semibold">Timestamp</th>
+<th class="py-space-sm px-space-md font-semibold">Actor / System</th>
+<th class="py-space-sm px-space-md font-semibold">Action Triggered</th>
+<th class="py-space-sm px-space-md font-semibold">Target Entity</th>
+<th class="py-space-sm px-space-md font-semibold">Origin &amp; Session</th>
+<th class="py-space-sm px-space-md font-semibold text-right">Inspect</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 font-body-sm text-body-sm text-on-surface">
+<!-- Row 1: AI Override (Selected / Highlighted) -->
+<tr class="bg-amber-50/40 hover:bg-amber-50/70 transition-colors cursor-pointer" id="override-row" onclick="selectAuditEntry(1)">
+<td class="py-space-md px-space-md align-top">
+<div class="font-label-sm text-label-sm font-semibold text-on-surface">Mar 27, 2027</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant">14:32:08 IST</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-sm text-label-sm font-semibold">PS</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold leading-tight text-on-surface">Priya Sharma</span>
+<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-surface-container text-primary mt-1 w-max">HR Admin</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-100 text-amber-900 font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[15px] text-amber-700">warning</span>
+                  Overrode AI Evaluation Score
+                </div>
+<div class="font-code-sm text-code-sm text-on-surface-variant mt-1 pl-1">Score: 78 → 92 (+14 pts)</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="font-label-md text-label-md font-semibold text-on-surface">Candidate #1042</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm">Ananya Sen (BITS CS)</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="font-code-sm text-code-sm text-on-surface">192.168.1.104</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-secondary">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+                  Okta MFA Verified
+                </div>
+</td>
+<td class="py-space-md px-space-md align-top text-right">
+<span class="material-symbols-outlined text-amber-700 text-[20px]">chevron_right</span>
+</td>
+</tr>
+<!-- Row 2: Offer Dispatch -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="selectAuditEntry(2)">
+<td class="py-space-md px-space-md align-top">
+<div class="font-label-sm text-label-sm font-semibold text-on-surface">Mar 27, 2027</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant">11:15:42 IST</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[16px]">smart_toy</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold leading-tight text-on-surface">Ampera AI Core v2.4</span>
+<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-surface-container text-secondary mt-1 w-max">AI Engine</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 text-emerald-800 font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[15px] text-emerald-600">send</span>
+                  Dispatched 35 Offer Letters
+                </div>
+<div class="font-code-sm text-code-sm text-on-surface-variant mt-1 pl-1">Batch Key #OFFER-NIT-991</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="font-label-md text-label-md font-semibold text-on-surface">Batch: NIT Trichy Offers</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm">Drive #DRV-2025-F1</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="font-code-sm text-code-sm text-on-surface">10.240.0.12</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-primary">
+<span class="material-symbols-outlined text-[14px]">cloud_done</span>
+                  Cloud VPC Internal
+                </div>
+</td>
+<td class="py-space-md px-space-md align-top text-right">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</td>
+</tr>
+<!-- Row 3: Cutoff Alteration -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="selectAuditEntry(3)">
+<td class="py-space-md px-space-md align-top">
+<div class="font-label-sm text-label-sm font-semibold text-on-surface">Mar 26, 2027</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant">19:04:19 IST</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm font-semibold">AC</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold leading-tight text-on-surface">Alex Chen</span>
+<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-surface-container-high text-primary mt-1 w-max">Super Admin</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-50 text-blue-800 font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[15px] text-blue-600">sliders</span>
+                  Altered Minimum Screening Cut-off to 72%
+                </div>
+<div class="font-code-sm text-code-sm text-on-surface-variant mt-1 pl-1">Threshold lowered from 75%</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="font-label-md text-label-md font-semibold text-on-surface">Global AI Screening Config</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm">Param: min_eval_pct</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="font-code-sm text-code-sm text-on-surface">192.168.1.88</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-secondary">
+<span class="material-symbols-outlined text-[14px]">key</span>
+                  Hardware Key (FIDO2)
+                </div>
+</td>
+<td class="py-space-md px-space-md align-top text-right">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</td>
+</tr>
+<!-- Row 4: Data Export Alert -->
+<tr class="hover:bg-surface-container-low transition-colors cursor-pointer" onclick="selectAuditEntry(4)">
+<td class="py-space-md px-space-md align-top">
+<div class="font-label-sm text-label-sm font-semibold text-on-surface">Mar 26, 2027</div>
+<div class="font-code-sm text-code-sm text-on-surface-variant">16:50:01 IST</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container text-on-surface flex items-center justify-center font-label-sm text-label-sm font-semibold">VM</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold leading-tight text-on-surface">Vikram Malhotra</span>
+<span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-surface-container text-on-surface-variant mt-1 w-max">Technical Interviewer</span>
+</div>
+</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-error-container/60 text-error font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[15px]">security_update_warning</span>
+                  Exported Candidate PII Data
+                </div>
+<div class="font-code-sm text-code-sm text-on-surface-variant mt-1 pl-1">214 Resumes Decrypted</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="font-label-md text-label-md font-semibold text-on-surface">Drive: BITS Pilani CS/IS</div>
+<div class="text-on-surface-variant font-body-sm text-body-sm">Batch #BITS-OFFLINE-T1</div>
+</td>
+<td class="py-space-md px-space-md align-top">
+<div class="font-code-sm text-code-sm text-on-surface">192.168.1.144</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-amber-700">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                  VPN Exit • OTP Expired
+                </div>
+</td>
+<td class="py-space-md px-space-md align-top text-right">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">chevron_right</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Bar -->
+<div class="p-space-md bg-surface-container-low/40 flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface-variant">Page 1 of 373 • Ledger cryptographic verification status: <strong class="text-secondary font-semibold">HEALTHY</strong></span>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm" disabled="">Previous</button>
+<button class="px-2.5 py-1 rounded bg-primary-container text-on-primary font-label-sm text-label-sm">1</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm">2</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm">3</button>
+<span class="px-1 text-on-surface-variant text-label-sm">...</span>
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm">373</button>
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container font-label-sm text-label-sm">Next</button>
+</div>
+</div>
+</div>
+<!-- Right Side Panel: Override Forensic Log Card (4 Cols) -->
+<div class="xl:col-span-4 flex flex-col gap-space-md">
+<!-- Primary Forensic Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-lg relative overflow-hidden">
+<div class="absolute top-0 right-0 left-0 h-1.5 bg-gradient-to-r from-amber-500 via-secondary to-primary"></div>
+<div class="flex items-start justify-between pb-space-sm mb-space-md">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[20px] text-amber-600">policy</span>
+<span class="font-label-sm text-label-sm font-bold text-amber-700 uppercase tracking-wider">Forensic Audit Log</span>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mt-1">Override Incident #LOG-8841</h2>
+</div>
+<span class="font-code-sm text-code-sm bg-surface-container px-2 py-0.5 rounded text-on-surface-variant">Tamper-Proof</span>
+</div>
+<!-- Target Candidate Quick Profile -->
+<div class="p-space-sm bg-surface-container-low rounded-lg mb-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-label-md text-label-md font-bold">AS</div>
+<div class="flex flex-col">
+<span class="font-label-md text-label-md font-semibold text-on-surface">Ananya Sen</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Candidate ID #1042 • BITS Pilani CS</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high font-label-sm text-label-sm text-primary">Tier 1 College</span>
+</div>
+<!-- Before & After Score Comparison Delta -->
+<div class="grid grid-cols-2 gap-space-sm mb-space-md">
+<div class="p-space-sm bg-surface-container-low rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">psychology</span>
+              Before (AI Eval)
+            </span>
+<div class="font-headline-lg text-headline-lg font-bold text-on-surface mt-1">78<span class="font-label-sm text-label-sm text-on-surface-variant font-normal">/100</span></div>
+<span class="font-code-sm text-code-sm text-on-surface-variant mt-0.5">Model: Ampera-Eval v2.4</span>
+</div>
+<div class="p-space-sm bg-amber-50 rounded-lg flex flex-col">
+<span class="font-label-sm text-label-sm text-amber-800 flex items-center gap-1 font-semibold">
+<span class="material-symbols-outlined text-[14px]">tune</span>
+              Overridden Score
+            </span>
+<div class="font-headline-lg text-headline-lg font-bold text-amber-900 mt-1">92<span class="font-label-sm text-label-sm text-amber-700 font-normal">/100</span></div>
+<span class="font-code-sm text-code-sm text-amber-800 font-semibold mt-0.5">+14 Point Deviation</span>
+</div>
+</div>
+<!-- Justification Statement -->
+<div class="mb-space-md">
+<label class="block font-label-sm text-label-sm text-on-surface-variant mb-1 font-semibold">Override Reason &amp; Evidence Log:</label>
+<div class="p-space-sm bg-surface-container-low rounded-lg text-on-surface font-body-sm text-body-sm leading-relaxed">
+            “Candidate demonstrated exceptional competitive programming rank on Codeforces (Candidate Master) verified during live screening. AI parsing had classified algorithm repository as generic course project.”
+          </div>
+</div>
+<!-- Dual Authorization Verification -->
+<div class="p-space-sm bg-surface-container-low rounded-lg mb-space-md">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-semibold">Dual-Authorization Signatures</span>
+<span class="font-code-sm text-code-sm text-secondary font-semibold">2 of 2 Valid</span>
+</div>
+<div class="space-y-2">
+<!-- Signer 1 -->
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Priya Sharma</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Campus Talent Lead (Primary Initiator)</span>
+</div>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">14:31:52</span>
+</div>
+<!-- Signer 2 -->
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">check_circle</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Alex Chen</span>
+<span class="font-code-sm text-code-sm text-on-surface-variant">Super Admin (Secondary Co-Sign)</span>
+</div>
+</div>
+<span class="font-code-sm text-code-sm text-on-surface-variant">14:32:08</span>
+</div>
+</div>
+</div>
+<!-- Cryptographic Footprint -->
+<div class="p-space-sm bg-surface-container-lowest rounded-lg mb-space-md">
+<div class="flex items-center justify-between text-on-surface-variant font-code-sm text-code-sm">
+<span>Merkle Leaf Hash</span>
+<span class="text-primary font-semibold cursor-pointer hover:underline">Copy Hash</span>
+</div>
+<div class="font-code-sm text-code-sm text-on-surface mt-1 truncate select-all bg-surface-container-low px-2 py-1 rounded">
+            0x9f88c42b...b817e92da31c4f02781b0a37e5d8
+          </div>
+</div>
+<!-- Action CTA -->
+<div class="flex items-center gap-space-sm">
+<button class="flex-1 py-space-sm px-space-md rounded-lg bg-surface-container text-on-surface hover:bg-surface-container-high transition-all font-label-md text-label-md text-center">
+            Download Cert
+          </button>
+<button class="flex-1 py-space-sm px-space-md rounded-lg bg-primary-container text-on-primary hover:bg-primary transition-all font-label-md text-label-md text-center">
+            Challenge Action
+          </button>
+</div>
+</div>
+<!-- Compliance Summary Metric Mini-Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[20px]">gavel</span>
+</div>
+<div>
+<div class="font-label-md text-label-md font-semibold text-on-surface">SOC2 &amp; AI Act Compliance</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Continuous automated auditing enabled</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-secondary text-[22px]">verified</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  function selectAuditEntry(index) {
+    const overrideRow = document.getElementById('override-row');
+    if (index === 1) {
+      overrideRow.classList.add('bg-amber-50/60');
+    }
+  }
+
+  function focusOverrideRow() {
+    const el = document.getElementById('override-row');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('ring-2', 'ring-amber-500');
+      setTimeout(() => {
+        el.classList.remove('ring-2', 'ring-amber-500');
+      }, 1800);
+    }
+  }
+</script></main></div></body></html>
