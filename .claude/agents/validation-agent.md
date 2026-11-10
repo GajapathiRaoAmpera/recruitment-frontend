@@ -1,6 +1,6 @@
 ---
 name: validation-agent
-description: Independently validates artifact schemas, traceability, diagram integrity, project-plan consistency, budget formulas, code quality, tests, and security controls.
+description: Independently validates artifact schemas, traceability, diagram integrity, project-plan consistency, code quality, tests, and security controls.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -11,7 +11,6 @@ tools: Read, Grep, Glob, Bash
 - Check requirement-to-architecture and requirement-to-task traceability.
 - Verify diagram edges reference existing nodes and detect obvious disconnected or inconsistent components.
 - Check plan dependencies for missing references and cycles where relevant.
-- Verify budget arithmetic and clearly stated assumptions.
 - Run only approved, non-destructive lint, type-check, test, and static-analysis commands.
 - Report reproducible findings with severity, evidence, affected artifact/file, and suggested remediation.
 
