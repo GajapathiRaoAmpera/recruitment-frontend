@@ -9,25 +9,32 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
+import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { hire as h, Person } from "@/components/hire/ui";
+import { useStaffUsers } from "@/features/admin/use-staff-users";
 import { useStore } from "@/mock/store";
 import type { StaffRole } from "@/mock/types";
 
 export default function UsersPage() {
   useBreadcrumbs([{ label: "Users & roles" }]);
-  const { state, dispatch } = useStore();
+  const { state } = useStore();
+  const { real, users, loadError, invite, toggle } = useStaffUsers();
   const toast = useToast();
+  const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", title: "", role: "HR" as StaffRole });
   const [error, setError] = useState<string>();
 
-  const add = () => {
+  const add = async () => {
     if (!form.name.trim() || !/^\S+@\S+\.\S+$/.test(form.email)) return setError("Enter a name and a valid email.");
-    if (state.staff.some((u) => u.email.toLowerCase() === form.email.toLowerCase())) return setError("A user with this email already exists.");
-    dispatch({ type: "addUser", user: form });
-    toast({ tone: "success", title: "Invite sent", description: form.email });
+    if (users?.some((u) => u.email.toLowerCase() === form.email.trim().toLowerCase())) return setError("A user with this email already exists.");
+    setSaving(true);
+    const err = await invite(form);
+    setSaving(false);
+    if (err) return setError(err);
+    toast({ tone: "success", title: "Invite sent", description: `${form.email} will get an email to set their password.` });
     setOpen(false);
     setForm({ name: "", email: "", title: "", role: "HR" });
   };
@@ -56,10 +63,27 @@ export default function UsersPage() {
           </tr>
         </thead>
         <tbody>
-          {state.staff.map((u) => (
+          {!users && !loadError && (
+            <tr>
+              <Td colSpan={5}>
+                <LoadingLabel label="Loading users" />
+                <Skeleton style={{ height: 40 }} />
+              </Td>
+            </tr>
+          )}
+          {loadError && (
+            <tr>
+              <Td colSpan={5}>
+                <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
+                  Couldn&apos;t load users: {loadError} Refresh the page to try again.
+                </p>
+              </Td>
+            </tr>
+          )}
+          {users?.map((u) => (
             <tr key={u.id}>
               <Td>
-                <Person name={u.name} meta={`${u.email} · ${u.title}`} />
+                <Person name={u.name} meta={real ? u.email : `${u.email} · ${u.title}`} />
               </Td>
               <Td>
                 <Badge tone={u.role === "SUPER_ADMIN" ? "primary" : "neutral"}>{u.role === "SUPER_ADMIN" ? "Super Admin" : "HR"}</Badge>
@@ -70,7 +94,14 @@ export default function UsersPage() {
               <Td className={h.small}>{u.lastLogin}</Td>
               <Td>
                 {u.id !== state.session?.userId && (
-                  <Button size="sm" variant="secondary" onClick={() => dispatch({ type: "toggleUser", id: u.id })}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={async () => {
+                      const err = await toggle(u);
+                      if (err) toast({ tone: "danger", title: `Couldn't ${u.active ? "deactivate" : "activate"} ${u.name}`, description: err });
+                    }}
+                  >
                     {u.active ? "Deactivate" : "Activate"}
                   </Button>
                 )}
@@ -88,7 +119,9 @@ export default function UsersPage() {
               <Button variant="secondary" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={add}>Send invite</Button>
+              <Button onClick={add} loading={saving}>
+                Send invite
+              </Button>
             </>
           }
         >
@@ -104,9 +137,11 @@ export default function UsersPage() {
             <Field label="Work email" required>
               <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Field>
-            <Field label="Job title">
-              <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            </Field>
+            {!real && (
+              <Field label="Job title">
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              </Field>
+            )}
             <Field label="Role">
               <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })}>
                 <option value="HR">HR — runs drives</option>

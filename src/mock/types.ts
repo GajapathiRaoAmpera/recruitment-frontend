@@ -165,5 +165,6 @@ export interface AiPrompt {
 export interface Session {
   role: Role;
   userId?: string; // staff
+  staff?: StaffUser; // real Supabase sign-in: the /me user, kept in the session so a refresh still knows them
   candidateId?: string; // student
 }
