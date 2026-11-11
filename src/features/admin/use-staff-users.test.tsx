@@ -10,6 +10,7 @@ vi.mock("@/lib/supabase", () => ({
       signOut: async () => ({ error: null }),
     },
   },
+  linkHash: null,
 }));
 
 import { MockStoreProvider } from "@/mock/store";

@@ -6,7 +6,7 @@ const auth = vi.hoisted(() => ({
   resetPasswordForEmail: vi.fn(),
   getSession: vi.fn(),
 }));
-vi.mock("@/lib/supabase", () => ({ supabase: { auth } }));
+vi.mock("@/lib/supabase", () => ({ supabase: { auth }, linkHash: null }));
 
 import { requestPasswordReset, signInStaff } from "./staff-sign-in";
 
