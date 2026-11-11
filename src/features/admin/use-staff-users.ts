@@ -15,7 +15,8 @@ const json = (method: string, body: unknown): RequestInit => ({ method, headers:
 
 /**
  * Staff CRUD for the Users page: /admin/users when Supabase is configured, the mock store otherwise.
- * invite/update/remove resolve to an error message, or undefined on success.
+ * update/remove resolve to an error message, or undefined on success.
+ * invite resolves to {error} or, when sendEmail is false, {link}: a one-time invite link to share.
  */
 export function useStaffUsers() {
   const { state, dispatch } = useStore();
@@ -35,7 +36,10 @@ export function useStaffUsers() {
       real,
       users: state.staff,
       loadError: undefined,
-      invite: async (f: InviteForm) => void dispatch({ type: "addUser", user: f }),
+      invite: async (f: InviteForm, sendEmail = true): Promise<{ error?: string; link?: string }> => {
+        dispatch({ type: "addUser", user: f });
+        return sendEmail ? {} : { link: "https://example.invalid/prototype-invite-link" };
+      },
       update: async (u: StaffUser, c: UserChanges) => {
         if (c.active !== undefined && c.active !== u.active) dispatch({ type: "toggleUser", id: u.id });
         if (c.name !== undefined || c.role !== undefined) dispatch({ type: "updateUser", id: u.id, changes: { name: c.name, role: c.role } });
@@ -56,11 +60,16 @@ export function useStaffUsers() {
     real,
     users,
     loadError,
-    invite: (f: InviteForm) =>
-      attempt(async () => {
-        const created = toStaff(await api<ApiUser>("/admin/users", json("POST", { email: f.email.trim(), full_name: f.name, role: apiRole(f.role) })));
-        setUsers((list) => [...(list ?? []), created]);
-      }),
+    invite: async (f: InviteForm, sendEmail = true): Promise<{ error?: string; link?: string }> => {
+      try {
+        const body = { email: f.email.trim(), full_name: f.name, role: apiRole(f.role), send_email: sendEmail };
+        const created = await api<ApiUser & { invite_link: string | null }>("/admin/users", json("POST", body));
+        setUsers((list) => [...(list ?? []), toStaff(created)]);
+        return { link: created.invite_link ?? undefined };
+      } catch (e) {
+        return { error: (e as Error).message };
+      }
+    },
     update: (u: StaffUser, c: UserChanges) =>
       attempt(async () => {
         const body = { full_name: c.name, role: c.role && apiRole(c.role), is_active: c.active };

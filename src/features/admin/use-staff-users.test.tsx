@@ -33,11 +33,11 @@ describe("Users page data via /admin/users (FR-27)", () => {
     expect(result.current.users![0]).toMatchObject({ name: "Asha", role: "HR", active: true });
 
     await act(async () => {
-      expect(await result.current.invite({ name: "New", email: " new@x.com ", title: "", role: "SUPER_ADMIN" })).toBeUndefined();
+      expect(await result.current.invite({ name: "New", email: " new@x.com ", title: "", role: "SUPER_ADMIN" })).toEqual({ link: undefined });
     });
     const [url, init] = fetchMock.mock.calls[1];
     expect(url).toBe("/api/v1/admin/users");
-    expect(JSON.parse(init!.body as string)).toEqual({ email: "new@x.com", full_name: "New", role: "super_admin" });
+    expect(JSON.parse(init!.body as string)).toEqual({ email: "new@x.com", full_name: "New", role: "super_admin", send_email: true });
     expect(result.current.users!.map((u) => u.role)).toEqual(["HR", "SUPER_ADMIN"]);
 
     await act(async () => void (await result.current.update(result.current.users![0], { active: false })));
@@ -64,11 +64,11 @@ describe("Users page data via /admin/users (FR-27)", () => {
     );
     const { result } = renderHook(() => useStaffUsers(), { wrapper });
     await waitFor(() => expect(result.current.users).toEqual([]));
-    let err: string | undefined;
+    let res: { error?: string } = {};
     await act(async () => {
-      err = await result.current.invite({ name: "X", email: "x@x.com", title: "", role: "HR" });
+      res = await result.current.invite({ name: "X", email: "x@x.com", title: "", role: "HR" });
     });
-    expect(err).toBe("An account with this email already exists");
+    expect(res.error).toBe("An account with this email already exists");
   });
 });
 
@@ -89,4 +89,21 @@ it("shows the API's reason when a user can't be deleted", async () => {
   });
   expect(err).toBe("Deactivate them instead.");
   expect(result.current.users).toHaveLength(1);
+});
+
+it("Create & copy link: asks for no email and returns the one-time link", async () => {
+  const fetchMock = vi.fn(async (_url: string, init?: RequestInit) =>
+    init?.method === "POST"
+      ? new Response(JSON.stringify({ ...hr, id: "u-9", invite_link: "https://x/verify?token=t" }), { status: 201 })
+      : new Response(JSON.stringify({ items: [] }), { status: 200 }),
+  );
+  vi.stubGlobal("fetch", fetchMock);
+  const { result } = renderHook(() => useStaffUsers(), { wrapper });
+  await waitFor(() => expect(result.current.users).toEqual([]));
+  let res: { link?: string } = {};
+  await act(async () => {
+    res = await result.current.invite({ name: "L", email: "l@x.com", title: "", role: "HR" }, false);
+  });
+  expect(JSON.parse(fetchMock.mock.calls[1][1]!.body as string).send_email).toBe(false);
+  expect(res.link).toBe("https://x/verify?token=t");
 });

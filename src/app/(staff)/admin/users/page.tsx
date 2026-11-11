@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Copy, Plus } from "lucide-react";
 import { useState } from "react";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
@@ -31,6 +31,8 @@ export default function UsersPage() {
   const [editing, setEditing] = useState<StaffUser>();
   const [edit, setEdit] = useState({ name: "", role: "HR" as StaffRole });
   const [editError, setEditError] = useState<string>();
+  const [link, setLink] = useState<{ email: string; url: string }>();
+  const [copied, setCopied] = useState(false);
   const [deleting, setDeleting] = useState<StaffUser>();
   const [deleteError, setDeleteError] = useState<string>();
 
@@ -55,14 +57,19 @@ export default function UsersPage() {
     setDeleting(undefined);
   };
 
-  const add = async () => {
+  const add = async (sendEmail: boolean) => {
     if (!form.name.trim() || !/^\S+@\S+\.\S+$/.test(form.email)) return setError("Enter a name and a valid email.");
     if (users?.some((u) => u.email.toLowerCase() === form.email.trim().toLowerCase())) return setError("A user with this email already exists.");
     setSaving(true);
-    const err = await invite(form);
+    const res = await invite(form, sendEmail);
     setSaving(false);
-    if (err) return setError(err);
-    toast({ tone: "success", title: "Invite sent", description: `${form.email} will get an email to set their password.` });
+    if (res.error) return setError(res.error);
+    if (res.link) {
+      setCopied(false);
+      setLink({ email: form.email.trim(), url: res.link });
+    } else {
+      toast({ tone: "success", title: "Invite sent", description: `${form.email} will get an email to set their password.` });
+    }
     setOpen(false);
     setForm({ name: "", email: "", title: "", role: "HR" });
   };
@@ -145,16 +152,19 @@ export default function UsersPage() {
                     >
                       {u.active ? "Deactivate" : "Activate"}
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      onClick={() => {
-                        setDeleteError(undefined);
-                        setDeleting(u);
-                      }}
-                    >
-                      Delete
-                    </Button>
+                    {/* Super Admins are deactivate-only (API: SUPER_ADMIN_PROTECTED). */}
+                    {u.role !== "SUPER_ADMIN" && (
+                      <Button
+                        size="sm"
+                        variant="tertiary"
+                        onClick={() => {
+                          setDeleteError(undefined);
+                          setDeleting(u);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    )}
                   </div>
                 )}
               </Td>
@@ -171,8 +181,11 @@ export default function UsersPage() {
               <Button variant="secondary" onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={add} loading={saving}>
-                Send invite
+              <Button variant="secondary" onClick={() => add(false)} disabled={saving}>
+                Create &amp; copy link
+              </Button>
+              <Button onClick={() => add(true)} loading={saving}>
+                Send invite email
               </Button>
             </>
           }
@@ -200,6 +213,39 @@ export default function UsersPage() {
                 <option value="SUPER_ADMIN">Super Admin — everything + system settings</option>
               </Select>
             </Field>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={link !== undefined} onOpenChange={(o) => !o && setLink(undefined)}>
+        <DialogContent
+          title="Share this invite link"
+          footer={
+            <Button variant="secondary" onClick={() => setLink(undefined)}>
+              Done
+            </Button>
+          }
+        >
+          <div className={h.stackSm}>
+            <p className={h.small}>
+              Account created for <strong>{link?.email}</strong>. Send them this link privately (Slack, WhatsApp). It opens the page where they set their
+              password, works once and expires in 24 hours. Anyone with the link can claim the account, so don&apos;t post it in a shared channel.
+            </p>
+            <Field label="Invite link">
+              <Input value={link?.url ?? ""} readOnly onFocus={(e) => e.currentTarget.select()} />
+            </Field>
+            <Button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(link!.url);
+                  setCopied(true);
+                } catch {
+                  toast({ tone: "danger", title: "Couldn't copy automatically", description: "Select the link above and copy it with Ctrl+C." });
+                }
+              }}
+            >
+              <Copy aria-hidden size={16} style={{ marginRight: 4 }} /> {copied ? "Copied" : "Copy link"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
