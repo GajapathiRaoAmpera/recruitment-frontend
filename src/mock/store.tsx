@@ -110,8 +110,10 @@ function moveOn(s: State, round: Round, passedIds: string[]): Pick<State, "round
 
 export function reducer(s: State, a: Action): State {
   switch (a.type) {
-    case "login":
-      return { ...s, session: a.session };
+    case "login": {
+      const me = a.session.staff;
+      return { ...s, session: a.session, staff: me && !s.staff.some((u) => u.id === me.id) ? [...s.staff, me] : s.staff };
+    }
     case "logout":
       return { ...s, session: null };
 

@@ -4,6 +4,7 @@ import * as DM from "@radix-ui/react-dropdown-menu";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabase";
 import { loginPath, portalOf } from "@/mock/auth";
 import { useStore } from "@/mock/store";
 import type { StaffUser } from "@/mock/types";
@@ -43,6 +44,7 @@ export function ProfileMenu({ user }: { user: StaffUser }) {
           <DM.Item
             className={s.item}
             onSelect={() => {
+              void supabase?.auth.signOut();
               dispatch({ type: "logout" });
               router.replace(loginPath[portalOf(user.role)]);
             }}

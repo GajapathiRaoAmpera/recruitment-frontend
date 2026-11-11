@@ -7,6 +7,8 @@ import { Pipeline } from "@/components/brand/pipeline";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { signInStaff } from "@/features/auth/staff-sign-in";
+import { supabase } from "@/lib/supabase";
 import { signIn, type Portal } from "@/mock/auth";
 import { DEMO_STUDENT } from "@/mock/data";
 import { useStore } from "@/mock/store";
@@ -50,7 +52,10 @@ export function LoginScreen({ portal }: { portal: Portal }) {
   const [secret, setSecret] = useState("");
   const [error, setError] = useState<string>();
   const copy = COPY[portal];
+  const [pending, setPending] = useState(false);
   const student = portal === "student";
+  // Staff use real Supabase sign-in once it's configured; students stay on the prototype until Phase 1.3.
+  const realStaff = !student && supabase !== null;
   const clear = () => setError(undefined);
 
   return (
@@ -74,9 +79,11 @@ export function LoginScreen({ portal }: { portal: Portal }) {
           <form
             className={s.form}
             noValidate
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              const res = signIn(state, portal, identifier, secret);
+              setPending(true);
+              const res = realStaff ? await signInStaff(portal, identifier, secret) : signIn(state, portal, identifier, secret);
+              setPending(false);
               if ("error" in res) return setError(res.error);
               dispatch({ type: "login", session: res.session });
               router.push(res.home);
@@ -94,10 +101,12 @@ export function LoginScreen({ portal }: { portal: Portal }) {
                 <Input type="password" autoComplete="current-password" value={secret} onChange={(e) => { setSecret(e.target.value); clear(); }} />
               </Field>
             )}
-            <Button type="submit">Sign in</Button>
+            <Button type="submit" loading={pending}>
+              Sign in
+            </Button>
           </form>
         </div>
-        <p className={s.demo}>{copy.demo}</p>
+        {!realStaff && <p className={s.demo}>{copy.demo}</p>}
       </main>
 
       <footer className={s.copy}>© Ampera Technologies</footer>
