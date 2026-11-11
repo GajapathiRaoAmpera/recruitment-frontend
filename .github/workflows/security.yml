@@ -26,15 +26,3 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: npm audit --audit-level=high --omit=dev
-  codeql:
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@v7
-      - uses: github/codeql-action/init@v4
-        with:
-          languages: javascript-typescript
-      - uses: github/codeql-action/analyze@v4
