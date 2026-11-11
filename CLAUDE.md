@@ -17,6 +17,7 @@ src/styles/       SCSS tokens + mixins (copied from DESIGN.md)
 Danger zone with its own CLAUDE.md: `src/features/test-runner/`.
 
 ## Commands
+`make` lists shortcuts for these (`make check` before pushing).
 ```bash
 npm install
 npm run dev        # Next on :3000; copy .env.example to .env.local (empty Supabase vars = prototype mode)
