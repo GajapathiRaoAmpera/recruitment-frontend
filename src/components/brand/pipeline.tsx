@@ -12,35 +12,38 @@ const GATES = [
   { label: "Final", x: 0.86, pass: 0.7 },
 ];
 
-interface Dot {
-  x: number;
-  lane: number; // -1..1 position across the funnel
-  vx: number;
-  phase: number;
+/** Depth rows on the ground plane: far rows are higher, smaller and fainter. Drawn back to front. */
+const ROWS = [
+  { ground: 0.5, scale: 0.68, alpha: 0.5 },
+  { ground: 0.66, scale: 0.84, alpha: 0.75 },
+  { ground: 0.82, scale: 1, alpha: 1 },
+];
+
+interface Walker {
+  row: number;
+  x: number; // feet position
+  speed: number; // px/s at this row's scale
+  phase: number; // walk-cycle angle
   gate: number; // next gate to cross
-  state: "flow" | "out" | "won";
+  state: "walk" | "out" | "won";
   alpha: number;
-  outY: number; // y where it was filtered out
-  fall: number; // fall distance after being filtered out
 }
 
 interface Ripple {
   x: number;
   y: number;
   t: number;
+  r: number;
   won: boolean;
 }
 
-const SPAWN_PER_SEC = 18;
-const MAX_DOTS = 200;
-const TRAIL = 22;
-
-const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+const SPAWN_PER_SEC = 2.4;
+const MAX_WALKERS = 36;
 
 /**
- * Candidates stream into a funnel, thin out at each stage gate and the few who pass the final gate turn magenta
- * and gather at the right edge, beside the sign-in card. Counts under each gate are live. Decorative canvas is
- * aria-hidden; reduced motion renders one settled frame.
+ * Candidates walk through the hiring stages as people. At each gate some are turned back (they turn around and fade);
+ * those who pass the final gate turn magenta and walk on toward the sign-in card. Counts under each gate are live.
+ * The canvas is decorative (aria-hidden); reduced motion renders one settled frame.
  */
 export function Pipeline({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,27 +56,21 @@ export function Pipeline({ className }: { className?: string }) {
     const css = getComputedStyle(document.documentElement);
     const token = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
     const C = {
-      dot: token("--ampera-lavender-500", "#8070b4"),
+      body: token("--ampera-lavender-500", "#8070b4"),
       win: token("--ampera-magenta-600", "#9c369a"),
       line: token("--ampera-cream", "#fffefa"),
     };
     let w = 0;
     let h = 0;
-    let dots: Dot[] = [];
+    let walkers: Walker[] = [];
     let ripples: Ripple[] = [];
     const glow = GATES.map(() => 0);
     const counts = GATES.map(() => 0);
-    let arrive = 0;
     let spawnDebt = 0;
 
-    const cy = () => h * 0.4;
-    const lastX = () => GATES[GATES.length - 1]!.x * w;
-    /** Funnel half-height: wide at the start, narrow at the final gate, closing to a point at the right edge. */
-    const half = (x: number) => {
-      if (x <= lastX()) return h * (0.34 - 0.26 * ease(Math.max(0, x / lastX())));
-      return h * 0.08 * Math.max(0, 1 - (x - lastX()) / (w - lastX()));
-    };
-    const yOf = (d: Dot, x = d.x) => cy() + d.lane * half(x) + Math.sin(d.phase + x * 0.018) * 2.5;
+    /** Figure height for a row: readable as a person on any screen, never huge. */
+    const heightOf = (row: number) => Math.min(70, Math.max(34, h * 0.24)) * ROWS[row]!.scale;
+    const groundOf = (row: number) => h * ROWS[row]!.ground;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -84,135 +81,138 @@ export function Pipeline({ className }: { className?: string }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
 
+    const spawn = () => {
+      const row = Math.floor(Math.random() * ROWS.length);
+      const H = heightOf(row);
+      // Keep personal space: don't spawn on top of the last person entering this row.
+      const crowded = walkers.some((p) => p.row === row && p.state !== "out" && p.x < H * 0.9);
+      if (crowded) return;
+      walkers.push({ row, x: -H * 0.4, speed: H * (0.85 + Math.random() * 0.15), phase: Math.random() * 6.28, gate: 0, state: "walk", alpha: 1 });
+    };
+
     const step = (dt: number) => {
       spawnDebt += dt * SPAWN_PER_SEC;
-      while (spawnDebt >= 1 && dots.length < MAX_DOTS) {
-        dots.push({ x: -TRAIL, lane: Math.random() * 2 - 1, vx: 50 + Math.random() * 36, phase: Math.random() * 6.28, gate: 0, state: "flow", alpha: 0.9, outY: 0, fall: 0 });
+      while (spawnDebt >= 1) {
+        if (walkers.length < MAX_WALKERS) spawn();
         spawnDebt -= 1;
       }
-      for (const d of dots) {
-        if (d.state === "out") {
-          d.fall += dt * (30 + d.fall * 2.2);
-          d.alpha -= dt * 1.3;
-          d.x += d.vx * dt * 0.25;
+      for (const p of walkers) {
+        const H = heightOf(p.row);
+        const v = p.state === "out" ? -p.speed * 0.45 : p.speed;
+        p.x += v * dt;
+        p.phase += (Math.abs(v) / (H * 0.42)) * dt; // stride matches speed so feet don't slide
+        if (p.state === "out") {
+          p.alpha -= dt * 0.7;
           continue;
         }
-        d.x += d.vx * dt;
-        if (d.state === "won") {
-          d.lane *= 1 - Math.min(1, dt * 1.6); // survivors pull into one lane
-          if (d.x >= w) {
-            arrive = Math.min(1.4, arrive + 0.22);
-            d.alpha = 0;
-          }
-          continue;
-        }
-        const g = GATES[d.gate];
-        if (g && d.x >= g.x * w) {
-          const y = yOf(d);
+        if (p.state === "won") continue;
+        const g = GATES[p.gate];
+        if (g && p.x >= g.x * w) {
           if (Math.random() < g.pass) {
-            counts[d.gate]! += 1;
-            glow[d.gate] = Math.min(1, glow[d.gate]! + 0.3);
-            const won = d.gate === GATES.length - 1;
-            ripples.push({ x: d.x, y, t: 0, won });
-            d.gate += 1;
-            if (won) d.state = "won";
+            counts[p.gate]! += 1;
+            glow[p.gate] = Math.min(1, glow[p.gate]! + 0.35);
+            const won = p.gate === GATES.length - 1;
+            ripples.push({ x: p.x, y: groundOf(p.row) - H * 0.55, t: 0, r: H * 0.6, won });
+            p.gate += 1;
+            if (won) p.state = "won";
           } else {
-            d.state = "out";
-            d.outY = y;
+            p.state = "out";
           }
         }
       }
       for (let i = 0; i < glow.length; i++) glow[i] = Math.max(0, glow[i]! - dt * 1.8);
-      arrive = Math.max(0, arrive - dt * 0.5);
-      ripples = ripples.filter((r) => (r.t += dt) < 0.7);
-      dots = dots.filter((d) => d.alpha > 0 && d.x < w + 4);
+      ripples = ripples.filter((r) => (r.t += dt) < 0.8);
+      walkers = walkers.filter((p) => p.alpha > 0 && p.x < w + 40 && p.x > -60);
+    };
+
+    /** One limb as two segments (upper + lower) with a bend; angles are from vertical, positive = facing direction. */
+    const limb = (x: number, y: number, a1: number, len1: number, a2: number, len2: number, face: number) => {
+      const kx = x + Math.sin(a1) * len1 * face;
+      const ky = y + Math.cos(a1) * len1;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(kx, ky);
+      ctx.lineTo(kx + Math.sin(a2) * len2 * face, ky + Math.cos(a2) * len2);
+      ctx.stroke();
+    };
+
+    /** A walking person with feet at (x, ground), height H. face = 1 walks right, -1 walks left. */
+    const person = (x: number, ground: number, H: number, phase: number, color: string, alpha: number, face: number, halo: boolean) => {
+      const bob = Math.abs(Math.sin(phase)) * H * 0.018;
+      const hip = ground - H * 0.47 - bob;
+      const shoulder = ground - H * 0.77 - bob;
+      const legSwing = (q: number) => 0.42 * Math.sin(q);
+      const kneeBend = (q: number) => 0.75 * Math.max(0, Math.sin(q + 1.3)); // knee folds as the leg swings forward
+      const armSwing = (q: number) => -0.38 * Math.sin(q);
+
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.shadowColor = color;
+      ctx.shadowBlur = halo ? 14 : 0;
+
+      // Far side limbs first, a touch dimmer for depth.
+      ctx.globalAlpha = alpha * 0.6;
+      ctx.lineWidth = H * 0.075;
+      limb(x, hip, legSwing(phase + Math.PI), H * 0.25, legSwing(phase + Math.PI) - kneeBend(phase + Math.PI), H * 0.24, face);
+      ctx.lineWidth = H * 0.06;
+      limb(x, shoulder + H * 0.02, armSwing(phase + Math.PI), H * 0.17, armSwing(phase + Math.PI) + 0.35, H * 0.16, face);
+
+      // Torso and head.
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = H * 0.15;
+      ctx.beginPath();
+      ctx.moveTo(x + H * 0.01 * face, shoulder);
+      ctx.lineTo(x, hip);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x + H * 0.015 * face, ground - H * 0.9 - bob, H * 0.075, 0, 6.28);
+      ctx.fill();
+
+      // Near side limbs.
+      ctx.lineWidth = H * 0.075;
+      limb(x, hip, legSwing(phase), H * 0.25, legSwing(phase) - kneeBend(phase), H * 0.24, face);
+      ctx.lineWidth = H * 0.06;
+      limb(x, shoulder + H * 0.02, armSwing(phase), H * 0.17, armSwing(phase) + 0.35, H * 0.16, face);
+      ctx.shadowBlur = 0;
     };
 
     const draw = () => {
       ctx.clearRect(0, 0, w, h);
 
-      // Funnel envelope.
-      const fill = ctx.createLinearGradient(0, 0, w, 0);
-      fill.addColorStop(0, C.dot);
-      fill.addColorStop(1, C.win);
-      ctx.beginPath();
-      for (let x = 0; x <= w; x += 8) ctx.lineTo(x, cy() - half(x) - 8);
-      for (let x = w; x >= 0; x -= 8) ctx.lineTo(x, cy() + half(x) + 8);
-      ctx.closePath();
-      ctx.globalAlpha = 0.07;
-      ctx.fillStyle = fill;
-      ctx.fill();
-      ctx.globalAlpha = 0.16;
-      ctx.strokeStyle = fill;
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      // Gates: brighten briefly when someone passes.
+      // Gate posts from above the far row to the near row's ground; they brighten when someone passes.
+      const top = groundOf(0) - heightOf(0) * 1.25;
+      const bottom = groundOf(ROWS.length - 1) + 4;
       GATES.forEach((g, i) => {
-        const x = g.x * w;
-        const top = cy() - half(x) - 18;
-        const bottom = cy() + half(x) + 18;
-        ctx.globalAlpha = 0.18 + glow[i]! * 0.55;
+        ctx.globalAlpha = 0.16 + glow[i]! * 0.55;
         ctx.strokeStyle = i === GATES.length - 1 ? C.win : C.line;
         ctx.lineWidth = 1 + glow[i]!;
         ctx.beginPath();
-        ctx.moveTo(x, top);
-        ctx.lineTo(x, bottom);
+        ctx.moveTo(g.x * w, top);
+        ctx.lineTo(g.x * w, bottom);
         ctx.stroke();
       });
 
-      // Arrival glow where survivors gather, beside the sign-in card.
-      if (arrive > 0.01) {
-        const r = ctx.createRadialGradient(w, cy(), 0, w, cy(), h * 0.45);
-        r.addColorStop(0, C.win);
-        r.addColorStop(1, "transparent");
-        ctx.globalAlpha = Math.min(0.55, arrive * 0.4);
-        ctx.fillStyle = r;
-        ctx.fillRect(w - h * 0.45, 0, h * 0.45, h);
-      }
-
-      // Candidates: short trails, fragments when filtered out, magenta once through the final gate.
-      ctx.lineCap = "round";
-      for (const d of dots) {
-        const won = d.state === "won";
-        if (d.state === "out") {
-          ctx.globalAlpha = Math.max(0, d.alpha) * 0.7;
-          ctx.fillStyle = C.dot;
-          for (let k = -1; k <= 1; k++) {
-            ctx.beginPath();
-            ctx.arc(d.x + k * (2 + d.fall * 0.18), d.outY + d.fall * (1 + Math.abs(k) * 0.3), 1.3, 0, 6.28);
-            ctx.fill();
-          }
-          continue;
+      // People, back row first so nearer people overlap farther ones.
+      for (let row = 0; row < ROWS.length; row++) {
+        const H = heightOf(row);
+        const ground = groundOf(row);
+        for (const p of walkers) {
+          if (p.row !== row) continue;
+          const won = p.state === "won";
+          const out = p.state === "out";
+          person(p.x, ground, H, p.phase, won ? C.win : C.body, ROWS[row]!.alpha * Math.max(0, p.alpha) * (out ? 0.6 : 1), out ? -1 : 1, won);
         }
-        const y = yOf(d);
-        const tail = ctx.createLinearGradient(d.x - TRAIL, 0, d.x, 0);
-        tail.addColorStop(0, "transparent");
-        tail.addColorStop(1, won ? C.win : C.dot);
-        ctx.globalAlpha = d.alpha * 0.6;
-        ctx.strokeStyle = tail;
-        ctx.lineWidth = won ? 2.4 : 1.6;
-        ctx.beginPath();
-        ctx.moveTo(d.x - TRAIL, yOf(d, d.x - TRAIL));
-        ctx.lineTo(d.x, y);
-        ctx.stroke();
-        ctx.globalAlpha = d.alpha;
-        ctx.fillStyle = won ? C.win : C.dot;
-        ctx.shadowBlur = won ? 14 : 0;
-        ctx.shadowColor = C.win;
-        ctx.beginPath();
-        ctx.arc(d.x, y, won ? 3.4 : 2.2, 0, 6.28);
-        ctx.fill();
-        ctx.shadowBlur = 0;
       }
 
-      // Pass ripples.
+      // Pass ripples at chest height.
       for (const r of ripples) {
-        ctx.globalAlpha = (1 - r.t / 0.7) * (r.won ? 0.8 : 0.4);
+        ctx.globalAlpha = (1 - r.t / 0.8) * (r.won ? 0.75 : 0.35);
         ctx.strokeStyle = r.won ? C.win : C.line;
         ctx.lineWidth = r.won ? 1.5 : 1;
         ctx.beginPath();
-        ctx.arc(r.x, r.y, 3 + r.t * (r.won ? 34 : 18), 0, 6.28);
+        ctx.arc(r.x, r.y, 4 + (r.t / 0.8) * r.r, 0, 6.28);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
@@ -229,7 +229,7 @@ export function Pipeline({ className }: { className?: string }) {
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       // Settle offscreen, then show one still frame.
-      for (let i = 0; i < 500; i++) step(0.05);
+      for (let i = 0; i < 600; i++) step(0.05);
       draw();
       paintCounts();
       return () => ro.disconnect();
