@@ -3,11 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const auth = vi.hoisted(() => ({
   signInWithPassword: vi.fn(),
   signOut: vi.fn(),
+  resetPasswordForEmail: vi.fn(),
   getSession: vi.fn(),
 }));
 vi.mock("@/lib/supabase", () => ({ supabase: { auth } }));
 
-import { signInStaff } from "./staff-sign-in";
+import { requestPasswordReset, signInStaff } from "./staff-sign-in";
 
 const me = (role: string) => ({ id: "u-1", email: "a@x.com", full_name: "Asha Rao", role });
 const reply = (status: number, body: unknown) => vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(body), { status })));
@@ -21,7 +22,7 @@ beforeEach(() => {
 describe("real staff sign-in: Supabase password, role from GET /me (AC-1)", () => {
   it("HR signs in at /hr/login and the token is sent to /me", async () => {
     reply(200, me("hr"));
-    const res = await signInStaff("hr", " a@x.com ", "pw");
+    const res = await signInStaff("hr", " A@X.com ", "pw");
     expect(res).toMatchObject({ home: "/hr", session: { role: "HR", userId: "u-1", staff: { name: "Asha Rao" } } });
     expect(auth.signInWithPassword).toHaveBeenCalledWith({ email: "a@x.com", password: "pw" });
     const [url, init] = vi.mocked(fetch).mock.calls[0];
@@ -60,5 +61,23 @@ describe("real staff sign-in: Supabase password, role from GET /me (AC-1)", () =
   it("empty fields never call Supabase", async () => {
     expect(await signInStaff("hr", "", "")).toHaveProperty("error");
     expect(auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+});
+
+describe("forgot password", () => {
+  it("sends a lowercased email with the /set-password redirect", async () => {
+    auth.resetPasswordForEmail.mockResolvedValue({ error: null });
+    expect(await requestPasswordReset(" Jay@X.com ", "http://localhost:3000")).toBeUndefined();
+    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith("jay@x.com", { redirectTo: "http://localhost:3000/set-password" });
+  });
+
+  it("rejects a malformed email without calling Supabase", async () => {
+    expect(await requestPasswordReset("nope", "http://x")).toBe("Enter your work email.");
+    expect(auth.resetPasswordForEmail).not.toHaveBeenCalled();
+  });
+
+  it("explains the rate limit", async () => {
+    auth.resetPasswordForEmail.mockResolvedValue({ error: { status: 429, message: "rate limit" } });
+    expect(await requestPasswordReset("a@x.com", "http://x")).toContain("Wait a few minutes");
   });
 });

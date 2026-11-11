@@ -18,10 +18,22 @@ export async function loadStaffSession(): Promise<Result> {
     const staff = toStaff(await api<ApiUser>("/me"));
     return { session: { role: staff.role, userId: staff.id, staff }, home: homePath[portalOf(staff.role)] };
   } catch (e) {
-    await supabase?.auth.signOut();
+    await supabase?.auth.signOut({ scope: "local" }); // this browser only; other devices stay signed in
     if (e instanceof ApiError && e.code === "NOT_STAFF") return { error: "This account has no access to Campus Hire yet. Ask a Super Admin to add you." };
     return { error: "Signed in, but the Campus Hire server didn't answer. Try again in a minute." };
   }
+}
+
+/**
+ * Email a password-reset link that opens /set-password. Resolves to an error message, or undefined.
+ * Supabase answers the same for unknown emails, so the page can't be used to discover accounts.
+ */
+export async function requestPasswordReset(email: string, origin: string): Promise<string | undefined> {
+  if (!supabase) return "Password reset isn't configured. Ask the team for the Supabase settings.";
+  if (!/^\S+@\S+\.\S+$/.test(email.trim())) return "Enter your work email.";
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${origin}/set-password` });
+  if (!error) return undefined;
+  return error.status === 429 ? "Too many reset emails were sent. Wait a few minutes and try again." : `Couldn't send the email (${error.message}). Try again.`;
 }
 
 /**
@@ -33,11 +45,11 @@ export async function signInStaff(portal: Exclude<Portal, "student">, email: str
   if (!email.trim() || !password) return { error: "Enter your work email and password." };
   const mismatch = { error: `That email and password don't match ${portal === "admin" ? "a Super Admin" : "an HR"} account.` };
 
-  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
   if (error) return error.code === "invalid_credentials" ? mismatch : { error: `Couldn't sign in (${error.message}). Try again.` };
 
   const res = await loadStaffSession();
   // Same message as a wrong password: each login page is for one role only.
-  if ("session" in res && portalOf(res.session.role) !== portal) return (await supabase.auth.signOut(), mismatch);
+  if ("session" in res && portalOf(res.session.role) !== portal) return (await supabase.auth.signOut({ scope: "local" }), mismatch);
   return res;
 }

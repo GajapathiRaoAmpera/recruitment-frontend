@@ -1,14 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/input";
 import { loadStaffSession } from "@/features/auth/staff-sign-in";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/mock/store";
+import { AuthFrame } from "./auth-frame";
 import s from "./login-screen.module.scss";
 
 /** Landing page of the staff invite email: supabase-js reads the invite tokens from the URL, the user picks a password. */
@@ -44,11 +45,7 @@ export function SetPasswordScreen() {
   };
 
   return (
-    <div className={s.page}>
-      <header className={s.brand}>
-        <Logo height={28} />
-      </header>
-      <main className={s.side}>
+    <AuthFrame headline="Welcome to Campus Hire." subline="Set a password once, then sign in to run campus drives from the first resume to the final decision.">
         <div className={s.card}>
           <h1 className={s.title}>Set your password</h1>
           {link === "checking" && (
@@ -57,9 +54,14 @@ export function SetPasswordScreen() {
             </p>
           )}
           {link === "invalid" && (
-            <p role="alert" className={s.lead}>
-              This invite link has expired or was already used. Ask your Super Admin to send you a new one.
-            </p>
+            <>
+              <p role="alert" className={s.lead}>
+                This link has expired or was already used.
+              </p>
+              <Link href="/forgot-password" className={s.link}>
+                Get a new link
+              </Link>
+            </>
           )}
           {link === "ok" && (
             <>
@@ -73,10 +75,10 @@ export function SetPasswordScreen() {
                 }}
               >
                 <Field label="New password" error={error}>
-                  <Input type="password" autoComplete="new-password" value={password} onChange={(e) => { setPassword(e.target.value); setError(undefined); }} />
+                  <PasswordInput autoComplete="new-password" value={password} onChange={(e) => { setPassword(e.target.value); setError(undefined); }} />
                 </Field>
                 <Field label="Repeat password">
-                  <Input type="password" autoComplete="new-password" value={confirm} onChange={(e) => { setConfirm(e.target.value); setError(undefined); }} />
+                  <PasswordInput autoComplete="new-password" value={confirm} onChange={(e) => { setConfirm(e.target.value); setError(undefined); }} />
                 </Field>
                 <Button type="submit" loading={pending}>
                   Save password
@@ -85,8 +87,6 @@ export function SetPasswordScreen() {
             </>
           )}
         </div>
-      </main>
-      <footer className={s.copy}>© Ampera Technologies</footer>
-    </div>
+    </AuthFrame>
   );
 }
