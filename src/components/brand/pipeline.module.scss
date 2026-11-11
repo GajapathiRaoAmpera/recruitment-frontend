@@ -15,11 +15,14 @@
 .gates {
   position: absolute;
   inset: auto 0 0;
-  height: sp(6);
+  height: sp(10);
 }
 
 .gate {
   position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   transform: translateX(-50%);
   white-space: nowrap;
   @include text(xs);
@@ -31,4 +34,12 @@
     color: var(--ui-color-sidebar-fg);
     font-weight: 500;
   }
+}
+
+/* Live pass count: tabular so ticking numbers don't jitter the label. */
+.count {
+  font-variant-numeric: tabular-nums;
+  @include text(xs);
+  color: var(--ui-color-sidebar-muted);
+  font-weight: 400;
 }

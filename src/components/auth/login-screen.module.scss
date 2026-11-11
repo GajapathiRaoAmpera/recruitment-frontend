@@ -42,7 +42,7 @@
 }
 
 .pipeline {
-  height: 13rem;
+  height: 15rem;
   @include up(lg) {
     height: min(46vh, 26rem);
   }
