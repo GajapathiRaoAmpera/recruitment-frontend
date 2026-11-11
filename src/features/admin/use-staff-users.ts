@@ -8,10 +8,14 @@ import { useStore } from "@/mock/store";
 import type { StaffRole, StaffUser } from "@/mock/types";
 
 export type InviteForm = { name: string; email: string; title: string; role: StaffRole };
+export type UserChanges = Partial<Pick<StaffUser, "name" | "role" | "active">>;
+
+const apiRole = (r: StaffRole) => (r === "SUPER_ADMIN" ? "super_admin" : "hr");
+const json = (method: string, body: unknown): RequestInit => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 /**
- * Staff list for the Users page: /admin/users when Supabase is configured, the mock store otherwise.
- * invite/toggle resolve to an error message, or undefined on success.
+ * Staff CRUD for the Users page: /admin/users when Supabase is configured, the mock store otherwise.
+ * invite/update/remove resolve to an error message, or undefined on success.
  */
 export function useStaffUsers() {
   const { state, dispatch } = useStore();
@@ -32,31 +36,41 @@ export function useStaffUsers() {
       users: state.staff,
       loadError: undefined,
       invite: async (f: InviteForm) => void dispatch({ type: "addUser", user: f }),
-      toggle: async (u: StaffUser) => void dispatch({ type: "toggleUser", id: u.id }),
+      update: async (u: StaffUser, c: UserChanges) => {
+        if (c.active !== undefined && c.active !== u.active) dispatch({ type: "toggleUser", id: u.id });
+        if (c.name !== undefined || c.role !== undefined) dispatch({ type: "updateUser", id: u.id, changes: { name: c.name, role: c.role } });
+        return undefined;
+      },
+      remove: async (u: StaffUser) => void dispatch({ type: "deleteUser", id: u.id }),
     };
   }
 
-  const replace = (u: StaffUser) => setUsers((list) => list?.map((x) => (x.id === u.id ? u : x)));
+  const attempt = async (fn: () => Promise<void>) => {
+    try {
+      await fn();
+    } catch (e) {
+      return (e as Error).message;
+    }
+  };
   return {
     real,
     users,
     loadError,
-    invite: async (f: InviteForm) => {
-      try {
-        const body = JSON.stringify({ email: f.email.trim(), full_name: f.name, role: f.role === "SUPER_ADMIN" ? "super_admin" : "hr" });
-        const created = toStaff(await api<ApiUser>("/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body }));
+    invite: (f: InviteForm) =>
+      attempt(async () => {
+        const created = toStaff(await api<ApiUser>("/admin/users", json("POST", { email: f.email.trim(), full_name: f.name, role: apiRole(f.role) })));
         setUsers((list) => [...(list ?? []), created]);
-      } catch (e) {
-        return (e as Error).message;
-      }
-    },
-    toggle: async (u: StaffUser) => {
-      try {
-        const body = JSON.stringify({ is_active: !u.active });
-        replace(toStaff(await api<ApiUser>(`/admin/users/${u.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body })));
-      } catch (e) {
-        return (e as Error).message;
-      }
-    },
+      }),
+    update: (u: StaffUser, c: UserChanges) =>
+      attempt(async () => {
+        const body = { full_name: c.name, role: c.role && apiRole(c.role), is_active: c.active };
+        const saved = toStaff(await api<ApiUser>(`/admin/users/${u.id}`, json("PATCH", body)));
+        setUsers((list) => list?.map((x) => (x.id === u.id ? saved : x)));
+      }),
+    remove: (u: StaffUser) =>
+      attempt(async () => {
+        await api(`/admin/users/${u.id}`, { method: "DELETE" });
+        setUsers((list) => list?.filter((x) => x.id !== u.id));
+      }),
   };
 }

@@ -18,6 +18,8 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const res = await fetch(`/api/v1${path}`, { ...init, headers });
   const body = await res.json().catch(() => null);
+  // Token rejected (expired, revoked): end this browser's Supabase session; the store sends the user to sign in.
+  if (res.status === 401) await supabase?.auth.signOut({ scope: "local" });
   if (!res.ok) {
     throw new ApiError(res.status, body?.error?.code ?? `HTTP_${res.status}`, body?.error?.message ?? "Something went wrong. Try again.");
   }

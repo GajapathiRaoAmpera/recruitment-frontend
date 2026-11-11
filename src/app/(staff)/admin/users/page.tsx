@@ -6,6 +6,7 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
@@ -15,17 +16,44 @@ import { useToast } from "@/components/ui/toast";
 import { hire as h, Person } from "@/components/hire/ui";
 import { useStaffUsers } from "@/features/admin/use-staff-users";
 import { useStore } from "@/mock/store";
-import type { StaffRole } from "@/mock/types";
+import type { StaffRole, StaffUser } from "@/mock/types";
 
 export default function UsersPage() {
   useBreadcrumbs([{ label: "Users & roles" }]);
   const { state } = useStore();
-  const { real, users, loadError, invite, toggle } = useStaffUsers();
+  const { real, users, loadError, invite, update, remove } = useStaffUsers();
   const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", title: "", role: "HR" as StaffRole });
   const [error, setError] = useState<string>();
+
+  const [editing, setEditing] = useState<StaffUser>();
+  const [edit, setEdit] = useState({ name: "", role: "HR" as StaffRole });
+  const [editError, setEditError] = useState<string>();
+  const [deleting, setDeleting] = useState<StaffUser>();
+  const [deleteError, setDeleteError] = useState<string>();
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    if (!edit.name.trim()) return setEditError("Enter a name.");
+    setSaving(true);
+    const err = await update(editing, { name: edit.name.trim(), role: edit.role });
+    setSaving(false);
+    if (err) return setEditError(err);
+    toast({ tone: "success", title: "User updated", description: edit.name.trim() });
+    setEditing(undefined);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setSaving(true);
+    const err = await remove(deleting);
+    setSaving(false);
+    if (err) return setDeleteError(err);
+    toast({ tone: "success", title: "User deleted", description: deleting.email });
+    setDeleting(undefined);
+  };
 
   const add = async () => {
     if (!form.name.trim() || !/^\S+@\S+\.\S+$/.test(form.email)) return setError("Enter a name and a valid email.");
@@ -93,17 +121,41 @@ export default function UsersPage() {
               </Td>
               <Td className={h.small}>{u.lastLogin}</Td>
               <Td>
+                {/* Own row: no actions, so nobody can lock themselves out (the API refuses too). */}
                 {u.id !== state.session?.userId && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={async () => {
-                      const err = await toggle(u);
-                      if (err) toast({ tone: "danger", title: `Couldn't ${u.active ? "deactivate" : "activate"} ${u.name}`, description: err });
-                    }}
-                  >
-                    {u.active ? "Deactivate" : "Activate"}
-                  </Button>
+                  <div className={h.row}>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        setEdit({ name: u.name, role: u.role });
+                        setEditError(undefined);
+                        setEditing(u);
+                      }}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={async () => {
+                        const err = await update(u, { active: !u.active });
+                        if (err) toast({ tone: "danger", title: `Couldn't ${u.active ? "deactivate" : "activate"} ${u.name}`, description: err });
+                      }}
+                    >
+                      {u.active ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="tertiary"
+                      onClick={() => {
+                        setDeleteError(undefined);
+                        setDeleting(u);
+                      }}
+                    >
+                      Delete
+                    </Button>
+                  </div>
                 )}
               </Td>
             </tr>
@@ -151,6 +203,58 @@ export default function UsersPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={editing !== undefined} onOpenChange={(o) => !o && setEditing(undefined)}>
+        <DialogContent
+          title={`Edit ${editing?.name ?? "user"}`}
+          footer={
+            <>
+              <Button variant="secondary" onClick={() => setEditing(undefined)}>
+                Cancel
+              </Button>
+              <Button onClick={saveEdit} loading={saving}>
+                Save changes
+              </Button>
+            </>
+          }
+        >
+          <div className={h.stackSm}>
+            {editError && (
+              <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
+                {editError}
+              </p>
+            )}
+            <Field label="Full name" required>
+              <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
+            </Field>
+            <Field label="Work email" hint="Email can't be changed here; it's their sign-in.">
+              <Input value={editing?.email ?? ""} disabled />
+            </Field>
+            <Field label="Role">
+              <Select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value as StaffRole })}>
+                <option value="HR">HR — runs drives</option>
+                <option value="SUPER_ADMIN">Super Admin — everything + system settings</option>
+              </Select>
+            </Field>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={deleting !== undefined}
+        onOpenChange={(o) => !o && setDeleting(undefined)}
+        title={`Delete ${deleting?.name ?? "user"}?`}
+        description={
+          <>
+            {deleting?.email} loses access and their account is removed. Users who own drives or have activity history can&apos;t be deleted — deactivate them
+            instead so the audit trail stays complete.
+          </>
+        }
+        confirmLabel={`Delete ${deleting?.name ?? "user"}`}
+        onConfirm={confirmDelete}
+        loading={saving}
+        error={deleteError}
+      />
     </>
   );
 }

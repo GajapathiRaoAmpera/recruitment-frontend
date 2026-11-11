@@ -2,6 +2,8 @@
 
 // shortcut: in-memory mock store (resets on full reload). Replace reads/writes with API hooks per ../docs/04-api-contracts.md.
 import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from "react";
+import { loadStaffSession } from "@/features/auth/staff-sign-in";
+import { supabase } from "@/lib/supabase";
 import * as seed from "./data";
 import type {
   AiPrompt, AuditLog, Candidate, College, Drive, EmailLog, Interview, Question, Round, RoundResult,
@@ -47,6 +49,7 @@ export const initialState: State = {
 export type Action =
   | { type: "login"; session: Session }
   | { type: "logout" }
+  | { type: "staffSignedOut" }
   | { type: "createDrive"; drive: Omit<Drive, "id" | "ownerId" | "status">; rounds: Pick<Round, "type" | "mode" | "durationMin" | "threshold">[] }
   | { type: "shortlist"; ids: string[]; value: boolean }
   | { type: "advanceRound"; roundId: string; threshold?: number }
@@ -66,6 +69,8 @@ export type Action =
   | { type: "setHrNotes"; interviewId: string; notes: string }
   | { type: "updatePrompt"; key: string; body: string }
   | { type: "toggleUser"; id: string }
+  | { type: "updateUser"; id: string; changes: Partial<Pick<StaffUser, "name" | "role">> }
+  | { type: "deleteUser"; id: string }
   | { type: "addUser"; user: Omit<StaffUser, "id" | "lastLogin" | "active"> };
 
 const now = () => new Date().toLocaleString("en-IN", { month: "short", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false });
@@ -116,6 +121,8 @@ export function reducer(s: State, a: Action): State {
     }
     case "logout":
       return { ...s, session: null };
+    case "staffSignedOut": // Supabase ended the session; a student's session is not Supabase's
+      return s.session && s.session.role !== "STUDENT" ? { ...s, session: null } : s;
 
     case "createDrive": {
       const id = `d${s.drives.length + 1}-${Date.now() % 10000}`;
@@ -278,6 +285,16 @@ export function reducer(s: State, a: Action): State {
       return { ...s, staff: s.staff.map((x) => (x.id === a.id ? { ...x, active: !x.active } : x)), auditLogs: audit(s, u.active ? "Deactivated user" : "Activated user", u.email) };
     }
 
+    case "updateUser": {
+      const u = s.staff.find((x) => x.id === a.id)!;
+      return { ...s, staff: s.staff.map((x) => (x.id === a.id ? { ...x, ...a.changes } : x)), auditLogs: audit(s, "Updated user", u.email) };
+    }
+
+    case "deleteUser": {
+      const u = s.staff.find((x) => x.id === a.id)!;
+      return { ...s, staff: s.staff.filter((x) => x.id !== a.id), auditLogs: audit(s, "Deleted user", u.email) };
+    }
+
     case "addUser":
       return { ...s, staff: [...s.staff, { ...a.user, id: `u${Date.now()}`, active: true, lastLogin: "Never" }], auditLogs: audit(s, `Invited ${a.user.role === "SUPER_ADMIN" ? "Super Admin" : "HR"}`, a.user.email) };
   }
@@ -303,15 +320,40 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [ready, setReady] = useState(false);
 
-  // Restore the session once on mount (sessionStorage is browser-only), then keep it in sync.
+  // Restore the session once on mount, then keep it in sync. Page guards wait for `ready`.
   useEffect(() => {
+    let saved: Session | null = null;
     try {
       const raw = window.sessionStorage.getItem(SESSION_KEY);
-      if (raw) dispatch({ type: "login", session: JSON.parse(raw) as Session });
+      if (raw) saved = JSON.parse(raw) as Session;
     } catch {
-      /* no storage: user signs in again */
+      /* no storage: rebuilt from Supabase below, or the user signs in again */
     }
-    setReady(true); // eslint-disable-line react-hooks/set-state-in-effect -- one-time mount flag
+    const staff = !saved || saved.role !== "STUDENT";
+    if (!supabase || !staff) {
+      if (saved) dispatch({ type: "login", session: saved });
+      setReady(true); // eslint-disable-line react-hooks/set-state-in-effect -- one-time mount flag
+      return;
+    }
+    // Real staff sign-in: the Supabase session (localStorage) is the source of truth.
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        // New tab or reopened browser: rebuild the tab's session from GET /me.
+        const res = saved ? { session: saved } : await loadStaffSession();
+        if ("session" in res) dispatch({ type: "login", session: res.session });
+      }
+      setReady(true);
+    })();
+  }, []);
+
+  // Supabase signed out (here, in another tab, or the refresh token died): drop the staff session.
+  useEffect(() => {
+    if (!supabase) return;
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") dispatch({ type: "staffSignedOut" });
+    });
+    return () => data.subscription.unsubscribe();
   }, []);
   useEffect(() => {
     if (!ready) return;

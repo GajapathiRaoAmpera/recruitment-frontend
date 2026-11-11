@@ -18,7 +18,7 @@ export async function loadStaffSession(): Promise<Result> {
     const staff = toStaff(await api<ApiUser>("/me"));
     return { session: { role: staff.role, userId: staff.id, staff }, home: homePath[portalOf(staff.role)] };
   } catch (e) {
-    await supabase?.auth.signOut();
+    await supabase?.auth.signOut({ scope: "local" }); // this browser only; other devices stay signed in
     if (e instanceof ApiError && e.code === "NOT_STAFF") return { error: "This account has no access to Campus Hire yet. Ask a Super Admin to add you." };
     return { error: "Signed in, but the Campus Hire server didn't answer. Try again in a minute." };
   }
@@ -50,6 +50,6 @@ export async function signInStaff(portal: Exclude<Portal, "student">, email: str
 
   const res = await loadStaffSession();
   // Same message as a wrong password: each login page is for one role only.
-  if ("session" in res && portalOf(res.session.role) !== portal) return (await supabase.auth.signOut(), mismatch);
+  if ("session" in res && portalOf(res.session.role) !== portal) return (await supabase.auth.signOut({ scope: "local" }), mismatch);
   return res;
 }
