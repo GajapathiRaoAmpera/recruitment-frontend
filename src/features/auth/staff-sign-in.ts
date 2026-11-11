@@ -33,7 +33,7 @@ export async function signInStaff(portal: Exclude<Portal, "student">, email: str
   if (!email.trim() || !password) return { error: "Enter your work email and password." };
   const mismatch = { error: `That email and password don't match ${portal === "admin" ? "a Super Admin" : "an HR"} account.` };
 
-  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
   if (error) return error.code === "invalid_credentials" ? mismatch : { error: `Couldn't sign in (${error.message}). Try again.` };
 
   const res = await loadStaffSession();

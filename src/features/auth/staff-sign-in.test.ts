@@ -21,7 +21,7 @@ beforeEach(() => {
 describe("real staff sign-in: Supabase password, role from GET /me (AC-1)", () => {
   it("HR signs in at /hr/login and the token is sent to /me", async () => {
     reply(200, me("hr"));
-    const res = await signInStaff("hr", " a@x.com ", "pw");
+    const res = await signInStaff("hr", " A@X.com ", "pw");
     expect(res).toMatchObject({ home: "/hr", session: { role: "HR", userId: "u-1", staff: { name: "Asha Rao" } } });
     expect(auth.signInWithPassword).toHaveBeenCalledWith({ email: "a@x.com", password: "pw" });
     const [url, init] = vi.mocked(fetch).mock.calls[0];
