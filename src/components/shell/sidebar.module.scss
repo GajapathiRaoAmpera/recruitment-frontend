@@ -1,0 +1,150 @@
+@use "@/styles/mixins" as *;
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: sp(6);
+}
+
+.sectionTitle {
+  margin-bottom: sp(2);
+  padding-inline: sp(3);
+  @include eyebrow;
+  color: var(--ui-color-sidebar-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: sp(1);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: sp(3);
+  border-radius: var(--ui-radius-input);
+  padding: sp(2) sp(3);
+  color: var(--ui-color-sidebar-muted);
+  transition:
+    background-color var(--ui-duration-fast),
+    color var(--ui-duration-fast);
+  @include focus-ring(var(--ampera-cream));
+  &:hover {
+    background: var(--ui-color-sidebar-active);
+    color: var(--ui-color-sidebar-fg);
+  }
+  &[aria-current="page"] {
+    background: var(--ui-color-sidebar-active);
+    font-weight: 500;
+    color: var(--ui-color-sidebar-fg);
+  }
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.collapsedLink {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.aside {
+  position: sticky;
+  top: 0;
+  display: none;
+  height: 100dvh;
+  width: sp(64);
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: sp(8);
+  background: var(--ui-color-sidebar-bg);
+  --ui-scrollbar-thumb: rgb(255 254 250 / 0.3);
+  --ui-scrollbar-thumb-hover: rgb(255 254 250 / 0.55);
+  padding: sp(5) sp(3);
+  color: var(--ui-color-sidebar-fg);
+  @include up(md) {
+    display: flex;
+  }
+}
+
+.asideCollapsed {
+  width: 72px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  padding-inline: sp(2);
+}
+
+.brandCollapsed {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.grow {
+  flex: 1;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: sp(3);
+  border-radius: var(--ui-radius-input);
+  padding: sp(2) sp(3);
+  @include text(sm);
+  color: var(--ui-color-sidebar-muted);
+  @include focus-ring(var(--ampera-cream));
+  &:hover {
+    background: var(--ui-color-sidebar-active);
+    color: var(--ui-color-sidebar-fg);
+  }
+}
+
+/* Mobile drawer */
+.menuButton {
+  border-radius: var(--ui-radius-pill);
+  padding: sp(2);
+  color: var(--ui-color-text);
+  &:hover {
+    background: var(--ui-color-surface-muted);
+  }
+  @include up(md) {
+    display: none;
+  }
+}
+
+.drawer {
+  position: fixed;
+  inset-block: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  width: sp(72);
+  max-width: 85vw;
+  flex-direction: column;
+  gap: sp(8);
+  background: var(--ui-color-sidebar-bg);
+  --ui-scrollbar-thumb: rgb(255 254 250 / 0.3);
+  --ui-scrollbar-thumb-hover: rgb(255 254 250 / 0.55);
+  padding: sp(5) sp(3);
+  color: var(--ui-color-sidebar-fg);
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: sp(2);
+}
+
+.drawerClose {
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1.5);
+  color: var(--ui-color-sidebar-muted);
+  &:hover {
+    color: var(--ui-color-sidebar-fg);
+  }
+}

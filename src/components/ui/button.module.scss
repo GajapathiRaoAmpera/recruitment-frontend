@@ -1,0 +1,75 @@
+@use "@/styles/mixins" as *;
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ui-radius-pill);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background-color var(--ui-duration-fast),
+    color var(--ui-duration-fast),
+    border-color var(--ui-duration-fast);
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.primary {
+  background: var(--ui-color-primary);
+  color: var(--ui-color-primary-fg);
+  &:hover:not(:disabled) {
+    background: var(--ui-color-primary-hover);
+  }
+}
+
+.secondary {
+  border: 1px solid var(--ui-color-text);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  &:hover:not(:disabled) {
+    background: var(--ui-color-surface-muted);
+  }
+}
+
+.tertiary {
+  color: var(--ui-color-primary);
+  &:hover:not(:disabled) {
+    background: var(--ui-color-primary-subtle);
+  }
+}
+
+.danger {
+  background: var(--ui-color-danger);
+  color: #fff;
+  &:hover:not(:disabled) {
+    filter: brightness(0.9);
+  }
+}
+
+.sm {
+  height: sp(8);
+  padding-inline: sp(3.5);
+  gap: sp(1.5);
+  @include text(sm);
+}
+
+.md {
+  height: sp(11);
+  padding-inline: sp(5);
+  gap: sp(2);
+  @include text(base);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

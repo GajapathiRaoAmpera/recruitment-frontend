@@ -1,0 +1,45 @@
+@use "@/styles/mixins" as *;
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: sp(3);
+  border: 1px dashed var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-card);
+  padding: sp(12) sp(6);
+  text-align: center;
+}
+
+.icon {
+  color: var(--ui-color-text-muted);
+}
+
+.title {
+  @include text(lg);
+  font-weight: 500;
+}
+
+.description {
+  max-width: 28rem;
+  color: var(--ui-color-text-muted);
+}
+
+.action {
+  margin-top: sp(2);
+}
+
+.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: sp(3);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-danger-subtle);
+  padding: sp(10) sp(6);
+  text-align: center;
+}
+
+.errorIcon {
+  color: var(--ui-color-danger);
+}

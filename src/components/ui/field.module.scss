@@ -1,0 +1,28 @@
+@use "@/styles/mixins" as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+}
+
+.label {
+  @include text(sm);
+  font-weight: 500;
+  color: var(--ui-color-text);
+}
+
+.required {
+  margin-left: sp(0.5);
+  color: var(--ui-color-danger);
+}
+
+.error {
+  @include text(sm);
+  color: var(--ui-color-danger);
+}
+
+.hint {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}

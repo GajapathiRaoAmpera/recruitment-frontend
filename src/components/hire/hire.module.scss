@@ -1,0 +1,471 @@
+// Recruitment-specific patterns on top of poc's tokens (src/styles/_tokens.scss). Tokens only — no hex values.
+@use "@/styles/mixins" as *;
+
+.card {
+  @include card;
+  padding: sp(5);
+  @include up(sm) {
+    padding: sp(6);
+  }
+}
+
+.cardTight {
+  @include card;
+  padding: sp(4);
+}
+
+.cardTitle {
+  @include text(lg);
+  font-weight: 500;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+  margin-bottom: sp(4);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: sp(6);
+}
+
+.stackSm {
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: sp(2);
+}
+
+.between {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+}
+
+.muted {
+  color: var(--ui-color-text-muted);
+}
+
+.small {
+  @include text(sm);
+}
+
+.xs {
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.eyebrow {
+  @include eyebrow;
+}
+
+.mono {
+  font-family: var(--ui-font-mono);
+  @include text(sm);
+}
+
+/* Grids */
+.grid4 {
+  display: grid;
+  gap: sp(4);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @include up(lg) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.grid3 {
+  display: grid;
+  gap: sp(4);
+  @include up(md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.grid2 {
+  display: grid;
+  gap: sp(4);
+  @include up(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.split {
+  display: grid;
+  gap: sp(6);
+  @include up(lg) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+/* Stat card */
+.stat {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+  padding: sp(4) sp(5);
+}
+
+.statHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  @include eyebrow;
+}
+
+.statIcon {
+  display: flex;
+  width: sp(8);
+  height: sp(8);
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-primary-subtle);
+  color: var(--ui-color-primary);
+}
+
+.statValue {
+  @include text(2xl);
+  font-weight: 300;
+}
+
+.statHint {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+/* Hero banner: navy brand surface, same as the poc sidebar. */
+.hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-sidebar-bg);
+  color: var(--ui-color-sidebar-fg);
+  padding: sp(6);
+  @include up(md) {
+    padding: sp(8);
+  }
+}
+
+.heroInner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+  @include up(md) {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.heroEyebrow {
+  @include eyebrow;
+  color: var(--ui-color-sidebar-muted);
+}
+
+.heroTitle {
+  margin-top: sp(2);
+  @include text(2xl);
+  font-weight: 300;
+}
+
+.heroText {
+  margin-top: sp(2);
+  max-width: 40rem;
+  color: var(--ui-color-sidebar-muted);
+}
+
+.heroGlow {
+  position: absolute;
+  right: -6rem;
+  top: -6rem;
+  width: 20rem;
+  height: 20rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, alpha(var(--ampera-magenta-600), 45%), transparent 70%);
+  pointer-events: none;
+}
+
+/* Pipeline steps */
+.steps {
+  display: grid;
+  gap: sp(2);
+  grid-template-columns: repeat(var(--n, 5), minmax(0, 1fr));
+}
+
+.step {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: sp(1.5);
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.stepBar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ui-color-surface-muted);
+}
+
+.stepLabel {
+  @include truncate;
+}
+
+.step[data-status="completed"] .stepBar {
+  background: var(--ui-color-success);
+}
+
+.step[data-status="active"] {
+  font-weight: 500;
+  color: var(--ui-color-primary);
+  .stepBar {
+    background: var(--ui-color-primary);
+  }
+}
+
+.step[data-status="skipped"] {
+  text-decoration: line-through;
+  .stepBar {
+    background: repeating-linear-gradient(45deg, var(--ui-color-border-strong) 0 4px, transparent 4px 8px);
+  }
+}
+
+/* Progress bar */
+.bar {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-color-surface-muted);
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--ui-color-primary);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: sp(1);
+  overflow-x: auto;
+  border-bottom: 1px solid var(--ui-color-border);
+  margin-bottom: sp(6);
+}
+
+.tab {
+  flex-shrink: 0;
+  border-bottom: 2px solid transparent;
+  padding: sp(2) sp(3);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  margin-bottom: -1px;
+  @include focus-ring;
+  &:hover {
+    color: var(--ui-color-text);
+  }
+  &[aria-selected="true"] {
+    border-color: var(--ui-color-primary);
+    font-weight: 500;
+    color: var(--ui-color-primary);
+  }
+}
+
+/* Segmented toggle */
+.segment {
+  display: inline-flex;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-pill);
+  padding: 3px;
+  background: var(--ui-color-surface);
+}
+
+.segmentBtn {
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1) sp(3);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  @include focus-ring;
+  &[aria-pressed="true"] {
+    background: var(--ui-color-primary-subtle);
+    font-weight: 500;
+    color: var(--ui-color-primary);
+  }
+}
+
+/* Avatar */
+.avatar {
+  display: inline-flex;
+  width: sp(9);
+  height: sp(9);
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--ui-color-primary-subtle);
+  @include text(xs);
+  font-weight: 500;
+  color: var(--ui-color-primary);
+}
+
+.person {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: sp(3);
+}
+
+.personName {
+  @include truncate;
+  font-weight: 500;
+}
+
+.personMeta {
+  @include truncate;
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+/* Chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-surface-muted);
+  padding: 2px sp(2.5);
+  @include text(xs);
+}
+
+/* Kanban board */
+.board {
+  display: grid;
+  grid-auto-columns: minmax(16rem, 1fr);
+  grid-auto-flow: column;
+  gap: sp(4);
+  overflow-x: auto;
+  padding-bottom: sp(2);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface-muted);
+  padding: sp(3);
+}
+
+.columnHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: sp(1) sp(1) 0;
+  @include text(sm);
+  font-weight: 500;
+}
+
+.boardCard {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+  padding: sp(3);
+  transition: box-shadow var(--ui-duration-fast);
+  &:hover {
+    box-shadow: var(--ui-shadow-md);
+  }
+}
+
+/* Lists */
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.listItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+  border-top: 1px solid var(--ui-color-border);
+  padding-block: sp(3);
+  &:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+
+/* Simple controls */
+.check {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--ui-color-primary);
+}
+
+.range {
+  width: 100%;
+  accent-color: var(--ui-color-primary);
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: sp(3);
+}
+
+.toolbar > * {
+  min-width: 10rem;
+}
+
+.demoNote {
+  display: flex;
+  align-items: center;
+  gap: sp(2);
+  border: 1px dashed var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-input);
+  padding: sp(2) sp(3);
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.code {
+  overflow-x: auto;
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-surface-muted);
+  padding: sp(3);
+  font-family: var(--ui-font-mono);
+  @include text(sm);
+  white-space: pre-wrap;
+}
+
+.scoreBig {
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 300;
+}
+
+.link {
+  color: var(--ui-color-primary);
+  font-weight: 500;
+  &:hover {
+    text-decoration: underline;
+  }
+}

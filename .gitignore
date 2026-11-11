@@ -3,3 +3,9 @@
 !.env.example
 .claude/settings.local.json
 .claude/skills/postgres/connections.json
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+coverage/

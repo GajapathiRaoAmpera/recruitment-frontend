@@ -1,0 +1,104 @@
+// Shared SCSS helpers. Import with `@use "@/styles/mixins" as *;` in component modules.
+@use "sass:map";
+@use "sass:math";
+@use "sass:list";
+
+// Breakpoints (min-width, mobile first): same values the layout was designed with.
+$breakpoints: (
+  sm: 640px,
+  md: 768px,
+  lg: 1024px,
+  xl: 1280px,
+  2xl: 1536px,
+);
+
+@mixin up($key) {
+  @media (min-width: map.get($breakpoints, $key)) {
+    @content;
+  }
+}
+
+@mixin down($key) {
+  @media (max-width: map.get($breakpoints, $key) - 0.02px) {
+    @content;
+  }
+}
+
+// 4px spacing scale: sp(4) = 1rem.
+@function sp($n) {
+  @return math.div($n, 4) * 1rem;
+}
+
+// Type scale: size + line height.
+$type: (
+  xs: (0.75rem, 1rem),
+  sm: (0.875rem, 1.25rem),
+  base: (1rem, 1.5rem),
+  body: (1.0625rem, 1.6),
+  lg: (1.25rem, 1.75rem),
+  xl: (1.5rem, 2rem),
+  2xl: (1.875rem, 2.25rem),
+);
+
+@mixin text($key) {
+  $t: map.get($type, $key);
+  font-size: list.nth($t, 1);
+  line-height: list.nth($t, 2);
+}
+
+@mixin focus-ring($color: var(--ui-color-focus-ring)) {
+  &:focus-visible {
+    outline: 2px solid $color;
+    outline-offset: 2px;
+  }
+}
+
+@mixin sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@mixin truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@mixin line-clamp($lines) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@mixin card {
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface);
+}
+
+@mixin eyebrow {
+  @include text(xs);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ui-color-text-muted);
+}
+
+// Colour with alpha from a CSS variable: alpha(var(--ui-color-primary), 30%).
+@function alpha($color, $pct) {
+  @return color-mix(in srgb, #{$color} #{$pct}, transparent);
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}

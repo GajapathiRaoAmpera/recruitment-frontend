@@ -1,0 +1,332 @@
+@use "@/styles/mixins" as *;
+
+/* Student portal frame: top bar instead of the staff sidebar. */
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  height: sp(16);
+  align-items: center;
+  gap: sp(4);
+  border-bottom: 1px solid var(--ui-color-border);
+  background: rgb(255 255 255 / 0.95);
+  padding-inline: sp(4);
+  backdrop-filter: blur(8px);
+  @include up(sm) {
+    padding-inline: sp(8);
+  }
+}
+
+.nav {
+  display: none;
+  gap: sp(1);
+  @include up(md) {
+    display: flex;
+  }
+}
+
+.navLink {
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1.5) sp(3);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  @include focus-ring;
+  &:hover {
+    color: var(--ui-color-text);
+  }
+  &[aria-current="page"] {
+    background: var(--ui-color-primary-subtle);
+    font-weight: 500;
+    color: var(--ui-color-primary);
+  }
+}
+
+.spacer {
+  flex: 1;
+}
+
+.who {
+  text-align: right;
+  @include text(sm);
+  line-height: 1.2;
+}
+
+.main {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 64rem;
+  padding: sp(8) sp(4) sp(16);
+}
+
+/* Exam frame */
+.exam {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  background: var(--ui-color-bg);
+}
+
+.examBar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: sp(3);
+  border-bottom: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+  padding: sp(3) sp(4);
+  @include up(sm) {
+    padding-inline: sp(6);
+  }
+}
+
+.examTitle {
+  min-width: 0;
+  flex: 1;
+  @include text(sm);
+  p:first-child {
+    font-weight: 500;
+  }
+}
+
+.timer {
+  display: inline-flex;
+  align-items: center;
+  gap: sp(2);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-primary-subtle);
+  padding: sp(1.5) sp(3);
+  font-family: var(--ui-font-mono);
+  color: var(--ui-color-primary);
+  &[data-low="true"] {
+    background: var(--ui-color-danger-subtle);
+    color: var(--ui-color-danger);
+  }
+}
+
+.saved {
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.examBody {
+  display: grid;
+  flex: 1;
+  gap: sp(6);
+  padding: sp(6) sp(4);
+  @include up(sm) {
+    padding-inline: sp(6);
+  }
+}
+
+.aptitude {
+  @include up(lg) {
+    grid-template-columns: 16rem minmax(0, 1fr);
+  }
+}
+
+.coding {
+  @include up(lg) {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  }
+}
+
+.palette {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: sp(2);
+}
+
+.paletteBtn {
+  aspect-ratio: 1;
+  border: 1px solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-input);
+  @include text(sm);
+  @include focus-ring;
+  &[data-state="answered"] {
+    border-color: var(--ui-color-success);
+    background: var(--ui-color-success-subtle);
+  }
+  &[data-state="marked"] {
+    border-color: var(--ui-color-warning);
+    background: var(--ui-color-warning-subtle);
+  }
+  &[aria-current="true"] {
+    outline: 2px solid var(--ui-color-primary);
+    outline-offset: 1px;
+  }
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(3);
+  margin-top: sp(4);
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.option {
+  display: flex;
+  cursor: pointer;
+  align-items: flex-start;
+  gap: sp(3);
+  border: 1px solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-card);
+  padding: sp(4);
+  transition: border-color var(--ui-duration-fast);
+  &:hover {
+    border-color: var(--ui-color-primary);
+  }
+  &:has(input:checked) {
+    border-color: var(--ui-color-primary);
+    background: var(--ui-color-primary-subtle);
+  }
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--ui-color-focus-ring);
+    outline-offset: 2px;
+  }
+  input {
+    margin-top: 4px;
+    accent-color: var(--ui-color-primary);
+  }
+}
+
+.optionKey {
+  font-weight: 500;
+}
+
+.problemTabs {
+  display: flex;
+  gap: sp(1);
+  overflow-x: auto;
+}
+
+.editorWrap {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--ui-radius-card);
+  background: var(--ampera-navy-900);
+  color: var(--ampera-cream);
+}
+
+.editorBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+  border-bottom: 1px solid rgb(255 254 250 / 0.12);
+  padding: sp(2) sp(3);
+  @include text(sm);
+  select {
+    border-radius: var(--ui-radius-input);
+    background: rgb(255 254 250 / 0.1);
+    padding: sp(1) sp(2);
+    color: var(--ampera-cream);
+    option {
+      color: var(--ui-color-text);
+    }
+  }
+}
+
+.editor {
+  min-height: 22rem;
+  width: 100%;
+  resize: vertical;
+  background: transparent;
+  padding: sp(4);
+  font-family: var(--ui-font-mono);
+  @include text(sm);
+  line-height: 1.6;
+  color: var(--ampera-cream);
+  tab-size: 4;
+  outline: none;
+  &:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--ampera-magenta-600);
+  }
+}
+
+.caseGrid {
+  display: grid;
+  gap: sp(3);
+  @include up(sm) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Overlay: lock screen / full-screen prompt */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: alpha(var(--ampera-navy-900), 92%);
+  padding: sp(4);
+}
+
+.overlayCard {
+  max-width: 28rem;
+  @include card;
+  padding: sp(8);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: sp(3);
+}
+
+.checkList {
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+}
+
+.checkItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+  @include card;
+  padding: sp(4);
+}
+
+.chat {
+  display: flex;
+  max-height: 28rem;
+  flex-direction: column;
+  gap: sp(3);
+  overflow-y: auto;
+}
+
+.bubble {
+  max-width: 85%;
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface-muted);
+  padding: sp(3) sp(4);
+  &[data-role="candidate"] {
+    align-self: flex-end;
+    background: var(--ui-color-primary-subtle);
+  }
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: sp(2);
+  @include text(sm);
+  color: var(--ui-color-danger);
+  &::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+}

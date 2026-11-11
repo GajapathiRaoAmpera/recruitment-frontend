@@ -1,0 +1,157 @@
+@use "@/styles/mixins" as *;
+
+.layout {
+  display: grid;
+  min-height: 100dvh;
+  @include up(lg) {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  }
+}
+
+.aside {
+  position: relative;
+  display: none;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--ui-color-sidebar-bg);
+  color: var(--ui-color-sidebar-fg);
+  padding: sp(12);
+  @include up(lg) {
+    display: flex;
+  }
+}
+
+.glow {
+  position: absolute;
+  left: 30%;
+  top: 35%;
+  width: 28rem;
+  height: 28rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, alpha(var(--ampera-magenta-600), 40%), transparent 70%);
+  pointer-events: none;
+}
+
+.pitch {
+  position: relative;
+  max-width: 28rem;
+}
+
+.headline {
+  @include text(2xl);
+  font-weight: 300;
+}
+
+.subline {
+  margin-top: sp(3);
+  color: var(--ui-color-sidebar-muted);
+}
+
+.points {
+  margin-top: sp(8);
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+  color: var(--ui-color-sidebar-muted);
+  @include text(sm);
+  li {
+    display: flex;
+    align-items: center;
+    gap: sp(3);
+  }
+}
+
+.copy {
+  position: relative;
+  @include text(xs);
+  color: var(--ui-color-sidebar-muted);
+}
+
+.panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: sp(6) sp(4);
+}
+
+.card {
+  width: 100%;
+  max-width: 28rem;
+  @include card;
+  padding: sp(8) sp(6);
+  box-shadow: var(--ui-shadow-md);
+  display: flex;
+  flex-direction: column;
+  gap: sp(5);
+}
+
+.mobileLogo {
+  @include up(lg) {
+    display: none;
+  }
+}
+
+.title {
+  @include text(xl);
+  font-weight: 400;
+}
+
+.lead {
+  margin-top: sp(1);
+  color: var(--ui-color-text-muted);
+  @include text(sm);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-surface-muted);
+  padding: 4px;
+}
+
+.tab {
+  border-radius: var(--ui-radius-pill);
+  padding: sp(2);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  @include focus-ring;
+  &[aria-selected="true"] {
+    background: var(--ui-color-surface);
+    box-shadow: var(--ui-shadow-sm);
+    font-weight: 500;
+    color: var(--ui-color-text);
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: sp(3);
+  @include eyebrow;
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--ui-color-border);
+  }
+}
+
+.demo {
+  display: grid;
+  gap: sp(2);
+  grid-template-columns: 1fr 1fr;
+}
+
+.hint {
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}

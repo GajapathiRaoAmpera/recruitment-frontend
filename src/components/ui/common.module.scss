@@ -1,0 +1,171 @@
+// Shared page patterns used across feature folders (forms, filters, tables, sections).
+@use "@/styles/mixins" as *;
+
+.muted {
+  color: var(--ui-color-text-muted);
+}
+
+.small {
+  @include text(sm);
+}
+
+.smallMuted {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.xsMuted {
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.strong {
+  font-weight: 500;
+}
+
+.wrap {
+  overflow-wrap: break-word;
+}
+
+.breakAll {
+  word-break: break-all;
+}
+
+.stack2 {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+}
+
+.stack4 {
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: sp(5);
+}
+
+.row2 {
+  display: flex;
+  gap: sp(2);
+}
+
+.section {
+  @include card;
+  padding: sp(6);
+}
+
+.sectionTitle {
+  @include text(lg);
+  font-weight: 500;
+}
+
+.pageTitle {
+  @include text(2xl);
+  font-weight: 300;
+}
+
+/* List filters */
+.filters {
+  margin-bottom: sp(4);
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+  @include up(md) {
+    flex-direction: row;
+  }
+}
+
+.search {
+  position: relative;
+  flex: 1;
+}
+
+.searchIcon {
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  left: sp(3);
+  transform: translateY(-50%);
+  color: var(--ui-color-text-muted);
+}
+
+.searchInput {
+  padding-left: sp(9);
+}
+
+.filterSelect {
+  @include up(md) {
+    width: sp(44);
+  }
+}
+
+.rowSkeleton {
+  height: sp(12);
+  width: 100%;
+}
+
+/* Responsive table cells */
+.mdCell {
+  display: none;
+  @include up(md) {
+    display: table-cell;
+  }
+}
+
+.lgCell {
+  display: none;
+  @include up(lg) {
+    display: table-cell;
+  }
+}
+
+.mdHidden {
+  @include up(md) {
+    display: none;
+  }
+}
+
+.block {
+  display: block;
+}
+
+.actionsCell {
+  width: sp(24);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.iconButton {
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1.5);
+  color: var(--ui-color-text-muted);
+  &:hover {
+    background: var(--ui-color-surface-muted);
+    color: var(--ui-color-text);
+  }
+}
+
+.iconButtonDanger {
+  &:hover {
+    background: var(--ui-color-danger-subtle);
+    color: var(--ui-color-danger);
+  }
+}
+
+.pagination {
+  margin-top: sp(4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  @include text(sm);
+}
+
+.skeletonTall {
+  height: sp(64);
+  width: 100%;
+}

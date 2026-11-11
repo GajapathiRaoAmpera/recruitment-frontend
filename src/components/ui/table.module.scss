@@ -1,0 +1,27 @@
+@use "@/styles/mixins" as *;
+
+.wrap {
+  overflow-x: auto;
+  @include card;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  @include text(sm);
+}
+
+.th {
+  border-bottom: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface-muted);
+  padding: sp(2.5) sp(4);
+  font-weight: 500;
+  color: var(--ui-color-text-muted);
+}
+
+.td {
+  border-bottom: 1px solid var(--ui-color-border);
+  padding: sp(3) sp(4);
+  vertical-align: middle;
+}

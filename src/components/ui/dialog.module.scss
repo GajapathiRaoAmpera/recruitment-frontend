@@ -1,0 +1,118 @@
+@use "@/styles/mixins" as *;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(5 5 5 / 0.4);
+}
+
+.content {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-md);
+  &:focus {
+    outline: none;
+  }
+}
+
+.centered {
+  top: 50%;
+  left: 50%;
+  width: calc(100vw - 2rem);
+  max-width: 32rem;
+  max-height: calc(100dvh - 2rem);
+  transform: translate(-50%, -50%);
+  border-radius: var(--ui-radius-card);
+}
+
+.side {
+  inset-block: 0;
+  right: 0;
+  width: 100%;
+  max-width: 28rem;
+  border-left: 1px solid var(--ui-color-border);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: sp(4);
+  border-bottom: 1px solid var(--ui-color-border);
+  padding: sp(4) sp(6);
+}
+
+.title {
+  @include text(lg);
+  font-weight: 500;
+}
+
+.description {
+  margin-top: sp(1);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.close {
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1.5);
+  color: var(--ui-color-text-muted);
+  &:hover {
+    background: var(--ui-color-surface-muted);
+  }
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: sp(5) sp(6);
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: sp(3);
+  border-top: 1px solid var(--ui-color-border);
+  padding: sp(4) sp(6);
+}
+
+/* Alert dialog (confirm) */
+.alert {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 50;
+  width: calc(100vw - 2rem);
+  max-width: 28rem;
+  transform: translate(-50%, -50%);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface);
+  padding: sp(6);
+  box-shadow: var(--ui-shadow-md);
+}
+
+.alertDescription {
+  margin-top: sp(2);
+  color: var(--ui-color-text-muted);
+}
+
+.confirmField {
+  margin-top: sp(4);
+}
+
+.alertError {
+  margin-top: sp(3);
+  @include text(sm);
+  color: var(--ui-color-danger);
+}
+
+.alertActions {
+  margin-top: sp(6);
+  display: flex;
+  justify-content: flex-end;
+  gap: sp(3);
+}

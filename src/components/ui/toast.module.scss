@@ -1,0 +1,89 @@
+@use "@/styles/mixins" as *;
+
+.viewport {
+  pointer-events: none;
+  position: fixed;
+  top: sp(20);
+  right: sp(4);
+  z-index: 60;
+  display: flex;
+  width: min(24rem, calc(100vw - 2rem));
+  flex-direction: column;
+  gap: sp(2);
+}
+
+.toast {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: sp(3);
+  overflow: hidden;
+  @include card;
+  padding: sp(3) sp(3) sp(3) sp(4);
+  box-shadow: var(--ui-shadow-md);
+  animation: toast-in var(--ui-duration-base) var(--ui-ease-out);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.bar {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: sp(1);
+}
+
+.icon {
+  margin-top: sp(0.5);
+  flex-shrink: 0;
+}
+
+.success {
+  --tone: var(--ui-color-success);
+}
+.danger {
+  --tone: var(--ui-color-danger);
+}
+.info {
+  --tone: var(--ui-color-primary);
+}
+.bar,
+.icon {
+  color: var(--tone);
+}
+.bar {
+  background: var(--tone);
+}
+
+.text {
+  min-width: 0;
+  flex: 1;
+}
+
+.title {
+  @include text(sm);
+  font-weight: 500;
+}
+
+.description {
+  margin-top: sp(0.5);
+  @include text(sm);
+  overflow-wrap: break-word;
+  color: var(--ui-color-text-muted);
+}
+
+.dismiss {
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1);
+  color: var(--ui-color-text-muted);
+  &:hover {
+    background: var(--ui-color-surface-muted);
+    color: var(--ui-color-text);
+  }
+}

@@ -1,0 +1,240 @@
+@use "@/styles/mixins" as *;
+
+/* App frame */
+.errorWrap {
+  margin-inline: auto;
+  max-width: 32rem;
+  padding: sp(8);
+}
+
+.skip {
+  @include sr-only;
+  z-index: 50;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-primary);
+  padding: sp(2) sp(4);
+  color: var(--ui-color-primary-fg);
+  &:focus {
+    position: fixed;
+    top: sp(3);
+    left: sp(3);
+    width: auto;
+    height: auto;
+    margin: 0;
+    clip: auto;
+    overflow: visible;
+    white-space: normal;
+  }
+}
+
+.frame {
+  display: flex;
+  min-height: 100dvh;
+}
+
+.column {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  height: sp(16);
+  align-items: center;
+  gap: sp(3);
+  border-bottom: 1px solid var(--ui-color-border);
+  background: rgb(255 255 255 / 0.95);
+  padding-inline: sp(4);
+  backdrop-filter: blur(8px);
+  @include up(sm) {
+    padding-inline: sp(6);
+  }
+}
+
+.crumbSlot {
+  min-width: 0;
+  flex: 1;
+}
+
+.avatarSkeleton {
+  width: sp(8);
+  height: sp(8);
+  border-radius: var(--ui-radius-pill);
+}
+
+.main {
+  flex: 1;
+  padding: sp(6) sp(4);
+  // Room for the docked assistant so it never covers the end of a page.
+  padding-bottom: sp(28);
+  &:focus {
+    outline: none;
+  }
+  @include up(sm) {
+    padding: sp(8);
+    padding-bottom: sp(28);
+  }
+}
+
+.container {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+}
+
+/* Page header */
+.pageHeader {
+  margin-bottom: sp(8);
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+  @include up(sm) {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+  }
+}
+
+.pageTitleWrap {
+  min-width: 0;
+}
+
+.pageTitle {
+  @include text(2xl);
+  font-weight: 300;
+  overflow-wrap: break-word;
+}
+
+.pageDescription {
+  margin-top: sp(1);
+  color: var(--ui-color-text-muted);
+}
+
+.pageActions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: sp(3);
+}
+
+/* Breadcrumbs */
+.crumbNav {
+  min-width: 0;
+}
+
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: sp(1.5);
+  @include text(sm);
+}
+
+.crumb {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: sp(1.5);
+}
+
+.crumbLink {
+  @include truncate; /* long project names wrapped over the next crumb at 375px */
+  color: var(--ui-color-text-muted);
+  &:hover {
+    color: var(--ui-color-text);
+  }
+}
+
+.crumbCurrent {
+  @include truncate;
+  font-weight: 500;
+}
+
+.crumbSep {
+  flex-shrink: 0;
+  color: var(--ui-color-text-muted);
+}
+
+/* Profile menu */
+.trigger {
+  display: flex;
+  align-items: center;
+  gap: sp(2);
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1) sp(3) sp(1) sp(1);
+  &:hover {
+    background: var(--ui-color-surface-muted);
+  }
+}
+
+.avatar {
+  display: flex;
+  width: sp(8);
+  height: sp(8);
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-primary-subtle);
+  @include text(sm);
+  font-weight: 500;
+  color: var(--ui-color-primary);
+}
+
+.triggerName {
+  display: none;
+  @include text(sm);
+  font-weight: 500;
+  @include up(sm) {
+    display: inline;
+  }
+}
+
+.menu {
+  z-index: 50;
+  width: sp(64);
+  @include card;
+  padding: sp(1.5);
+  box-shadow: var(--ui-shadow-md);
+}
+
+.menuHead {
+  padding: sp(2) sp(3);
+}
+
+.menuName {
+  font-weight: 500;
+}
+
+.menuEmail {
+  @include truncate;
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.menuRole {
+  margin-top: sp(2);
+}
+
+.separator {
+  margin-block: sp(1);
+  height: 1px;
+  background: var(--ui-color-border);
+}
+
+.item {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  gap: sp(2);
+  border-radius: var(--ui-radius-input);
+  padding: sp(2) sp(3);
+  @include text(sm);
+  outline: none;
+  &[data-highlighted] {
+    background: var(--ui-color-surface-muted);
+  }
+}

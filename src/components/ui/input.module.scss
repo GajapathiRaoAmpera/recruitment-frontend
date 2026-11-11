@@ -1,0 +1,54 @@
+@use "@/styles/mixins" as *;
+
+.control {
+  width: 100%;
+  border: 1px solid var(--ui-color-border-input);
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-surface);
+  padding-inline: sp(3.5);
+  color: var(--ui-color-text);
+  @include text(base);
+  transition:
+    border-color var(--ui-duration-fast) var(--ui-ease-out),
+    box-shadow var(--ui-duration-fast) var(--ui-ease-out);
+
+  &::placeholder {
+    color: var(--ui-color-text-muted);
+    opacity: 0.8;
+  }
+  &:hover:not(:disabled) {
+    border-color: var(--ui-color-text-muted);
+  }
+  &:focus-visible {
+    border-color: var(--ui-color-primary);
+    box-shadow: 0 0 0 3px var(--ui-color-primary-subtle);
+  }
+  &[aria-invalid="true"] {
+    border-color: var(--ui-color-danger);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    background: var(--ui-color-surface-muted);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// 44px: comfortable to read and a full touch target.
+.input {
+  height: sp(11);
+}
+
+.textarea {
+  min-height: sp(24);
+  padding-block: sp(2.5);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.select {
+  height: sp(11);
+  padding-right: sp(8);
+}

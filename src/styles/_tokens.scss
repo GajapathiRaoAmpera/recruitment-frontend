@@ -1,0 +1,105 @@
+/*
+ * Ampera design tokens — derived from amperatech.ai (2026-10-23).
+ * Spec: poc-backend/docs/specs/2026-10-23-foundation-design.md §8
+ * Contrast ratios are measured on --ampera-paper unless noted.
+ */
+:root {
+  /* Primitives */
+  --ampera-magenta-600: #9c369a; /* logo "A"; 6.0:1 */
+  --ampera-magenta-700: #7e2b7c; /* hover/pressed (derived); white text 8.3:1 */
+  --ampera-magenta-50: #f7edf7; /* tinted surfaces (derived) */
+  --ampera-lavender-500: #8070b4; /* sampled from logo wordmark — ASSUMPTION, replace with official */
+  --ampera-navy-900: #000f5c;
+  --ampera-ink-950: #050505;
+  --ampera-paper: #fcfcfc;
+  --ampera-cream: #fffefa;
+  --ampera-gray-500: #969696; /* decorative only: 2.9:1, fails AA as text */
+
+  /* Semantic */
+  --ui-color-bg: var(--ampera-paper);
+  --ui-color-surface: #ffffff;
+  --ui-color-surface-muted: #f5f5f4;
+  --ui-color-text: var(--ampera-ink-950);
+  --ui-color-text-muted: #5b5b5b; /* ink @65% on paper: 6.6:1 */
+  --ui-color-border: rgb(5 5 5 / 0.1);
+  --ui-color-border-strong: rgb(5 5 5 / 0.25);
+  --ui-color-border-input: #8d8d8d; /* ink @45%: 3.2:1, meets non-text 3:1 */
+  --ui-color-primary: var(--ampera-magenta-600);
+  --ui-color-primary-hover: var(--ampera-magenta-700);
+  --ui-color-primary-fg: #ffffff;
+  --ui-color-primary-subtle: var(--ampera-magenta-50);
+  --ui-color-sidebar-bg: var(--ampera-navy-900);
+  --ui-color-sidebar-fg: var(--ampera-cream);
+  --ui-color-sidebar-muted: rgb(255 254 250 / 0.72);
+  --ui-color-sidebar-active: rgb(255 254 250 / 0.12);
+  --ui-scrollbar-thumb: rgb(156 54 154 / 0.45); /* magenta-600, softened so it never competes with content */
+  --ui-scrollbar-thumb-hover: var(--ampera-magenta-600);
+  --ui-scrollbar-track: transparent;
+  --ui-color-focus-ring: var(--ampera-magenta-600);
+  --ui-color-success: #1e7b4a; /* 5.1:1 */
+  --ui-color-success-subtle: #e8f4ed;
+  --ui-color-warning: #8a5a00; /* 5.8:1 */
+  --ui-color-warning-subtle: #fdf4e3;
+  --ui-color-danger: #b42318; /* 6.4:1 */
+  --ui-color-danger-subtle: #fdecea;
+  --ui-color-info: #1d4ed8; /* 6.5:1 */
+  --ui-color-info-subtle: #eaf0fd;
+
+  /* Agent console (on white surface): AA text contrast */
+  --ui-color-console-accent: var(--ampera-magenta-600);
+  --ui-color-console-ok: var(--ui-color-success);
+  --ui-color-console-warn: var(--ui-color-warning);
+  --ui-color-console-error: var(--ui-color-danger);
+  --ui-color-console-info: var(--ui-color-info);
+  --ui-color-console-hover: #faf7fa; /* hover rows */
+
+  /* Assistant character (3D materials only; never used for text) */
+  --ui-color-doll-skin: #f7d6c8;
+  --ui-color-doll-blush: #ff9fb8;
+  --ui-color-doll-hair: #ff6fae;
+  --ui-color-doll-hair-shade: #e2548f;
+  --ui-color-doll-dress: #ff7fb9;
+  --ui-color-doll-dress-light: #ffc2dc;
+  --ui-color-doll-trim: #ffffff;
+  --ui-color-doll-ink: #2a1630;
+  --ui-color-doll-lips: #e0507a;
+  --ui-color-robot-glow: #7fd7ff;
+  --ui-color-robot-success: #39d98a;
+  --ui-color-robot-error: #ff5a4f;
+
+  /* Plan timeline: one fixed hue per role (non-text, >=3:1 on white). Roles beyond six reuse the cycle. */
+  --ui-color-role-1: var(--ampera-magenta-600);
+  --ui-color-role-2: var(--ampera-navy-900);
+  --ui-color-role-3: var(--ampera-lavender-500);
+  --ui-color-role-4: #1f7a8c;
+  --ui-color-role-5: #a8650f;
+  --ui-color-role-6: #5b5b5b;
+
+  /* Architecture diagram: one hue per component category (non-text, >=3:1 on white). */
+  --ui-color-cat-clients: #1f7a8c;
+  --ui-color-cat-application: var(--ampera-magenta-600);
+  --ui-color-cat-data: #2a4bb8;
+  --ui-color-cat-integration: #a8650f;
+  --ui-color-cat-security: #6f5fa8;
+  --ui-color-cat-operations: #5b5b5b;
+  --ui-color-canvas: #f8f7f6;
+  --ui-color-edge: #8a8796; /* connections at rest: 3.4:1 on the canvas */
+
+  /* Shape */
+  --ui-radius-pill: 40px;
+  --ui-radius-card: 12px;
+  --ui-radius-input: 8px;
+
+  /* Shadow: subtle, low-opacity ink (the site uses almost none) */
+  --ui-shadow-sm: 0 1px 2px rgb(5 5 5 / 0.06);
+  --ui-shadow-md: 0 4px 16px rgb(5 5 5 / 0.08);
+
+  /* Motion */
+  --ui-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ui-duration-fast: 150ms;
+  --ui-duration-base: 220ms;
+
+  /* Type */
+  --ui-font-sans: "Switzer", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ui-font-mono: var(--font-fragment-mono), ui-monospace, "SFMono-Regular", monospace;
+}
