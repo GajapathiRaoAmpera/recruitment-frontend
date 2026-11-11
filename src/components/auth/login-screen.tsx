@@ -6,7 +6,7 @@ import { Logo } from "@/components/brand/logo";
 import { Pipeline } from "@/components/brand/pipeline";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { Input, PasswordInput } from "@/components/ui/input";
 import { signInStaff } from "@/features/auth/staff-sign-in";
 import { supabase } from "@/lib/supabase";
 import { signIn, type Portal } from "@/mock/auth";
@@ -98,7 +98,7 @@ export function LoginScreen({ portal }: { portal: Portal }) {
               </Field>
             ) : (
               <Field label="Password">
-                <Input type="password" autoComplete="current-password" value={secret} onChange={(e) => { setSecret(e.target.value); clear(); }} />
+                <PasswordInput autoComplete="current-password" value={secret} onChange={(e) => { setSecret(e.target.value); clear(); }} />
               </Field>
             )}
             <Button type="submit" loading={pending}>

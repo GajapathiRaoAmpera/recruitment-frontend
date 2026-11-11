@@ -52,3 +52,35 @@
   height: sp(11);
   padding-right: sp(8);
 }
+
+.passwordWrap {
+  position: relative;
+}
+
+.passwordInput {
+  padding-right: sp(11); // room for the toggle, so text never runs under it
+}
+
+// Square 44px target sitting inside the field's right edge.
+.reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: sp(11);
+  height: sp(11);
+  border: 0;
+  border-radius: var(--ui-radius-input);
+  background: transparent;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+
+  &:hover {
+    color: var(--ui-color-text);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--ui-color-primary);
+    outline-offset: -4px;
+  }
+}

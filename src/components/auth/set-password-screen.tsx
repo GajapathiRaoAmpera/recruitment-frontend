@@ -6,7 +6,7 @@ import { Logo } from "@/components/brand/logo";
 import { Pipeline } from "@/components/brand/pipeline";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/input";
 import { loadStaffSession } from "@/features/auth/staff-sign-in";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "@/mock/store";
@@ -82,10 +82,10 @@ export function SetPasswordScreen() {
                 }}
               >
                 <Field label="New password" error={error}>
-                  <Input type="password" autoComplete="new-password" value={password} onChange={(e) => { setPassword(e.target.value); setError(undefined); }} />
+                  <PasswordInput autoComplete="new-password" value={password} onChange={(e) => { setPassword(e.target.value); setError(undefined); }} />
                 </Field>
                 <Field label="Repeat password">
-                  <Input type="password" autoComplete="new-password" value={confirm} onChange={(e) => { setConfirm(e.target.value); setError(undefined); }} />
+                  <PasswordInput autoComplete="new-password" value={confirm} onChange={(e) => { setConfirm(e.target.value); setError(undefined); }} />
                 </Field>
                 <Button type="submit" loading={pending}>
                   Save password
