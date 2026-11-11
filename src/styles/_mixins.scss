@@ -78,10 +78,20 @@ $type: (
   overflow: hidden;
 }
 
+@mixin glass($strong: false) {
+  border: 1px solid var(--ui-glass-border);
+  background: var(--ui-glass-bg);
+  @if $strong {
+    background: var(--ui-glass-bg-strong);
+  }
+  box-shadow: var(--ui-glass-shadow);
+  -webkit-backdrop-filter: var(--ui-glass-blur);
+  backdrop-filter: var(--ui-glass-blur);
+}
+
 @mixin card {
-  border: 1px solid var(--ui-color-border);
+  @include glass;
   border-radius: var(--ui-radius-card);
-  background: var(--ui-color-surface);
 }
 
 @mixin eyebrow {

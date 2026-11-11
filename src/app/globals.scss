@@ -49,7 +49,8 @@ html {
 
 body {
   min-height: 100dvh;
-  background: var(--ui-color-bg);
+  background: var(--ui-color-bg-gradient), var(--ui-color-bg);
+  background-attachment: fixed;
   color: var(--ui-color-text);
   font-family: var(--ui-font-sans);
   font-size: 1.0625rem;

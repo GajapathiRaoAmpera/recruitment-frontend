@@ -20,6 +20,7 @@
   gap: sp(3);
   overflow: hidden;
   @include card;
+  background: var(--ui-glass-bg-strong);
   padding: sp(3) sp(3) sp(3) sp(4);
   box-shadow: var(--ui-shadow-md);
   animation: toast-in var(--ui-duration-base) var(--ui-ease-out);

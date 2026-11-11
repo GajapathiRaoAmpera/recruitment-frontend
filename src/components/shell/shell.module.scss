@@ -47,10 +47,11 @@
   height: sp(16);
   align-items: center;
   gap: sp(3);
-  border-bottom: 1px solid var(--ui-color-border);
-  background: rgb(255 255 255 / 0.95);
+  border-bottom: 1px solid var(--ui-glass-border);
+  background: var(--ui-glass-bg-strong);
   padding-inline: sp(4);
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: var(--ui-glass-blur);
+  backdrop-filter: var(--ui-glass-blur);
   @include up(sm) {
     padding-inline: sp(6);
   }
@@ -197,6 +198,7 @@
   z-index: 50;
   width: sp(64);
   @include card;
+  background: var(--ui-glass-bg-strong);
   padding: sp(1.5);
   box-shadow: var(--ui-shadow-md);
 }

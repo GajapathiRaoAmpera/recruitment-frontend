@@ -81,7 +81,10 @@
 
 .card {
   border-radius: var(--ui-radius-card);
-  background: var(--ui-color-surface);
+  border: 1px solid rgb(255 255 255 / 0.4);
+  background: rgb(255 255 255 / 0.9);
+  -webkit-backdrop-filter: var(--ui-glass-blur);
+  backdrop-filter: var(--ui-glass-blur);
   color: var(--ui-color-text);
   padding: sp(8) sp(6);
   box-shadow: 0 24px 60px alpha(var(--ampera-ink-950), 35%);

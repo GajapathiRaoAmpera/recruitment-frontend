@@ -85,6 +85,18 @@
   --ui-color-canvas: #f8f7f6;
   --ui-color-edge: #8a8796; /* connections at rest: 3.4:1 on the canvas */
 
+  /* Glass: frosted white surfaces over a soft brand gradient. Text sits on >=58% white, so contrast stays AA. */
+  --ui-color-bg-gradient:
+    radial-gradient(60rem 40rem at 0% 0%, rgb(156 54 154 / 0.24), transparent 60%),
+    radial-gradient(50rem 36rem at 100% 10%, rgb(128 112 180 / 0.28), transparent 60%),
+    radial-gradient(48rem 40rem at 50% 100%, rgb(0 15 92 / 0.12), transparent 60%);
+  --ui-glass-bg: rgb(255 255 255 / 0.58);
+  --ui-glass-bg-strong: rgb(255 255 255 / 0.82); /* bars, dialogs, popovers: more opaque over busy content */
+  --ui-glass-border: rgb(255 255 255 / 0.75);
+  --ui-glass-blur: blur(16px) saturate(160%);
+  --ui-glass-shadow: 0 8px 32px rgb(0 15 92 / 0.08), inset 0 1px 0 rgb(255 255 255 / 0.6);
+  --ui-glass-sidebar: rgb(0 15 92 / 0.94);
+
   /* Shape */
   --ui-radius-pill: 40px;
   --ui-radius-card: 12px;
