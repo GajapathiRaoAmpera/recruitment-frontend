@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/logo";
+import { Pipeline } from "@/components/brand/pipeline";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,14 @@ export function SetPasswordScreen() {
       <header className={s.brand}>
         <Logo height={28} />
       </header>
+      {/* Same three-part layout as the login page; the grid needs the stage column. */}
+      <section className={s.stage}>
+        <Pipeline className={s.pipeline} />
+        <div>
+          <p className={s.headline}>Welcome to Campus Hire.</p>
+          <p className={s.subline}>Set a password once, then sign in to run campus drives from the first resume to the final decision.</p>
+        </div>
+      </section>
       <main className={s.side}>
         <div className={s.card}>
           <h1 className={s.title}>Set your password</h1>
