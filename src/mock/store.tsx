@@ -3,7 +3,7 @@
 // shortcut: in-memory mock store (resets on full reload). Replace reads/writes with API hooks per ../docs/04-api-contracts.md.
 import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from "react";
 import { loadStaffSession } from "@/features/auth/staff-sign-in";
-import { supabase } from "@/lib/supabase";
+import { linkHash, supabase } from "@/lib/supabase";
 import * as seed from "./data";
 import type {
   AiPrompt, AuditLog, Candidate, College, Drive, EmailLog, Interview, Question, Round, RoundResult,
@@ -329,10 +329,17 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     } catch {
       /* no storage: rebuilt from Supabase below, or the user signs in again */
     }
+    if (supabase && linkHash) {
+      // Opened from an invite/reset link: no usable password yet, so never treat this as signed in.
+      // Any other landing page (e.g. the Site URL fallback) hands the link tokens to /set-password.
+      if (window.location.pathname !== "/set-password") window.location.replace(`/set-password${linkHash}`);
+      setReady(true); // eslint-disable-line react-hooks/set-state-in-effect -- one-time mount flag
+      return;
+    }
     const staff = !saved || saved.role !== "STUDENT";
     if (!supabase || !staff) {
       if (saved) dispatch({ type: "login", session: saved });
-      setReady(true); // eslint-disable-line react-hooks/set-state-in-effect -- one-time mount flag
+      setReady(true);
       return;
     }
     // Real staff sign-in: the Supabase session (localStorage) is the source of truth.

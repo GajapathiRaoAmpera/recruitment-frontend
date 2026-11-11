@@ -7,26 +7,43 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/input";
 import { loadStaffSession } from "@/features/auth/staff-sign-in";
-import { supabase } from "@/lib/supabase";
+import { linkHash, supabase } from "@/lib/supabase";
 import { useStore } from "@/mock/store";
 import { AuthFrame } from "./auth-frame";
 import s from "./login-screen.module.scss";
 
-/** Landing page of the staff invite email: supabase-js reads the invite tokens from the URL, the user picks a password. */
+/** The session carried by the invite/reset link itself, or null when the page wasn't opened from one. */
+function linkTokens() {
+  const p = new URLSearchParams(linkHash?.slice(1) ?? "");
+  const access_token = p.get("access_token");
+  const refresh_token = p.get("refresh_token");
+  return access_token && refresh_token ? { access_token, refresh_token } : null;
+}
+
+/**
+ * Landing page of invite and reset links. It only ever works with the account in the link:
+ * a session already in this browser (e.g. a signed-in Super Admin) must never get its password changed.
+ */
 export function SetPasswordScreen() {
   const router = useRouter();
   const { dispatch } = useStore();
-  const [link, setLink] = useState<"checking" | "ok" | "invalid">(supabase ? "checking" : "invalid");
+  const [tokens] = useState(linkTokens);
+  const [link, setLink] = useState<"checking" | "ok" | "invalid">(supabase && tokens ? "checking" : "invalid");
+  const [email, setEmail] = useState<string>();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
 
   useEffect(() => {
-    if (!supabase) return;
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => setLink(session ? "ok" : "invalid"));
-    return () => data.subscription.unsubscribe();
-  }, []);
+    if (!supabase || !tokens) return;
+    // Switch this browser to the link's account, replacing anyone already signed in here.
+    void supabase.auth.setSession(tokens).then(({ data, error }) => {
+      if (error || !data.session) return setLink("invalid");
+      setEmail(data.session.user.email);
+      setLink("ok");
+    });
+  }, [tokens]);
 
   const submit = async () => {
     if (password.length < 8) return setError("Use at least 8 characters.");
@@ -65,7 +82,9 @@ export function SetPasswordScreen() {
           )}
           {link === "ok" && (
             <>
-              <p className={s.lead}>Choose the password you&apos;ll use to sign in to Campus Hire.</p>
+              <p className={s.lead}>
+                Choose the password for <strong>{email}</strong>. You&apos;ll use it to sign in to Campus Hire.
+              </p>
               <form
                 className={s.form}
                 noValidate

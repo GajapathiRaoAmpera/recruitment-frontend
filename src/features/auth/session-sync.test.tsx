@@ -10,7 +10,7 @@ const auth = vi.hoisted(() => ({
     return { data: { subscription: { unsubscribe() {} } } };
   }),
 }));
-vi.mock("@/lib/supabase", () => ({ supabase: { auth } }));
+vi.mock("@/lib/supabase", () => ({ supabase: { auth }, linkHash: null }));
 
 import { api } from "@/api/client";
 import { initialState, MockStoreProvider, reducer, useStore } from "@/mock/store";
