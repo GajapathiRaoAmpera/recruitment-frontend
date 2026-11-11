@@ -1,19 +1,18 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { safeStorage } from "@/lib/storage";
-import { DEMO_STUDENT } from "@/mock/data";
 import { useStore } from "@/mock/store";
 
-/** Current student; a cold deep link signs in the demo student so every student URL works on its own. */
+/** Current student. Anyone without a student session is sent to sign in. */
 export function useStudent() {
-  const { state, dispatch } = useStore();
+  const { state, ready } = useStore();
+  const router = useRouter();
   const session = state.session?.role === "STUDENT" ? state.session : null;
   useEffect(() => {
-    if (session) return;
-    const demo = state.candidates.find((c) => c.studentId === DEMO_STUDENT.studentId)!;
-    dispatch({ type: "login", session: { role: "STUDENT", candidateId: demo.id } });
-  }, [session, state.candidates, dispatch]);
+    if (ready && !session) router.replace("/student/login");
+  }, [ready, session, router]);
   const candidate = state.candidates.find((c) => c.id === session?.candidateId);
   const drive = state.drives.find((d) => d.id === candidate?.driveId);
   return { candidate, drive };

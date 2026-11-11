@@ -1,25 +1,27 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
+import { homePath, loginPath, portalOf } from "@/mock/auth";
 import { useStore } from "@/mock/store";
 import { Breadcrumbs, BreadcrumbsProvider } from "./breadcrumbs";
 import { ProfileMenu } from "./profile-menu";
 import s from "./shell.module.scss";
 import { MobileNav, Sidebar } from "./sidebar";
 
-/** Staff frame (HR + Super Admin). A cold deep link signs in the matching demo user so every URL works on its own. */
+/** Staff frame (HR + Super Admin). The signed-in account decides the role; there is no role switching. */
 export function AppShell({ children }: { children: ReactNode }) {
-  const { state, dispatch } = useStore();
+  const { state, ready } = useStore();
+  const router = useRouter();
   const pathname = usePathname();
   const session = state.session;
   const staffSession = session && session.role !== "STUDENT" ? session : null;
 
   useEffect(() => {
-    if (staffSession) return;
-    const admin = pathname.startsWith("/admin");
-    dispatch({ type: "login", session: { role: admin ? "SUPER_ADMIN" : "HR", userId: admin ? "u2" : "u1" } });
-  }, [staffSession, pathname, dispatch]);
+    if (!ready || staffSession) return;
+    // Signed-in students go home; everyone else goes to the login of the area they tried to open.
+    router.replace(session ? homePath[portalOf(session.role)] : loginPath[pathname.startsWith("/admin") ? "admin" : "hr"]);
+  }, [ready, staffSession, session, pathname, router]);
 
   const user = state.staff.find((u) => u.id === staffSession?.userId);
   const role = staffSession?.role ?? "HR";

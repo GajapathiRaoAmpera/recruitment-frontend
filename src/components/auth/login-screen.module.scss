@@ -1,0 +1,129 @@
+@use "@/styles/mixins" as *;
+
+/* One navy stage: the pipeline runs across the left, the sign-in card sits where candidates arrive. */
+.page {
+  display: grid;
+  min-height: 100dvh;
+  background: var(--ui-color-sidebar-bg);
+  color: var(--ui-color-sidebar-fg);
+  grid-template-rows: auto auto 1fr;
+  @include up(lg) {
+    grid-template-columns: minmax(0, 1fr) 28rem;
+    grid-template-rows: auto 1fr auto;
+    column-gap: sp(10);
+    padding-right: sp(12);
+  }
+}
+
+.brand {
+  padding: sp(6) sp(4) 0;
+  @include up(sm) {
+    padding: sp(8) sp(8) 0;
+  }
+  @include up(lg) {
+    grid-column: 1 / -1;
+    padding: sp(10) sp(12) 0;
+  }
+}
+
+.stage {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: center;
+  gap: sp(8);
+  padding: sp(6) sp(4) sp(4);
+  @include up(sm) {
+    padding: sp(8);
+  }
+  @include up(lg) {
+    padding: 0 0 sp(10) sp(12);
+  }
+}
+
+.pipeline {
+  height: 13rem;
+  @include up(lg) {
+    height: min(46vh, 26rem);
+  }
+}
+
+.headline {
+  max-width: 34rem;
+  @include text(2xl);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  @include up(lg) {
+    font-size: 2.75rem;
+    line-height: 1.1;
+  }
+}
+
+.subline {
+  margin-top: sp(3);
+  max-width: 34rem;
+  color: var(--ui-color-sidebar-muted);
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: sp(4);
+  padding: sp(2) sp(4) sp(10);
+  @include up(sm) {
+    padding-inline: sp(8);
+  }
+  @include up(lg) {
+    padding: 0 0 sp(10);
+  }
+}
+
+.card {
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  padding: sp(8) sp(6);
+  box-shadow: 0 24px 60px alpha(var(--ampera-ink-950), 35%);
+  @include up(sm) {
+    padding: sp(10) sp(8);
+  }
+}
+
+.title {
+  @include text(xl);
+  font-weight: 400;
+}
+
+.lead {
+  margin-top: sp(1);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.form {
+  margin-top: sp(6);
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+}
+
+.demo {
+  @include text(xs);
+  color: var(--ui-color-sidebar-muted);
+  line-height: 1.6;
+  strong {
+    font-weight: 500;
+    color: var(--ui-color-sidebar-fg);
+  }
+}
+
+.copy {
+  @include text(xs);
+  color: var(--ui-color-sidebar-muted);
+  padding: 0 sp(4) sp(6);
+  @include up(lg) {
+    grid-column: 1 / -1;
+    padding: 0 sp(12) sp(8);
+  }
+}

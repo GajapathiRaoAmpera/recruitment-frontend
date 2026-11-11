@@ -1,0 +1,34 @@
+@use "@/styles/mixins" as *;
+
+.wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.gates {
+  position: absolute;
+  inset: auto 0 0;
+  height: sp(6);
+}
+
+.gate {
+  position: absolute;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  @include text(xs);
+  color: var(--ui-color-sidebar-muted);
+  @include up(sm) {
+    @include text(sm);
+  }
+  &:last-child {
+    color: var(--ui-color-sidebar-fg);
+    font-weight: 500;
+  }
+}

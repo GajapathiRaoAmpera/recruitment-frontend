@@ -1,7 +1,7 @@
 "use client";
 
 // shortcut: in-memory mock store (resets on full reload). Replace reads/writes with API hooks per ../docs/04-api-contracts.md.
-import { createContext, useContext, useReducer, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from "react";
 import * as seed from "./data";
 import type {
   AiPrompt, AuditLog, Candidate, College, Drive, EmailLog, Interview, Question, Round, RoundResult,
@@ -294,11 +294,34 @@ export function mockEvaluate(transcript: TranscriptTurn[]) {
   };
 }
 
-const Ctx = createContext<{ state: State; dispatch: (a: Action) => void } | null>(null);
+const Ctx = createContext<{ state: State; dispatch: (a: Action) => void; ready: boolean } | null>(null);
+const SESSION_KEY = "ampera.session";
 
 export function MockStoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  return <Ctx.Provider value={{ state, dispatch }}>{children}</Ctx.Provider>;
+  const [ready, setReady] = useState(false);
+
+  // Restore the session once on mount (sessionStorage is browser-only), then keep it in sync.
+  useEffect(() => {
+    try {
+      const raw = window.sessionStorage.getItem(SESSION_KEY);
+      if (raw) dispatch({ type: "login", session: JSON.parse(raw) as Session });
+    } catch {
+      /* no storage: user signs in again */
+    }
+    setReady(true); // eslint-disable-line react-hooks/set-state-in-effect -- one-time mount flag
+  }, []);
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      if (state.session) window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(state.session));
+      else window.sessionStorage.removeItem(SESSION_KEY);
+    } catch {
+      /* ignore */
+    }
+  }, [state.session, ready]);
+
+  return <Ctx.Provider value={{ state, dispatch, ready }}>{children}</Ctx.Provider>;
 }
 
 export function useStore() {

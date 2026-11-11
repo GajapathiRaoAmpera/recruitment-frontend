@@ -47,7 +47,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
           size="sm"
           onClick={() => {
             dispatch({ type: "logout" });
-            router.replace("/login");
+            router.replace("/student/login");
           }}
         >
           Sign out

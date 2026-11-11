@@ -1,9 +1,10 @@
 "use client";
 
 import * as DM from "@radix-ui/react-dropdown-menu";
-import { LogOut, Repeat } from "lucide-react";
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { loginPath, portalOf } from "@/mock/auth";
 import { useStore } from "@/mock/store";
 import type { StaffUser } from "@/mock/types";
 import s from "./shell.module.scss";
@@ -20,7 +21,6 @@ export function initials(name: string) {
 export function ProfileMenu({ user }: { user: StaffUser }) {
   const router = useRouter();
   const { dispatch } = useStore();
-  const other = user.role === "HR" ? { role: "SUPER_ADMIN" as const, userId: "u2", href: "/admin", label: "Super Admin" } : { role: "HR" as const, userId: "u1", href: "/hr", label: "HR" };
 
   return (
     <DM.Root>
@@ -43,17 +43,8 @@ export function ProfileMenu({ user }: { user: StaffUser }) {
           <DM.Item
             className={s.item}
             onSelect={() => {
-              dispatch({ type: "login", session: { role: other.role, userId: other.userId } });
-              router.push(other.href);
-            }}
-          >
-            <Repeat aria-hidden size={16} /> Demo: switch to {other.label}
-          </DM.Item>
-          <DM.Item
-            className={s.item}
-            onSelect={() => {
               dispatch({ type: "logout" });
-              router.replace("/login");
+              router.replace(loginPath[portalOf(user.role)]);
             }}
           >
             <LogOut aria-hidden size={16} /> Sign out
