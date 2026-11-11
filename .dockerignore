@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+.git
+.github
+.claude
+node_modules
+.next
+coverage
+*.tsbuildinfo
+stitch_ampera_campus_recruitment_platform
+Dockerfile
