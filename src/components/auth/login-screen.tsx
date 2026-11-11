@@ -1,9 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Logo } from "@/components/brand/logo";
-import { Pipeline } from "@/components/brand/pipeline";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, PasswordInput } from "@/components/ui/input";
@@ -12,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { signIn, type Portal } from "@/mock/auth";
 import { DEMO_STUDENT } from "@/mock/data";
 import { useStore } from "@/mock/store";
+import { AuthFrame } from "./auth-frame";
 import s from "./login-screen.module.scss";
 
 const COPY: Record<Portal, { title: string; lead: string; demo: React.ReactNode }> = {
@@ -59,20 +59,10 @@ export function LoginScreen({ portal }: { portal: Portal }) {
   const clear = () => setError(undefined);
 
   return (
-    <div className={s.page}>
-      <header className={s.brand}>
-        <Logo height={28} />
-      </header>
-
-      <section className={s.stage}>
-        <Pipeline className={s.pipeline} />
-        <div>
-          <p className={s.headline}>Every campus drive, from the first resume to the final decision.</p>
-          <p className={s.subline}>Students take each round from one link. HR sees every result and decides who moves on.</p>
-        </div>
-      </section>
-
-      <main className={s.side}>
+    <AuthFrame
+      headline="Every campus drive, from the first resume to the final decision."
+      subline="Students take each round from one link. HR sees every result and decides who moves on."
+    >
         <div className={s.card}>
           <h1 className={s.title}>{copy.title}</h1>
           <p className={s.lead}>{copy.lead}</p>
@@ -101,15 +91,17 @@ export function LoginScreen({ portal }: { portal: Portal }) {
                 <PasswordInput autoComplete="current-password" value={secret} onChange={(e) => { setSecret(e.target.value); clear(); }} />
               </Field>
             )}
+            {realStaff && (
+              <Link href={`/forgot-password?portal=${portal}`} className={s.link}>
+                Forgot password?
+              </Link>
+            )}
             <Button type="submit" loading={pending}>
               Sign in
             </Button>
           </form>
         </div>
         {!realStaff && <p className={s.demo}>{copy.demo}</p>}
-      </main>
-
-      <footer className={s.copy}>© Ampera Technologies</footer>
-    </div>
+    </AuthFrame>
   );
 }

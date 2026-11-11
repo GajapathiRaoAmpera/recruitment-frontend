@@ -25,6 +25,18 @@ export async function loadStaffSession(): Promise<Result> {
 }
 
 /**
+ * Email a password-reset link that opens /set-password. Resolves to an error message, or undefined.
+ * Supabase answers the same for unknown emails, so the page can't be used to discover accounts.
+ */
+export async function requestPasswordReset(email: string, origin: string): Promise<string | undefined> {
+  if (!supabase) return "Password reset isn't configured. Ask the team for the Supabase settings.";
+  if (!/^\S+@\S+\.\S+$/.test(email.trim())) return "Enter your work email.";
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${origin}/set-password` });
+  if (!error) return undefined;
+  return error.status === 429 ? "Too many reset emails were sent. Wait a few minutes and try again." : `Couldn't send the email (${error.message}). Try again.`;
+}
+
+/**
  * Real HR/Admin sign-in (D3): Supabase checks the password, then GET /me says who this is.
  * The role comes from the API, never from the browser.
  */
