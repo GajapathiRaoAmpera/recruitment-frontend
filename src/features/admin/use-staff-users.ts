@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api/client";
 import { toStaff, type ApiUser } from "@/features/auth/staff-sign-in";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +9,8 @@ import type { StaffRole, StaffUser } from "@/mock/types";
 
 export type InviteForm = { name: string; email: string; title: string; role: StaffRole };
 
+const staffUsersKey = ["admin", "staff-users"] as const;
+
 /**
  * Staff list for the Users page: /admin/users when Supabase is configured, the mock store otherwise.
  * invite/toggle resolve to an error message, or undefined on success.
@@ -16,15 +18,33 @@ export type InviteForm = { name: string; email: string; title: string; role: Sta
 export function useStaffUsers() {
   const { state, dispatch } = useStore();
   const real = supabase !== null;
-  const [users, setUsers] = useState<StaffUser[]>();
-  const [loadError, setLoadError] = useState<string>();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (!real) return;
-    api<{ items: ApiUser[] }>("/admin/users")
-      .then((r) => setUsers(r.items.map(toStaff)))
-      .catch((e: Error) => setLoadError(e.message));
-  }, [real]);
+  const query = useQuery({
+    queryKey: staffUsersKey,
+    queryFn: async () => (await api<{ items: ApiUser[] }>("/admin/users")).items.map(toStaff),
+    enabled: real,
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: (f: InviteForm) => {
+      const body = JSON.stringify({ email: f.email.trim(), full_name: f.name, role: f.role === "SUPER_ADMIN" ? "super_admin" : "hr" });
+      return api<ApiUser>("/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body }).then(toStaff);
+    },
+    onSuccess: (created) => {
+      queryClient.setQueryData<StaffUser[]>(staffUsersKey, (list) => [...(list ?? []), created]);
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: (u: StaffUser) => {
+      const body = JSON.stringify({ is_active: !u.active });
+      return api<ApiUser>(`/admin/users/${u.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body }).then(toStaff);
+    },
+    onSuccess: (updated) => {
+      queryClient.setQueryData<StaffUser[]>(staffUsersKey, (list) => list?.map((x) => (x.id === updated.id ? updated : x)));
+    },
+  });
 
   if (!real) {
     return {
@@ -36,24 +56,20 @@ export function useStaffUsers() {
     };
   }
 
-  const replace = (u: StaffUser) => setUsers((list) => list?.map((x) => (x.id === u.id ? u : x)));
   return {
     real,
-    users,
-    loadError,
+    users: query.data,
+    loadError: query.error instanceof Error ? query.error.message : undefined,
     invite: async (f: InviteForm) => {
       try {
-        const body = JSON.stringify({ email: f.email.trim(), full_name: f.name, role: f.role === "SUPER_ADMIN" ? "super_admin" : "hr" });
-        const created = toStaff(await api<ApiUser>("/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body }));
-        setUsers((list) => [...(list ?? []), created]);
+        await inviteMutation.mutateAsync(f);
       } catch (e) {
         return (e as Error).message;
       }
     },
     toggle: async (u: StaffUser) => {
       try {
-        const body = JSON.stringify({ is_active: !u.active });
-        replace(toStaff(await api<ApiUser>(`/admin/users/${u.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body })));
+        await toggleMutation.mutateAsync(u);
       } catch (e) {
         return (e as Error).message;
       }

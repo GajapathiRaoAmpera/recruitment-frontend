@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fragment_Mono } from "next/font/google";
+import { QueryProvider } from "@/api/query-client";
 import { ToastProvider } from "@/components/ui/toast";
 import { MockStoreProvider } from "@/mock/store";
 import "./globals.scss";
@@ -25,9 +26,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body>
         {/* One store for all portals so HR actions show up in the student portal and vice versa. */}
-        <MockStoreProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </MockStoreProvider>
+        <QueryProvider>
+          <MockStoreProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </MockStoreProvider>
+        </QueryProvider>
       </body>
     </html>
   );

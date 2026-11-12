@@ -1,5 +1,6 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, renderHook, waitFor } from "@testing-library/react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/supabase", () => ({
@@ -10,7 +11,14 @@ import { MockStoreProvider } from "@/mock/store";
 import { useStaffUsers } from "./use-staff-users";
 
 const hr = { id: "u-1", email: "hr@x.com", full_name: "Asha", role: "hr", is_active: true };
-const wrapper = ({ children }: { children: ReactNode }) => <MockStoreProvider>{children}</MockStoreProvider>;
+const wrapper = ({ children }: { children: ReactNode }) => {
+  const [client] = useState(() => new QueryClient());
+  return (
+    <QueryClientProvider client={client}>
+      <MockStoreProvider>{children}</MockStoreProvider>
+    </QueryClientProvider>
+  );
+};
 
 describe("Users page data via /admin/users (FR-27)", () => {
   it("loads, invites and deactivates through the API", async () => {
@@ -31,11 +39,11 @@ describe("Users page data via /admin/users (FR-27)", () => {
     const [url, init] = fetchMock.mock.calls[1];
     expect(url).toBe("/api/v1/admin/users");
     expect(JSON.parse(init!.body as string)).toEqual({ email: "new@x.com", full_name: "New", role: "super_admin" });
-    expect(result.current.users!.map((u) => u.role)).toEqual(["HR", "SUPER_ADMIN"]);
+    await waitFor(() => expect(result.current.users!.map((u) => u.role)).toEqual(["HR", "SUPER_ADMIN"]));
 
     await act(async () => void (await result.current.toggle(result.current.users![0])));
     expect(fetchMock.mock.calls[2][0]).toBe("/api/v1/admin/users/u-1");
-    expect(result.current.users![0].active).toBe(false);
+    await waitFor(() => expect(result.current.users![0].active).toBe(false));
   });
 
   it("returns the API's message when an invite fails", async () => {
