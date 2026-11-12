@@ -1,25 +1,10 @@
 import { api } from "@/api/client";
+import { fromWire as from, json as toJson } from "@/api/wire";
 import type { AiStatus, Draft, DraftDetail, PaperSettings, QuestionEdit, SendResult } from "@/features/papers/types";
 
-// The single place wire snake_case <-> app camelCase is mapped. Wire keys are all lower snake_case
-// identifiers (enum values such as "non_it" are values, never keys), so a structural key map is safe.
-const toCamelKey = (k: string) => k.replace(/_([a-z0-9])/g, (_, c: string) => c.toUpperCase());
-const toSnakeKey = (k: string) => k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
-
-function mapKeys(value: unknown, fn: (k: string) => string): unknown {
-  if (Array.isArray(value)) return value.map((v) => mapKeys(v, fn));
-  if (value && typeof value === "object") {
-    return Object.fromEntries(Object.entries(value).map(([k, v]) => [fn(k), mapKeys(v, fn)]));
-  }
-  return value;
-}
-
-const fromWire = <T>(v: unknown) => mapKeys(v, toCamelKey) as T;
-const json = (method: string, body: unknown): RequestInit => ({
-  method,
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(mapKeys(body, toSnakeKey)),
-});
+const RAW = new Set(["subjects"]); // settings.subjects is keyed by subject name
+const fromWire = <T>(v: unknown) => from<T>(v, RAW);
+const json = (method: string, body: unknown) => toJson(method, body, RAW);
 const draftPath = (id: string) => `/papers/drafts/${encodeURIComponent(id)}`;
 
 export const aiStatus = async () => fromWire<AiStatus>(await api<unknown>("/papers/ai-status"));

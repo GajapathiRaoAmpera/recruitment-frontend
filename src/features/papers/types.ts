@@ -14,6 +14,10 @@ export interface PaperSettings {
   differentPerStudent: boolean;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
+  /** IT Technical from the PDF banks: subject name → weight (sum 100); null/absent = even split. */
+  subjects?: Record<string, number> | null;
+  /** Steers bank retrieval when embeddings exist (≤ 200 chars). */
+  focus?: string | null;
 }
 
 export interface Progress {

@@ -1,4 +1,4 @@
-import { BookOpenCheck, Building2, ClipboardList, FileText, FolderKanban, LayoutDashboard, type LucideIcon, ScrollText, Settings2, Users, Video } from "lucide-react";
+import { BookOpenCheck, Building2, ClipboardList, FileText, FolderKanban, LayoutDashboard, Library, type LucideIcon, ScrollText, Settings2, Users, Video } from "lucide-react";
 import type { Role } from "@/mock/types";
 
 export interface NavItem {
@@ -14,6 +14,7 @@ export function navItems(role: Role): NavItem[] {
     { label: "Drives", href: "/hr/drives", icon: FolderKanban, section: "main" },
     { label: "Question bank", href: "/hr/questions", icon: BookOpenCheck, section: "main" },
     { label: "Paper builder", href: "/hr/papers", icon: FileText, section: "main" },
+    { label: "PDF question banks", href: "/hr/question-banks", icon: Library, section: "main" },
     { label: "Interviews", href: "/hr/interviews", icon: Video, section: "main" },
   ];
   if (role === "SUPER_ADMIN") {
