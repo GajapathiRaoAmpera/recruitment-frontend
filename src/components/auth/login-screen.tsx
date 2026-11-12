@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, PasswordInput } from "@/components/ui/input";
+import { entryVerify } from "@/api/entry";
 import { signInStaff } from "@/features/auth/staff-sign-in";
 import { supabase } from "@/lib/supabase";
 import { signIn, type Portal } from "@/mock/auth";
@@ -72,6 +73,21 @@ export function LoginScreen({ portal }: { portal: Portal }) {
             onSubmit={async (e) => {
               e.preventDefault();
               setPending(true);
+              if (student && supabase) {
+                // Real student sign-in: the API checks Student ID + DOB against the imported candidates.
+                if (!identifier.trim() || !secret) {
+                  setPending(false);
+                  return setError("Enter your Student ID and date of birth.");
+                }
+                try {
+                  dispatch({ type: "login", session: { role: "STUDENT", student: await entryVerify(identifier, secret) } });
+                  return router.push("/student");
+                } catch (err) {
+                  return setError((err as Error).message);
+                } finally {
+                  setPending(false);
+                }
+              }
               const res = realStaff ? await signInStaff(portal, identifier, secret) : signIn(state, portal, identifier, secret);
               setPending(false);
               if ("error" in res) return setError(res.error);
@@ -101,7 +117,7 @@ export function LoginScreen({ portal }: { portal: Portal }) {
             </Button>
           </form>
         </div>
-        {!realStaff && <p className={s.demo}>{copy.demo}</p>}
+        {!realStaff && !(student && supabase) && <p className={s.demo}>{copy.demo}</p>}
     </AuthFrame>
   );
 }

@@ -1,4 +1,5 @@
 import { CheckCircle2, Pencil } from "lucide-react";
+import type { ReactNode } from "react";
 import { hire as h } from "@/components/hire/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,8 @@ export function RichText({ text }: { text: string }) {
   );
 }
 
-export function QuestionCard({ q, n, onEdit }: { q: KeyItem; n: number; onEdit?: () => void }) {
+/** `tags` replaces the default Verified / Edited badges (e.g. bank questions show Approved / warnings). */
+export function QuestionCard({ q, n, onEdit, tags }: { q: KeyItem; n: number; onEdit?: () => void; tags?: ReactNode }) {
   return (
     <li className={s.question} aria-labelledby={`q-${q.id}`}>
       <div className={s.questionHead}>
@@ -41,8 +43,12 @@ export function QuestionCard({ q, n, onEdit }: { q: KeyItem; n: number; onEdit?:
           {q.topic && <span className={h.xs}>{q.topic}</span>}
         </span>
         <span className={h.row}>
-          <Badge tone="success">Verified</Badge>
-          {q.edited && <Badge tone="info">Edited</Badge>}
+          {tags ?? (
+            <>
+              <Badge tone="success">Verified</Badge>
+              {q.edited && <Badge tone="info">Edited</Badge>}
+            </>
+          )}
           {onEdit && (
             <Button variant="secondary" size="sm" onClick={onEdit} aria-label={`Edit question ${n}`}>
               <Pencil aria-hidden size={14} style={{ marginRight: 4 }} /> Edit

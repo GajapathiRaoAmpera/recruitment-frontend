@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { editQuestion } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
@@ -24,13 +24,19 @@ export function validateEdit(q: QuestionEdit): string | undefined {
 }
 
 interface Props {
-  draftId: string;
   question: KeyItem;
   onClose: () => void;
-  onSaved: (d: DraftDetail) => void;
+  /** Paper drafts: saved through PATCH /papers/drafts/{draftId}/questions/{id}. */
+  draftId?: string;
+  onSaved?: (d: DraftDetail) => void;
+  /** Any other owner of the question (e.g. a question bank) saves through this instead. */
+  save?: (body: QuestionEdit) => Promise<void>;
+  warning?: ReactNode;
 }
 
-export function QuestionEditDialog({ draftId, question, onClose, onSaved }: Props) {
+const PAPER_WARNING = "This changes the question for every candidate whose paper includes it.";
+
+export function QuestionEditDialog({ draftId, question, onClose, onSaved, save: saveTo, warning = PAPER_WARNING }: Props) {
   const toast = useToast();
   const [q, setQ] = useState<QuestionEdit>({ text: question.text, options: [...question.options], answer: question.answer, why: question.why });
   const [error, setError] = useState<string>();
@@ -42,8 +48,10 @@ export function QuestionEditDialog({ draftId, question, onClose, onSaved }: Prop
     setSaving(true);
     setError(undefined);
     try {
-      onSaved(await editQuestion(draftId, question.id, { ...q, text: q.text.trim(), why: q.why.trim(), options: q.options.map((o) => o.trim()) }));
-      toast({ tone: "success", title: "Question saved", description: "Checks refreshed." });
+      const body = { ...q, text: q.text.trim(), why: q.why.trim(), options: q.options.map((o) => o.trim()) };
+      if (saveTo) await saveTo(body);
+      else onSaved?.(await editQuestion(draftId!, question.id, body));
+      toast({ tone: "success", title: "Question saved", description: saveTo ? undefined : "Checks refreshed." });
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save. Try again.");
@@ -70,7 +78,7 @@ export function QuestionEditDialog({ draftId, question, onClose, onSaved }: Prop
         <div className={h.stackSm}>
           <p className={s.banner}>
             <AlertTriangle aria-hidden size={16} />
-            <span>This changes the question for every candidate whose paper includes it.</span>
+            <span>{warning}</span>
           </p>
           {error && (
             <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>

@@ -15,7 +15,7 @@ export function useStudent() {
   }, [ready, session, router]);
   const candidate = state.candidates.find((c) => c.id === session?.candidateId);
   const drive = state.drives.find((d) => d.id === candidate?.driveId);
-  return { candidate, drive };
+  return { candidate, drive, real: session?.student };
 }
 
 export interface ExamDraft<T> {

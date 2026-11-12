@@ -17,8 +17,10 @@ import { Chips, hire as h, Person, ResultBadge, RoundStatusBadge, Segment, StatC
 import { RoundActions } from "@/components/hire/round-actions";
 import { driveRounds, pct, useStore } from "@/mock/store";
 import type { Candidate, Round, RoundResult } from "@/mock/types";
+import { RealDriveHome } from "@/features/hiring/real-drive-home";
+import { supabase } from "@/lib/supabase";
 
-export default function DrivePipelinePage() {
+function MockPipeline() {
   const { driveId } = useParams<{ driveId: string }>();
   const { state, dispatch } = useStore();
   const toast = useToast();
@@ -240,4 +242,8 @@ function CandidateCard({ c, last }: { c: Candidate; last?: RoundResult }) {
       </div>
     </Link>
   );
+}
+
+export default function DrivePipelinePage() {
+  return supabase ? <RealDriveHome /> : <MockPipeline />;
 }
