@@ -9,16 +9,16 @@ import s from "./papers.module.scss";
 export const SECTIONS: readonly Section[] = ["aptitude", "reasoning", "technical"];
 export const sum = (r: Record<string, number>) => Object.values(r).reduce((a, b) => a + b, 0);
 
-/** Rescales the mix to total exactly 100 (largest-remainder rounding); all zero → an even split. */
-export function balance(mix: Record<Section, number>): Record<Section, number> {
+/** Rescales weights to total exactly 100 (largest-remainder rounding); all zero → an even split. */
+export function balance<K extends string>(mix: Record<K, number>, keys: readonly K[] = Object.keys(mix) as K[]): Record<K, number> {
   const total = sum(mix);
-  const raw = SECTIONS.map((k) => (total ? (mix[k] * 100) / total : 100 / SECTIONS.length));
+  const raw = keys.map((k) => (total ? (mix[k] * 100) / total : 100 / keys.length));
   const out = raw.map(Math.floor);
   // Hand the leftover points to the sections with the largest fractional parts.
   const order = raw.map((v, i) => ({ frac: v - Math.floor(v), i })).sort((a, b) => b.frac - a.frac);
   const leftover = 100 - out.reduce((a, b) => a + b, 0);
   for (let j = 0; j < leftover; j++) out[order[j]!.i]! += 1;
-  return Object.fromEntries(SECTIONS.map((k, i) => [k, out[i]!])) as Record<Section, number>;
+  return Object.fromEntries(keys.map((k, i) => [k, out[i]!])) as Record<K, number>;
 }
 
 /** Aptitude / Reasoning / Technical percentages with a visible running total and "Balance to 100". */
@@ -32,7 +32,7 @@ export function MixEditor({ value, onChange, technicalLabel }: { value: Record<S
           Total {total}% {total === 100 ? "" : "— must be 100%"}
         </span>
         {total !== 100 && (
-          <Button variant="tertiary" size="sm" onClick={() => onChange(balance(value))}>
+          <Button variant="tertiary" size="sm" onClick={() => onChange(balance(value, SECTIONS))}>
             Balance to 100
           </Button>
         )}

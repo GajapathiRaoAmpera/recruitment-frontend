@@ -3,14 +3,16 @@
 import { AlertTriangle, Sparkles } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { createDraft, aiStatus } from "@/api/papers";
+import { getAvailability } from "@/api/qbank";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
-import { Field, useFieldControl } from "@/components/ui/field";
+import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Draft, Level, PaperSettings } from "@/features/papers/types";
 import { useAsync } from "@/features/papers/use-async";
 import { supabase } from "@/lib/supabase";
+import { BankTechnical, bankShortfall } from "./bank-technical";
 import { CountSteppers, NumberStepper } from "./count-steppers";
 import { MixEditor, sum } from "./mix-editor";
 import s from "./papers.module.scss";
@@ -48,15 +50,10 @@ export function SetupStep(props: SetupStepProps) {
   return supabase ? <SetupForm {...props} /> : <PrototypeState />;
 }
 
-/** Range slider wired to the surrounding <Field> label. */
-function Range({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-  const field = useFieldControl();
-  return <input type="range" {...field} className={s.range} min={0} max={100} step={5} value={value} onChange={(e) => onChange(Number(e.target.value))} />;
-}
-
 function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
   const trackLabel = useId();
   const providers = useAsync(aiStatus, []);
+  const availability = useAsync(() => getAvailability("it"), []); // IT Technical comes from the PDF banks
   const [driveRef, setDriveRef] = useState(drives.some((d) => d.id === initialDrive) ? initialDrive! : (drives[0]?.id ?? ""));
   const [title, setTitle] = useState("Round 1 — Aptitude paper");
   const [settings, setSettings] = useState<PaperSettings>(DEFAULT_SETTINGS);
@@ -65,7 +62,13 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
   const set = (patch: Partial<PaperSettings>) => setSettings((v) => ({ ...v, ...patch }));
 
   const total = sum(settings.counts);
-  const missing = providers.data ? [!providers.data.gemini && "Gemini (writes questions)", !providers.data.groq && "Groq (checks answers)"].filter(Boolean) : [];
+  const isIt = settings.track === "it";
+  // IT: Gemini picks the sample paper. Non-IT: Gemini writes the soft-skill questions and Groq checks them.
+  const missing = providers.data
+    ? [!providers.data.gemini && (isIt ? "Gemini (picks the sample paper)" : "Gemini (writes questions)"), !isIt && !providers.data.groq && "Groq (checks answers)"].filter(Boolean)
+    : [];
+  const short = isIt && availability.data ? bankShortfall(settings, availability.data) : {};
+  const shortText = Object.entries(short).map(([lv, n]) => `${lv} ${n}`).join(", ");
   const blocker =
     !driveRef ? "Pick a drive." :
     !title.trim() ? "Enter a title." :
@@ -73,7 +76,11 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
     sum(settings.mix) !== 100 ? "The section mix must total 100%." :
     providers.loading ? "Checking AI providers…" :
     providers.error ? "Could not check the AI providers." :
-    missing.length ? "An AI provider key is missing." : undefined;
+    missing.length ? "An AI provider key is missing." :
+    isIt && availability.loading && !availability.data ? "Checking the question banks…" :
+    isIt && !availability.data ? "Could not load the question banks." :
+    isIt && settings.subjects && sum(settings.subjects) !== 100 ? "The subject mix must total 100%." :
+    shortText ? `The PDF banks are short of approved Technical questions (${shortText}). Upload or approve more, or lower the counts.` : undefined;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -81,7 +88,8 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
     setSubmitting(true);
     setError(undefined);
     try {
-      onCreated(await createDraft({ driveRef, title: title.trim(), settings }));
+      const sent: PaperSettings = { ...settings, subjects: isIt ? (settings.subjects ?? null) : null, focus: isIt ? settings.focus?.trim() || null : null };
+      onCreated(await createDraft({ driveRef, title: title.trim(), settings: sent }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create the paper. Try again.");
       setSubmitting(false);
@@ -107,7 +115,7 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
           <p role="alert" className={s.banner}>
             <AlertTriangle aria-hidden size={16} />
             <span>
-              Missing API key for {missing.join(" and ")}. Ask a Super Admin to add it to the backend <code>.env</code> and restart the API — both models are required so every question is independently checked.
+              Missing API key for {missing.join(" and ")}. Ask a Super Admin to add it to the backend <code>.env</code> and restart the API.
             </span>
           </p>
         ) : null}
@@ -137,7 +145,7 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
             </p>
             <TrackToggle labelledBy={trackLabel} value={settings.track} onChange={(track) => set({ track })} />
             <p className={h.xs} style={{ marginTop: 6 }}>
-              {settings.track === "it" ? "Technical section covers programming concepts and code syntax." : "Technical section covers workplace soft skills."}
+              {isIt ? "Technical questions come from the approved questions in your PDF question banks." : "Technical section covers workplace soft skills, written and checked by AI."}
             </p>
           </div>
         </section>
@@ -149,13 +157,17 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
           <div className={h.stack}>
             <CountSteppers keys={LEVELS} labels={LEVEL_LABELS} value={settings.counts} max={100} onChange={(counts) => set({ counts })} />
             <MixEditor value={settings.mix} technicalLabel={settings.track === "it" ? "Technical %" : "Soft skills %"} onChange={(mix) => set({ mix })} />
-            {settings.track === "it" && (
-              <Field label={`Syntax vs concept — ${settings.itSyntaxPercent}% syntax`} hint="Share of technical questions that ask about code syntax; the rest test concepts.">
-                <Range value={settings.itSyntaxPercent} onChange={(itSyntaxPercent) => set({ itSyntaxPercent })} />
-              </Field>
-            )}
           </div>
         </section>
+
+        {isIt && (
+          <section className={h.card} aria-labelledby="paper-bank">
+            <h2 id="paper-bank" className={h.cardTitle} style={{ marginBottom: "1rem" }}>
+              Technical from your PDF banks
+            </h2>
+            <BankTechnical settings={settings} onChange={set} availability={availability} />
+          </section>
+        )}
 
         <section className={h.card} aria-labelledby="paper-rules">
           <h2 id="paper-rules" className={h.cardTitle} style={{ marginBottom: "1rem" }}>
