@@ -1,0 +1,348 @@
+// Paper builder styles on top of hire.module.scss. Tokens only — no hex values.
+@use "@/styles/mixins" as *;
+
+.radiogroup {
+  display: inline-flex;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-pill);
+  padding: 3px;
+  background: var(--ui-color-surface);
+}
+
+.radio {
+  min-height: 36px;
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1) sp(4);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  @include focus-ring;
+  &[aria-checked="true"] {
+    background: var(--ui-color-primary-subtle);
+    font-weight: 500;
+    color: var(--ui-color-primary);
+  }
+}
+
+.numbers {
+  display: grid;
+  gap: sp(3);
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: sp(1);
+  input {
+    width: 4.5rem;
+    text-align: center;
+  }
+}
+
+.total {
+  @include text(sm);
+  font-variant-numeric: tabular-nums;
+  &[data-ok="false"] {
+    font-weight: 500;
+    color: var(--ui-color-danger);
+  }
+  &[data-ok="true"] {
+    color: var(--ui-color-success);
+  }
+}
+
+.range {
+  width: 100%;
+  accent-color: var(--ui-color-primary);
+}
+
+.toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(2) sp(5);
+  label {
+    display: inline-flex;
+    align-items: center;
+    gap: sp(2);
+    @include text(sm);
+  }
+  input {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--ui-color-primary);
+  }
+}
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: sp(2);
+  border-radius: var(--ui-radius-input);
+  padding: sp(3);
+  @include text(sm);
+  background: var(--ui-color-warning-subtle);
+  color: var(--ui-color-warning);
+  &[data-tone="danger"] {
+    background: var(--ui-color-danger-subtle);
+    color: var(--ui-color-danger);
+  }
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+.summary {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+  margin-top: sp(6);
+  @include card;
+  @include glass(true);
+  padding: sp(3) sp(4);
+}
+
+.summaryText {
+  @include text(sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.stage {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.counter {
+  @include text(2xl);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+@include down(sm) {
+  .summary > :last-child {
+    width: 100%;
+  }
+}
+
+.banner[data-tone="info"] {
+  background: var(--ui-color-info-subtle);
+  color: var(--ui-color-info);
+}
+
+/* Review */
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: sp(2);
+    @include text(sm);
+  }
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+.ok {
+  color: var(--ui-color-success);
+}
+
+.bad {
+  color: var(--ui-color-danger);
+}
+
+.paper {
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+  counter-reset: q;
+}
+
+.question {
+  @include card;
+  padding: sp(4);
+}
+
+.questionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(2);
+  margin-bottom: sp(3);
+}
+
+.questionText {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.options {
+  display: grid;
+  gap: sp(2);
+  margin-top: sp(3);
+  @include up(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: sp(2);
+    border: 1px solid var(--ui-color-border);
+    border-radius: var(--ui-radius-input);
+    padding: sp(2) sp(3);
+    @include text(sm);
+    overflow-wrap: anywhere;
+  }
+  li[data-correct="true"] {
+    border-color: var(--ui-color-success);
+    background: var(--ui-color-success-subtle);
+  }
+}
+
+.letter {
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.why {
+  margin-top: sp(3);
+  @include text(sm);
+  summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--ui-color-primary);
+    @include focus-ring;
+  }
+  p {
+    margin-top: sp(2);
+    white-space: pre-wrap;
+    color: var(--ui-color-text-muted);
+  }
+}
+
+.codeBlock {
+  margin-block: sp(2);
+  overflow-x: auto;
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-surface-muted);
+  padding: sp(3);
+  font-family: var(--ui-font-mono);
+  @include text(sm);
+  white-space: pre;
+}
+
+/* Send + list */
+.sendBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: sp(3);
+  margin-bottom: sp(3);
+  > :first-child {
+    flex: 1 1 14rem;
+  }
+}
+
+.drafts {
+  display: grid;
+  gap: sp(3);
+  @include up(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @include up(xl) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.draftCard {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+  @include card;
+  padding: sp(4);
+  color: inherit;
+  transition: box-shadow var(--ui-duration-fast) var(--ui-ease-out);
+  @include focus-ring;
+  &:hover {
+    box-shadow: var(--ui-shadow-md);
+  }
+  @include reduced-motion {
+    transition: none;
+  }
+}
+
+.draftTitle {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* Pool picker */
+.counts {
+  width: 100%;
+  border-collapse: collapse;
+  @include text(sm);
+  font-variant-numeric: tabular-nums;
+  th,
+  td {
+    border-top: 1px solid var(--ui-color-border);
+    padding: sp(2);
+    text-align: left;
+  }
+  thead th {
+    border-top: 0;
+    @include eyebrow;
+  }
+}
+
+.short {
+  font-weight: 500;
+  color: var(--ui-color-danger);
+}
+
+.poolList {
+  display: flex;
+  flex-direction: column;
+  max-height: 32rem;
+  overflow-y: auto;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-input);
+}
+
+.poolRow {
+  display: flex;
+  align-items: flex-start;
+  gap: sp(3);
+  border-top: 1px solid var(--ui-color-border);
+  padding: sp(3);
+  &:first-child {
+    border-top: 0;
+  }
+  label {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    align-items: flex-start;
+    gap: sp(3);
+    cursor: pointer;
+  }
+  input {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+}
+
+.poolText {
+  @include line-clamp(2);
+  @include text(sm);
+  overflow-wrap: anywhere;
+}
