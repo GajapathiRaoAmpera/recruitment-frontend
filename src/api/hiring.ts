@@ -71,12 +71,13 @@ export const getDrive = async (id: string) => toDrive(await api<unknown>(`/drive
 export interface RoundSetup {
   type: "shortlist" | "aptitude" | "coding" | "ai_interview" | "technical" | "final";
   mode: "ai" | "manual" | "auto";
-  threshold?: number;
+  threshold?: number; // cut-off %
+  durationMin?: number; // minutes the test runs
 }
 
 /** `rounds` is the pipeline in order; the server saves it with the drive. */
 export const createDrive = async (b: { company: string; campus: string; roleTitle: string; jdText: string; rounds: RoundSetup[] }) =>
-  toDrive(await api<unknown>("/drives", json("POST", { company: b.company, campus: b.campus, role_title: b.roleTitle, jd_text: b.jdText, rounds: b.rounds })));
+  toDrive(await api<unknown>("/drives", json("POST", { company: b.company, campus: b.campus, role_title: b.roleTitle, jd_text: b.jdText, rounds: b.rounds.map((r) => ({ type: r.type, mode: r.mode, threshold: r.threshold, duration_min: r.durationMin })) })));
 
 /** Google Form export (.xlsx / .csv). Bad rows come back in `errors`; good rows are imported. */
 export const importCandidates = (driveId: string, sheet: File) => {

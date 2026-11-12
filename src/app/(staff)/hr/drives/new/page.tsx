@@ -67,7 +67,7 @@ export default function NewDrivePage() {
         campus: details.campus,
         roleTitle: details.roleTitle,
         jdText: details.jd,
-        rounds: rounds.map((r) => ({ type: r.type, mode: r.mode, threshold: r.threshold })),
+        rounds: rounds.map((r) => ({ type: r.type, mode: r.mode, threshold: r.threshold, durationMin: r.durationMin })),
       });
       setCreated(d.id);
     } catch (e) {
@@ -138,7 +138,7 @@ export default function NewDrivePage() {
 
         {step === 1 && (
           <div className={h.stackSm}>
-            {supabase && <DemoNote>These rounds are saved with the drive. Shortlisting a candidate invites them to the first test round. Minutes per round are not saved yet.</DemoNote>}
+            {supabase && <DemoNote>These rounds are saved with the drive. Shortlisting a candidate invites them to the first test round. Minutes and cut-off % are saved per round.</DemoNote>}
             <ul className={h.list}>
               {rounds.map((r, i) => (
                 <li key={`${r.type}-${i}`} className={h.listItem}>

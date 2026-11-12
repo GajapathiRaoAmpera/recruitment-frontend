@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, Circle, Maximize, MapPin } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { entryStep, type EntryStep, type StudentSession } from "@/api/entry";
 import { Logo } from "@/components/brand/logo";
@@ -18,9 +18,10 @@ type Status = "todo" | "ok" | "error";
 /**
  * System check for a student signed in through the API. ID + DOB were already verified at sign-in;
  * location, terms and full screen are each recorded on the server (/entry/steps).
- * shortcut: the test itself can't start yet. POST /entry/start and the attempt endpoints are not built.
+ * shortcut: Start opens a test screen with the timer and checks but no questions yet (POST /entry/start and the attempt endpoints are not built).
  */
 export function RealSystemCheck({ student, roundId }: { student: StudentSession; roundId: string }) {
+  const router = useRouter();
   const round = student.rounds.find((r) => r.roundId === roundId);
   const [loc, setLoc] = useState<Status>("todo");
   const [terms, setTerms] = useState(false);
@@ -148,11 +149,9 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
             <section className={s.checkItem} role="status">
               <div>
                 <p style={{ fontWeight: 500 }}>Verification complete</p>
-                <p className={h.xs}>Your ID, location, terms and full screen are recorded. The test can&apos;t start yet: the exam server isn&apos;t connected, so ask HR to try again later.</p>
+                <p className={h.xs}>Your ID, location, terms and full screen are recorded. The timer starts when you click Start.</p>
               </div>
-              <Button asChild variant="secondary" onClick={() => void document.exitFullscreen?.()}>
-                <Link href="/student">Back to dashboard</Link>
-              </Button>
+              <Button onClick={() => router.push(`/exam/${roundId}/test`)}>Start test</Button>
             </section>
           )}
         </div>
