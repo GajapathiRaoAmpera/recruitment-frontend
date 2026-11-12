@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, FileSpreadsheet, FileText, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
@@ -10,6 +11,9 @@ import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { DemoNote, hire as h } from "@/components/hire/ui";
+import { createDrive } from "@/api/hiring";
+import { ImportPanel } from "@/features/hiring/import-panel";
+import { supabase } from "@/lib/supabase";
 import { roundTitle } from "@/mock/data";
 import { useStore } from "@/mock/store";
 import type { Round } from "@/mock/types";
@@ -35,6 +39,8 @@ export default function NewDrivePage() {
   const [rounds, setRounds] = useState<Draft[]>(DEFAULT_ROUNDS);
   const [files, setFiles] = useState<{ sheet?: string; resumes?: number }>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [created, setCreated] = useState<string>(); // id of the real drive, once saved on the server
+  const [launching, setLaunching] = useState(false);
 
   const validateDetails = () => {
     const e: Record<string, string> = {};
@@ -53,11 +59,45 @@ export default function NewDrivePage() {
   const update = (i: number, patch: Partial<Draft>) => setRounds((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
   const hasTechnical = rounds.some((r) => r.type === "technical");
 
+  const launchReal = async () => {
+    setLaunching(true);
+    try {
+      const d = await createDrive({
+        company: details.company,
+        campus: details.campus,
+        roleTitle: details.roleTitle,
+        jdText: details.jd,
+        rounds: rounds.map((r) => ({ type: r.type, mode: r.mode, threshold: r.threshold })),
+      });
+      setCreated(d.id);
+    } catch (e) {
+      toast({ tone: "danger", title: "Couldn't create the drive", description: (e as Error).message });
+    } finally {
+      setLaunching(false);
+    }
+  };
+
   const launch = () => {
+    if (supabase) return void launchReal();
     dispatch({ type: "createDrive", drive: { ...details, window: details.window || "TBD" }, rounds });
     toast({ tone: "success", title: "Drive launched", description: `${details.roleTitle} at ${details.campus} is live.` });
     router.push("/hr/drives");
   };
+
+  if (created)
+    return (
+      <>
+        <PageHeader title="Drive created" description={`${details.roleTitle} at ${details.campus}. Now import the candidates.`} />
+        <div className={h.stack}>
+          <ImportPanel driveId={created} />
+          <div>
+            <Button asChild>
+              <Link href={`/hr/drives/${created}/candidates`}>Go to shortlist</Link>
+            </Button>
+          </div>
+        </div>
+      </>
+    );
 
   return (
     <>
@@ -98,6 +138,7 @@ export default function NewDrivePage() {
 
         {step === 1 && (
           <div className={h.stackSm}>
+            {supabase && <DemoNote>These rounds are saved with the drive. Shortlisting a candidate invites them to the first test round. Minutes per round are not saved yet.</DemoNote>}
             <ul className={h.list}>
               {rounds.map((r, i) => (
                 <li key={`${r.type}-${i}`} className={h.listItem}>
@@ -147,7 +188,15 @@ export default function NewDrivePage() {
           </div>
         )}
 
-        {step === 2 && (
+        {step === 2 && supabase && (
+          <div className={h.stackSm}>
+            <p>
+              You import the Google Form export right after the drive is created. Resumes are read from the Drive links in that sheet, so there is nothing to upload here.
+            </p>
+          </div>
+        )}
+
+        {step === 2 && !supabase && (
           <div className={h.stackSm}>
             <div className={h.grid2}>
               <label className={h.cardTight} style={{ cursor: "pointer" }}>
@@ -196,8 +245,8 @@ export default function NewDrivePage() {
           {step < STEPS.length - 1 ? (
             <Button onClick={next}>Continue</Button>
           ) : (
-            <Button onClick={launch}>
-              <Check aria-hidden size={16} style={{ marginRight: 6 }} /> Launch drive
+            <Button onClick={launch} loading={launching}>
+              <Check aria-hidden size={16} style={{ marginRight: 6 }} /> {supabase ? "Create drive" : "Launch drive"}
             </Button>
           )}
         </div>

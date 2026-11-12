@@ -6,12 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DemoNote, hire as h, ResultBadge, RoundStatusBadge } from "@/components/hire/ui";
 import { useStudent } from "@/components/student/hooks";
+import { RealStudentHome } from "@/features/student/real-student-home";
 import { driveRounds, useStore } from "@/mock/store";
 import type { Round } from "@/mock/types";
 
 const examPath = (r: Round) => `/exam/${r.id}`;
 
-export default function StudentDashboard() {
+function MockDashboard() {
   const { state } = useStore();
   const { candidate, drive } = useStudent();
   if (!candidate || !drive) return null;
@@ -94,4 +95,9 @@ export default function StudentDashboard() {
       )}
     </div>
   );
+}
+
+export default function StudentDashboard() {
+  const { real } = useStudent();
+  return real ? <RealStudentHome student={real} /> : <MockDashboard />;
 }

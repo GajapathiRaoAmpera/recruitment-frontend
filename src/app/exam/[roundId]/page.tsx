@@ -11,14 +11,15 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NotFoundState } from "@/components/ui/states";
 import { DemoNote, hire as h } from "@/components/hire/ui";
-import { useExamRound } from "@/components/student/hooks";
+import { RealSystemCheck } from "@/features/student/real-system-check";
+import { useExamRound, useStudent } from "@/components/student/hooks";
 import s from "@/components/student/student.module.scss";
 import { MAX_TAB_SWITCHES, useStore } from "@/mock/store";
 
 type Status = "todo" | "ok" | "error";
 
 /** System check before every round: ID + DOB, location, terms, then full screen (FR-5..7). */
-export default function SystemCheckPage() {
+function MockSystemCheck() {
   const { roundId } = useParams<{ roundId: string }>();
   const router = useRouter();
   const { dispatch } = useStore();
@@ -188,4 +189,10 @@ export default function SystemCheckPage() {
 
 function StepIcon({ st }: { st: Status }) {
   return st === "ok" ? <CheckCircle2 aria-hidden size={20} color="var(--ui-color-success)" /> : <Circle aria-hidden size={20} color="var(--ui-color-border-strong)" />;
+}
+
+export default function SystemCheckPage() {
+  const { roundId } = useParams<{ roundId: string }>();
+  const { real } = useStudent();
+  return real ? <RealSystemCheck student={real} roundId={roundId} /> : <MockSystemCheck />;
 }

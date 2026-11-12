@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h, PipelineSteps, roundLabel } from "@/components/hire/ui";
 import { activeRound, driveRounds, useStore } from "@/mock/store";
+import { RealDrives } from "@/features/hiring/real-drives";
+import { supabase } from "@/lib/supabase";
 
-export default function DrivesPage() {
+function MockDrives() {
   const { state } = useStore();
   useBreadcrumbs([{ label: "Drives" }]);
   return (
@@ -60,4 +62,8 @@ export default function DrivesPage() {
       </Table>
     </>
   );
+}
+
+export default function DrivesPage() {
+  return supabase ? <RealDrives /> : <MockDrives />;
 }

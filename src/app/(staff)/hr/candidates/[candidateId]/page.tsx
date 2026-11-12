@@ -13,10 +13,12 @@ import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { Chips, hire as h, ResultBadge, StatCard, Tabs } from "@/components/hire/ui";
 import { driveRounds, pct, useStore } from "@/mock/store";
+import { RealCandidate } from "@/features/hiring/real-candidate";
+import { supabase } from "@/lib/supabase";
 
 type Tab = "rounds" | "integrity" | "interview";
 
-export default function CandidatePage() {
+function MockCandidate() {
   const { candidateId } = useParams<{ candidateId: string }>();
   const { state, dispatch } = useStore();
   const toast = useToast();
@@ -180,4 +182,9 @@ export default function CandidatePage() {
       </div>
     </div>
   );
+}
+
+export default function CandidatePage() {
+  const { candidateId } = useParams<{ candidateId: string }>();
+  return supabase ? <RealCandidate candidateId={candidateId} /> : <MockCandidate />;
 }

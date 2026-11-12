@@ -19,7 +19,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { dispatch } = useStore();
-  const { candidate, drive } = useStudent();
+  const { candidate, drive, real } = useStudent();
   return (
     <>
       <header className={s.top}>
@@ -27,18 +27,18 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
           <Logo height={24} />
         </Link>
         <nav aria-label="Student" className={s.nav}>
-          {NAV.map((n) => (
+          {(real ? NAV.slice(0, 1) : NAV).map((n) => (
             <Link key={n.href} href={n.href} className={s.navLink} aria-current={pathname === n.href ? "page" : undefined}>
               {n.label}
             </Link>
           ))}
         </nav>
         <span className={s.spacer} />
-        {candidate && (
+        {(candidate || real) && (
           <div className={s.who}>
-            <p style={{ fontWeight: 500 }}>{candidate.name}</p>
+            <p style={{ fontWeight: 500 }}>{candidate?.name ?? real?.fullName}</p>
             <p style={{ color: "var(--ui-color-text-muted)", fontSize: "0.75rem" }}>
-              {candidate.studentId} · {drive?.campus}
+              {candidate?.studentId ?? real?.studentId}{drive ? ` · ${drive.campus}` : ""}
             </p>
           </div>
         )}
@@ -54,7 +54,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
         </Button>
       </header>
       <main id="main" className={s.main}>
-        {candidate ? children : null}
+        {candidate || real ? children : null}
       </main>
     </>
   );

@@ -15,8 +15,10 @@ import { Table, Td, Th } from "@/components/ui/table";
 import { Chips, DemoNote, hire as h, Person } from "@/components/hire/ui";
 import { RoundActions } from "@/components/hire/round-actions";
 import { driveRounds, useStore } from "@/mock/store";
+import { RealShortlist } from "@/features/hiring/real-shortlist";
+import { supabase } from "@/lib/supabase";
 
-export default function ShortlistPage() {
+function MockShortlist() {
   const { driveId } = useParams<{ driveId: string }>();
   const { state, dispatch } = useStore();
   const drive = state.drives.find((d) => d.id === driveId);
@@ -144,4 +146,9 @@ export default function ShortlistPage() {
       )}
     </div>
   );
+}
+
+export default function ShortlistPage() {
+  const { driveId } = useParams<{ driveId: string }>();
+  return supabase ? <RealShortlist driveId={driveId} /> : <MockShortlist />;
 }
