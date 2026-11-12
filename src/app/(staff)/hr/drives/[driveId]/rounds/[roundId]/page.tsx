@@ -14,6 +14,7 @@ import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { hire as h, Person, Progress, ResultBadge, RoundStatusBadge, StatCard, Tabs } from "@/components/hire/ui";
 import { RoundActions } from "@/components/hire/round-actions";
+import { BuildPaperLink } from "@/features/papers/components/build-paper-link";
 import { candidateById, pct, rank, roundResults, useStore } from "@/mock/store";
 
 type Tab = "overview" | "ranking" | "alerts" | "questions" | "emails";
@@ -69,7 +70,12 @@ function RoundDashboard() {
             <RoundStatusBadge status={round.status} /> {drive.roleTitle} · {round.durationMin ? `${round.durationMin} min` : ""} {round.threshold !== undefined && `· cut-off ${round.threshold}%`}
           </span>
         }
-        actions={<RoundActions round={round} />}
+        actions={
+          <span className={h.row}>
+            <BuildPaperLink round={round} />
+            <RoundActions round={round} />
+          </span>
+        }
       />
 
       <div className={h.grid4}>

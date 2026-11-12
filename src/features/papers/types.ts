@@ -50,6 +50,11 @@ export interface KeyItem {
   edited: boolean;
 }
 
+/** A generated pool question with HR's pick; options are in their original order. */
+export interface PoolItem extends KeyItem {
+  selected: boolean;
+}
+
 export interface Check {
   id: string;
   label: string;
@@ -74,6 +79,8 @@ export interface DraftDetail extends Draft {
   overlap: Overlap | null;
   issues: Issue[];
   editedCount: number;
+  pool: PoolItem[];
+  selectedCount: number;
 }
 
 export interface QuestionEdit {

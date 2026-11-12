@@ -5,7 +5,7 @@ vi.mock("@/lib/supabase", () => ({
 }));
 
 import { ApiError } from "./client";
-import { acceptDraft, aiStatus, createDraft, editQuestion, getDraft, listDrafts, sendPapers } from "./papers";
+import { acceptDraft, aiStatus, createDraft, editQuestion, getDraft, listDrafts, sendPapers, setSelection } from "./papers";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -81,4 +81,15 @@ it("maps detail, edits, accept, send and the simple calls", async () => {
   const send = stub({ sent: 2, already_sent: 1 });
   expect(await sendPapers("d-1", ["a", "b", "c"])).toEqual({ sent: 2, alreadySent: 1 });
   expect(JSON.parse(call(send)[1].body as string)).toEqual({ candidate_refs: ["a", "b", "c"] });
+});
+
+it("setSelection PUTs snake_case ids and maps the detail back", async () => {
+  const fetchMock = stub({ ...wireDraft, status: "draft", selected_count: 1, pool: [{ id: "q1", selected: true, fixed_options: false }] });
+  const d = await setSelection("d-1", ["q1"]);
+  const [url, init] = call(fetchMock);
+  expect(url).toBe("/api/v1/papers/drafts/d-1/selection");
+  expect(init.method).toBe("PUT");
+  expect(JSON.parse(init.body as string)).toEqual({ selected_ids: ["q1"] });
+  expect(d.selectedCount).toBe(1);
+  expect(d.pool[0]).toMatchObject({ id: "q1", selected: true, fixedOptions: false });
 });
