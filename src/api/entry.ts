@@ -7,10 +7,10 @@ export interface StudentSession {
   entryToken: string;
   studentId: string;
   fullName: string;
-  rounds: { roundId: string; type: string; testId: string | null }[];
+  rounds: { roundId: string; type: string; testId: string | null; durationMin: number | null }[];
 }
 
-async function call<T>(path: string, init: RequestInit): Promise<T> {
+export async function call<T>(path: string, init: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`/api/v1${path}`, init);
@@ -22,7 +22,7 @@ async function call<T>(path: string, init: RequestInit): Promise<T> {
   return body as T;
 }
 
-const json = (body: unknown, token?: string): RequestInit => ({
+export const json = (body: unknown, token?: string): RequestInit => ({
   method: "POST",
   headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   body: JSON.stringify(body),
@@ -30,7 +30,7 @@ const json = (body: unknown, token?: string): RequestInit => ({
 
 /** Student ID + date of birth (yyyy-mm-dd). A wrong ID and a wrong DOB get the same 401 on purpose. */
 export async function entryVerify(studentId: string, dob: string): Promise<StudentSession> {
-  const r = await call<{ entry_token: string; candidate: { full_name: string }; rounds: { round_id: string; type: string; test_id: string | null }[] }>(
+  const r = await call<{ entry_token: string; candidate: { full_name: string }; rounds: { round_id: string; type: string; test_id: string | null; duration_min: number | null }[] }>(
     "/entry/verify",
     json({ student_id: studentId.trim(), dob }),
   );
@@ -38,7 +38,7 @@ export async function entryVerify(studentId: string, dob: string): Promise<Stude
     entryToken: r.entry_token,
     studentId: studentId.trim(),
     fullName: r.candidate.full_name,
-    rounds: r.rounds.map((x) => ({ roundId: x.round_id, type: x.type, testId: x.test_id })),
+    rounds: r.rounds.map((x) => ({ roundId: x.round_id, type: x.type, testId: x.test_id, durationMin: x.duration_min })),
   };
 }
 
@@ -46,3 +46,13 @@ export type EntryStep = "location" | "terms" | "fullscreen";
 
 export const entryStep = (token: string, roundId: string, step: EntryStep, ok: boolean, meta: Record<string, unknown> = {}) =>
   call<void>("/entry/steps", json({ round_id: roundId, step, ok, meta }, token)).then(() => undefined);
+
+/** Latest result per step for a round (location / terms / fullscreen / id_dob), so a refresh keeps progress. */
+export const entrySteps = (token: string, roundId: string) =>
+  call<Partial<Record<EntryStep | "id_dob", boolean>>>(`/entry/steps?round_id=${encodeURIComponent(roundId)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+/** Per-round "confirm it's you": Student ID + DOB checked again and logged against this round (204). */
+export const entryConfirm = (token: string, roundId: string, studentId: string, dob: string) =>
+  call<void>("/entry/confirm", json({ round_id: roundId, student_id: studentId.trim(), dob }, token)).then(() => undefined);

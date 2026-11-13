@@ -71,12 +71,13 @@ export const getDrive = async (id: string) => toDrive(await api<unknown>(`/drive
 export interface RoundSetup {
   type: "shortlist" | "aptitude" | "coding" | "ai_interview" | "technical" | "final";
   mode: "ai" | "manual" | "auto";
-  threshold?: number;
+  threshold?: number; // cut-off %
+  durationMin?: number; // minutes the test runs
 }
 
 /** `rounds` is the pipeline in order; the server saves it with the drive. */
 export const createDrive = async (b: { company: string; campus: string; roleTitle: string; jdText: string; rounds: RoundSetup[] }) =>
-  toDrive(await api<unknown>("/drives", json("POST", { company: b.company, campus: b.campus, role_title: b.roleTitle, jd_text: b.jdText, rounds: b.rounds })));
+  toDrive(await api<unknown>("/drives", json("POST", { company: b.company, campus: b.campus, role_title: b.roleTitle, jd_text: b.jdText, rounds: b.rounds.map((r) => ({ type: r.type, mode: r.mode, threshold: r.threshold, duration_min: r.durationMin })) })));
 
 /** Google Form export (.xlsx / .csv). Bad rows come back in `errors`; good rows are imported. */
 export const importCandidates = (driveId: string, sheet: File) => {
@@ -145,4 +146,76 @@ export async function openResume(candidateId: string): Promise<void> {
   const url = URL.createObjectURL(await res.blob());
   window.open(url, "_blank", "noopener");
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+export type StepName = "id_dob" | "location" | "terms" | "fullscreen";
+export interface ProgressRow {
+  candidateId: string;
+  studentId: string;
+  fullName: string;
+  status: string;
+  steps: Record<StepName, boolean | null>; // null = never tried
+  attemptStatus: "in_progress" | "submitted" | "locked" | "expired" | null; // null = not started
+  startedAt: string | null;
+  submittedAt: string | null;
+  marks: number | null;
+  tabSwitches: number;
+}
+export interface RoundProgress {
+  roundId: string;
+  type: string;
+  status: string;
+  candidates: ProgressRow[];
+}
+
+/** Live progress of one round: entry checks, attempt status, tab switches and marks per candidate. */
+export async function getRoundProgress(driveId: string, roundId: string): Promise<RoundProgress> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p: any = await api<unknown>(`/drives/${driveId}/rounds/${roundId}/progress`);
+  return {
+    roundId: p.round_id,
+    type: p.type,
+    status: p.status,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    candidates: p.candidates.map((c: any): ProgressRow => ({
+      candidateId: c.candidate_id, studentId: c.student_id, fullName: c.full_name, status: c.status, steps: c.steps,
+      attemptStatus: c.attempt_status, startedAt: c.started_at, submittedAt: c.submitted_at, marks: c.marks, tabSwitches: c.tab_switches,
+    })),
+  };
+}
+
+export const listRounds = async (driveId: string) =>
+  (await api<{ id: string; position: number; type: string; status: string }[]>(`/drives/${driveId}/rounds`)).map((r) => ({ id: r.id, position: r.position, type: r.type, status: r.status }));
+
+export interface RoundCounts {
+  roundId: string;
+  position: number;
+  type: string;
+  status: string;
+  total: number;
+  notStarted: number;
+  inProgress: number;
+  submitted: number;
+  locked: number;
+  expired: number;
+}
+export interface DriveProgress {
+  driveId: string;
+  company: string;
+  campus: string;
+  roleTitle: string;
+  rounds: RoundCounts[];
+}
+
+/** Super Admin only: every drive with per-round counts of who is where. */
+export async function getProgressOverview(): Promise<DriveProgress[]> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (await api<any[]>("/admin/progress")).map((d): DriveProgress => ({
+    driveId: d.drive_id, company: d.company, campus: d.campus, roleTitle: d.role_title,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rounds: d.rounds.map((r: any): RoundCounts => ({
+      roundId: r.round_id, position: r.position, type: r.type, status: r.status, total: r.total,
+      notStarted: r.not_started, inProgress: r.in_progress, submitted: r.submitted, locked: r.locked, expired: r.expired,
+    })),
+  }));
 }

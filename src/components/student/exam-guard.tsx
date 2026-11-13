@@ -8,6 +8,8 @@ import { MAX_TAB_SWITCHES, useStore } from "@/mock/store";
 import type { RoundResult } from "@/mock/types";
 import { hire as h } from "@/components/hire/ui";
 import { exitFullscreen, useIntegrity } from "./hooks";
+import { useLockdown } from "./lockdown";
+import { TabSwitchBadge } from "./tab-switch-badge";
 import s from "./student.module.scss";
 
 /** Integrity layer for test runners: reports tab switches, shows warnings, the lock screen and the full-screen prompt. */
@@ -24,8 +26,17 @@ export function ExamGuard({ roundId, candidateId, result, recorded }: { roundId:
     if (n < MAX_TAB_SWITCHES) toast({ tone: "danger", title: `Warning ${n} of ${MAX_TAB_SWITCHES - 1}`, description: `Leaving the test tab ${MAX_TAB_SWITCHES} times closes the test.` });
   });
 
+  useLockdown(!locked);
+  const hud = (
+    <div className={s.switchHud}>
+      <TabSwitchBadge count={used} max={MAX_TAB_SWITCHES} />
+    </div>
+  );
+
   if (locked)
     return (
+      <>
+        {hud}
       <div className={s.overlay} role="alertdialog" aria-labelledby="lock-h" aria-describedby="lock-d">
         <div className={s.overlayCard}>
           <Lock aria-hidden size={32} />
@@ -40,10 +51,13 @@ export function ExamGuard({ roundId, candidateId, result, recorded }: { roundId:
           </Button>
         </div>
       </div>
+      </>
     );
 
   if (!fullscreen)
     return (
+      <>
+      {hud}
       <div className={s.overlay} role="alertdialog" aria-labelledby="fs-h">
         <div className={s.overlayCard}>
           <Maximize aria-hidden size={32} />
@@ -54,7 +68,8 @@ export function ExamGuard({ roundId, candidateId, result, recorded }: { roundId:
           <Button onClick={enterFullscreen}>Enter full screen</Button>
         </div>
       </div>
+      </>
     );
 
-  return null;
+  return hud;
 }
