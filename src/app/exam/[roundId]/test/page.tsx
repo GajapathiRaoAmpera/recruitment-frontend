@@ -55,6 +55,8 @@ function Runner({ roundId }: { roundId: string }) {
   const go = (i: number) => update((d) => ({ ...d, current: Math.max(0, Math.min(questions.length - 1, i)) }));
   const stateOf = (id: string) => (marked.includes(id) ? "marked" : answers[id] !== undefined ? "answered" : "todo");
   const unanswered = questions.filter((x) => answers[x.id] === undefined).length;
+  const attempted = questions.length - unanswered;
+  const markedCount = questions.filter((x) => marked.includes(x.id)).length;
 
   return (
     <>
@@ -80,6 +82,9 @@ function Runner({ roundId }: { roundId: string }) {
         <aside className={h.card} aria-label="Question navigator">
           <p className={h.eyebrow} style={{ marginBottom: 12 }}>
             Questions
+          </p>
+          <p className={h.xs} style={{ marginBottom: 12 }} aria-live="polite">
+            Attempted {attempted} · Marked for review {markedCount} · Not attempted {unanswered}
           </p>
           <div className={s.palette}>
             {questions.map((x, i) => (
@@ -146,7 +151,7 @@ function Runner({ roundId }: { roundId: string }) {
         onOpenChange={setConfirm}
         destructive={false}
         title="Submit your test?"
-        description={unanswered ? `${unanswered} question(s) are unanswered. You can't change answers after submitting.` : "You can't change answers after submitting."}
+        description={`${attempted} attempted, ${unanswered} unanswered, ${markedCount} marked for review. You can't change answers after submitting.`}
         confirmLabel="Submit test"
         onConfirm={() => {
           setConfirm(false);

@@ -16,6 +16,7 @@ import { ErrorState, NotFoundState } from "@/components/ui/states";
 import { hire as h } from "@/components/hire/ui";
 import { exitFullscreen, useCountdown, useIntegrity } from "@/components/student/hooks";
 import { useLocationWatch } from "@/components/student/use-location-watch";
+import { safeStorage } from "@/lib/storage";
 import { useLockdown } from "@/components/student/lockdown";
 import s from "@/components/student/student.module.scss";
 import { TabSwitchBadge } from "@/components/student/tab-switch-badge";
@@ -129,6 +130,20 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   const [answers, setAnswers] = useState(initial.savedAnswers);
   const [current, setCurrent] = useState(0);
   const [saveError, setSaveError] = useState<string>();
+  // shortcut: "marked for review" is this browser's note to itself (the API has no field for it); it is not sent to HR.
+  const markKey = `exam-marked:${roundId}`;
+  const [marked, setMarked] = useState<string[]>(() => {
+    try {
+      return JSON.parse(safeStorage.get(markKey) ?? "[]") as string[];
+    } catch {
+      return [];
+    }
+  });
+  const toggleMark = (id: string) => {
+    const next = marked.includes(id) ? marked.filter((x) => x !== id) : [...marked, id];
+    setMarked(next);
+    safeStorage.set(markKey, JSON.stringify(next));
+  };
   const [offline, setOffline] = useState(false);
   const max = initial.maxTabSwitches;
   const switches = Math.min(max, confirmed + pending);
@@ -207,6 +222,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
       const r = await submitAttempt(token);
       setTimeTaken(r.timeTakenSec);
       setSubmitted(true);
+      safeStorage.set(markKey, "[]");
       setConfirm(undefined);
       exitFullscreen();
     } catch (e) {
@@ -224,6 +240,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expired, locked, submitted]);
   const unanswered = questions.length - Object.keys(answers).length;
+  const markedCount = questions.filter((x) => marked.includes(x.id)).length;
   const closed = locked || expired || submitted;
 
   return (
@@ -234,6 +251,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
           <p>{roundTitle[type as Round["type"]] ?? type}</p>
           <p className={h.xs} aria-live="polite">
             {offline ? "Offline: reconnecting…" : saveError ?? (type === "coding" ? `${initial.coding.length} coding problem(s)` : `${Object.keys(answers).length} of ${questions.length} answered`)}
+            {offline ? "Offline: reconnecting…" : saveError ?? `${Object.keys(answers).length} of ${questions.length} answered · ${markedCount} marked for review`}
           </p>
         </div>
         <Badge tone={locationOn ? "success" : "danger"}>
@@ -284,9 +302,14 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
               <Button variant="secondary" disabled={current === 0} onClick={() => setCurrent(current - 1)}>
                 Previous
               </Button>
-              <Button disabled={current === questions.length - 1} onClick={() => setCurrent(current + 1)}>
-                Next
-              </Button>
+              <div className={h.row}>
+                <Button variant="secondary" disabled={!live} aria-pressed={marked.includes(q.id)} onClick={() => toggleMark(q.id)}>
+                  {marked.includes(q.id) ? "Unmark" : "Mark for review"}
+                </Button>
+                <Button disabled={current === questions.length - 1} onClick={() => setCurrent(current + 1)}>
+                  Next
+                </Button>
+              </div>
             </div>
           </section>
         )}
@@ -330,7 +353,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         onOpenChange={(o) => !o && setConfirm(undefined)}
         destructive={false}
         title="Submit your test?"
-        description={`${unanswered ? `${unanswered} question(s) are unanswered. ` : ""}Your answers become final and you can't change them after submitting.`}
+        description={`${unanswered ? `${unanswered} question(s) are unanswered. ` : ""}${markedCount ? `${markedCount} marked for review. ` : ""}Your answers become final and you can't change them after submitting.`}
         confirmLabel="Submit test"
         loading={submitting}
         error={submitError}
