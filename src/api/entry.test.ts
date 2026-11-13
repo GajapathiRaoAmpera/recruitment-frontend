@@ -6,12 +6,12 @@ afterEach(() => vi.unstubAllGlobals());
 const reply = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 it("verifies Student ID + DOB and maps the session", async () => {
-  const f = vi.fn().mockResolvedValue(reply({ entry_token: "T", candidate: { full_name: "Asha Rao" }, rounds: [{ round_id: "r1", type: "aptitude", test_id: null }] }));
+  const f = vi.fn().mockResolvedValue(reply({ entry_token: "T", candidate: { full_name: "Asha Rao" }, rounds: [{ round_id: "r1", type: "aptitude", test_id: null, duration_min: 45 }] }));
   vi.stubGlobal("fetch", f);
   const s = await entryVerify(" S101 ", "2003-05-01");
   expect(JSON.parse(f.mock.calls[0]![1].body)).toEqual({ student_id: "S101", dob: "2003-05-01" });
   expect(new Headers(f.mock.calls[0]![1].headers).has("Authorization")).toBe(false);
-  expect(s).toEqual({ entryToken: "T", studentId: "S101", fullName: "Asha Rao", rounds: [{ roundId: "r1", type: "aptitude", testId: null }] });
+  expect(s).toEqual({ entryToken: "T", studentId: "S101", fullName: "Asha Rao", rounds: [{ roundId: "r1", type: "aptitude", testId: null, durationMin: 45 }] });
 });
 
 it("shows the API's mismatch message and a network failure", async () => {

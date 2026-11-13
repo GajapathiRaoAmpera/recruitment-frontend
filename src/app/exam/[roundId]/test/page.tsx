@@ -10,7 +10,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { NotFoundState } from "@/components/ui/states";
 import { hire as h } from "@/components/hire/ui";
 import { ExamGuard } from "@/components/student/exam-guard";
-import { exitFullscreen, minutesSince, useCountdown, useExamDraft, useExamRound } from "@/components/student/hooks";
+import { RealExamShell } from "@/features/student/real-exam-shell";
+import { exitFullscreen, minutesSince, useCountdown, useExamDraft, useExamRound, useStudent } from "@/components/student/hooks";
 import s from "@/components/student/student.module.scss";
 import { useStore } from "@/mock/store";
 
@@ -20,7 +21,7 @@ interface Answers {
   current: number;
 }
 
-export default function AptitudeTestPage() {
+function MockTest() {
   const { roundId } = useParams<{ roundId: string }>();
   const { candidate, round } = useExamRound(roundId);
   if (!round || !candidate || round.type === "coding") return <NotFoundState title="Test not found" />;
@@ -154,4 +155,10 @@ function Runner({ roundId }: { roundId: string }) {
       />
     </>
   );
+}
+
+export default function AptitudeTestPage() {
+  const { roundId } = useParams<{ roundId: string }>();
+  const { real } = useStudent();
+  return real ? <RealExamShell student={real} roundId={roundId} /> : <MockTest />;
 }

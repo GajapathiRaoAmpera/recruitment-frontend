@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode } from "react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { useStudent } from "@/components/student/hooks";
+import { exitFullscreen, useStudent } from "@/components/student/hooks";
 import s from "@/components/student/student.module.scss";
 import { useStore } from "@/mock/store";
 
@@ -47,6 +47,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
           size="sm"
           onClick={() => {
             dispatch({ type: "logout" });
+            exitFullscreen(); // back to a normal window
             router.replace("/student/login");
           }}
         >

@@ -13,7 +13,7 @@ export const POLL_MS = 2000;
 
 function stage(done: number, total: number) {
   if (done === 0) return "Starting the AI models…";
-  if (done < total) return "Gemini is writing questions and Groq is checking each answer independently.";
+  if (done < total) return "The AI is writing the Technical questions for the role. You check the answers in the next step.";
   return "Building the sample paper…";
 }
 

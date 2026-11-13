@@ -3,10 +3,8 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { ApiError } from "@/api/client";
 
 const api = vi.hoisted(() => ({ aiStatus: vi.fn(), createDraft: vi.fn() }));
-const qbank = vi.hoisted(() => ({ getAvailability: vi.fn() }));
 const auth = vi.hoisted(() => ({ configured: true }));
 vi.mock("@/api/papers", () => api);
-vi.mock("@/api/qbank", () => qbank);
 vi.mock("@/lib/supabase", () => ({
   get supabase() {
     return auth.configured ? {} : null;
@@ -17,8 +15,8 @@ import { balance } from "./mix-editor";
 import { SetupStep } from "./setup-step";
 
 const drives = [
-  { id: "d1", label: "SDE — ABC College" },
-  { id: "d2", label: "Analyst — XYZ College" },
+  { id: "d1", label: "SDE — ABC College", role: "SDE" },
+  { id: "d2", label: "Analyst — XYZ College", role: "Analyst" },
 ];
 const create = () => screen.getByRole("button", { name: /create and generate/i });
 const renderSetup = (onCreated = vi.fn()) => {
@@ -28,18 +26,8 @@ const renderSetup = (onCreated = vi.fn()) => {
 
 beforeEach(() => {
   auth.configured = true;
-  api.aiStatus.mockReset().mockResolvedValue({ gemini: true, groq: true });
+  api.aiStatus.mockReset().mockResolvedValue({ nvidia: true });
   api.createDraft.mockReset();
-  qbank.getAvailability.mockReset().mockResolvedValue(stock(40));
-});
-
-const SUBJECTS = ["Computer Networks", "Operating Systems"];
-/** `n` approved questions per subject and level. */
-const stock = (n: number) => ({
-  track: "it",
-  subjects: Object.fromEntries(SUBJECTS.map((sub) => [sub, { easy: n, medium: n, advanced: n }])),
-  byLevel: { easy: 2 * n, medium: 2 * n, advanced: 2 * n },
-  total: 6 * n,
 });
 
 it("track toggle is a radiogroup operable by arrow keys", async () => {
@@ -81,19 +69,13 @@ it("create disabled while counts total 0", async () => {
   expect(screen.getByText("Add at least one question.")).toBeInTheDocument();
 });
 
-it("IT needs only Gemini; Non-IT also needs Groq", async () => {
-  api.aiStatus.mockResolvedValue({ gemini: true, groq: false });
+it("both tracks are blocked without the NVIDIA key", async () => {
+  api.aiStatus.mockResolvedValue({ nvidia: false });
   renderSetup();
-  await waitFor(() => expect(create()).toBeEnabled()); // IT: no Groq needed
-  fireEvent.click(screen.getByRole("radio", { name: "Non-IT" }));
-  expect(await screen.findByRole("alert")).toHaveTextContent(/missing api key for groq/i);
+  expect(await screen.findByRole("alert")).toHaveTextContent(/missing nvidia api key/i);
   expect(create()).toBeDisabled();
-});
-
-it("IT without a Gemini key is blocked", async () => {
-  api.aiStatus.mockResolvedValue({ gemini: false, groq: true });
-  renderSetup();
-  expect(await screen.findByRole("alert")).toHaveTextContent(/missing api key for gemini \(picks the sample paper\)/i);
+  fireEvent.click(screen.getByRole("radio", { name: "Non-IT" }));
+  expect(screen.getByRole("alert")).toHaveTextContent(/missing nvidia api key/i);
   expect(create()).toBeDisabled();
 });
 
@@ -125,60 +107,23 @@ it("successful create hands the draft to the page", async () => {
   expect(onCreated).toHaveBeenCalledWith({ id: "p-1" });
 });
 
-it("shows bank availability per level and blocks create when the banks are short", async () => {
-  qbank.getAvailability.mockResolvedValue(stock(4)); // 8 per level; defaults need 6 / 7 / 4 technical
-  renderSetup();
-  const table = await screen.findByRole("table", { name: /needed vs approved/i });
-  expect(table).toHaveTextContent(/Medium\s*7\s*8/);
-  await waitFor(() => expect(create()).toBeEnabled());
-  fireEvent.change(screen.getByLabelText("Medium"), { target: { value: "40" } }); // medium technical 12
-  expect(screen.getByText(/banks are short of approved technical questions \(medium 4\)/i)).toBeInTheDocument();
-  expect(create()).toBeDisabled();
-});
-
-it("empty banks link to the question banks page", async () => {
-  qbank.getAvailability.mockResolvedValue({ track: "it", subjects: {}, byLevel: { easy: 0, medium: 0, advanced: 0 }, total: 0 });
-  renderSetup();
-  expect(await screen.findByRole("link", { name: /upload a bank or approve/i })).toHaveAttribute("href", "/hr/question-banks");
-  expect(create()).toBeDisabled();
-});
-
-it("subject mix: even split by default, custom weights must total 100 and are sent with the focus", async () => {
+it("role is pre-filled from the drive, required, and sent trimmed for both tracks", async () => {
   api.createDraft.mockResolvedValue({ id: "p-1" });
   renderSetup();
-  const even = await screen.findByRole("checkbox", { name: /even split across subjects/i });
-  expect(even).toBeChecked();
-  fireEvent.click(even);
-  expect(screen.getByLabelText("Operating Systems %")).toHaveValue(50);
-  fireEvent.change(screen.getByLabelText("Operating Systems %"), { target: { value: "70" } });
-  expect(screen.getByText(/subjects total 120%/i)).toBeInTheDocument();
-  await waitFor(() => expect(create()).toBeDisabled());
-  fireEvent.change(screen.getByLabelText("Computer Networks %"), { target: { value: "30" } });
-  fireEvent.change(screen.getByLabelText(/focus/i), { target: { value: "  process scheduling  " } });
-  await waitFor(() => expect(create()).toBeEnabled());
-  await act(async () => fireEvent.click(create()));
-  expect(api.createDraft).toHaveBeenCalledWith(
-    expect.objectContaining({ settings: expect.objectContaining({ subjects: { "Computer Networks": 30, "Operating Systems": 70 }, focus: "process scheduling" }) }),
-  );
-});
-
-it("Non-IT sends no subjects or focus", async () => {
-  api.createDraft.mockResolvedValue({ id: "p-1" });
-  renderSetup();
+  const role = screen.getByLabelText(/role/i);
+  expect(role).toHaveValue("Analyst"); // initialDrive d2
+  fireEvent.change(screen.getByLabelText(/drive/i), { target: { value: "d1" } });
+  expect(role).toHaveValue("SDE");
+  fireEvent.change(role, { target: { value: "   " } });
+  expect(screen.getByText("Enter the role the Technical questions are for.")).toBeInTheDocument();
+  expect(create()).toBeDisabled();
+  fireEvent.change(role, { target: { value: "  Sales Executive " } });
   fireEvent.click(screen.getByRole("radio", { name: "Non-IT" }));
-  expect(screen.queryByLabelText(/focus/i)).not.toBeInTheDocument();
   await waitFor(() => expect(create()).toBeEnabled());
   await act(async () => fireEvent.click(create()));
-  expect(api.createDraft).toHaveBeenCalledWith(expect.objectContaining({ settings: expect.objectContaining({ track: "non_it", subjects: null, focus: null }) }));
-});
-
-it("bank load error offers a retry and blocks create", async () => {
-  qbank.getAvailability.mockRejectedValueOnce(new ApiError(500, "INTERNAL", "down")).mockResolvedValue(stock(40));
-  renderSetup();
-  expect(await screen.findByText(/could not load the question banks: down/i)).toBeInTheDocument();
-  expect(create()).toBeDisabled();
-  fireEvent.click(screen.getByRole("button", { name: /try again/i }));
-  await waitFor(() => expect(create()).toBeEnabled());
+  const sent = api.createDraft.mock.calls[0][0].settings;
+  expect(sent).toMatchObject({ track: "non_it", role: "Sales Executive" });
+  expect(sent).not.toHaveProperty("subjects"); // the PDF banks are no longer part of a paper
 });
 
 it("level counts stop at the backend limit of 100", () => {

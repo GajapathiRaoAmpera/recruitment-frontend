@@ -259,6 +259,14 @@
   }
 }
 
+/* Tab-switch counter pinned to the corner of the test screens */
+.switchHud {
+  position: fixed;
+  right: sp(4);
+  bottom: sp(4);
+  z-index: 50;
+}
+
 /* Overlay: lock screen / full-screen prompt */
 .overlay {
   position: fixed;

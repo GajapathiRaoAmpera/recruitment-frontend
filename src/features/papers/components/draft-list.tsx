@@ -42,7 +42,7 @@ export function DraftList({ showOwner, ownerName }: { showOwner: boolean; ownerN
       <EmptyState
         icon={<FileText aria-hidden size={32} />}
         title="No papers yet"
-        description="Create a Round 1 paper: AI writes the questions, a second AI checks them, and you review before sending."
+        description="Create a Round 1 paper: AI writes the Technical questions for the role, and you check them before sending."
         action={
           <Button asChild>
             <Link href="/hr/papers/new">

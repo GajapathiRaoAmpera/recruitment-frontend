@@ -90,25 +90,54 @@ export function useCountdown(deadline: number, onExpire: () => void) {
   return { left, label: `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}` };
 }
 
-/** Reports tab switches (page hidden) and tracks full screen. Counting/locking happens in the store (server for real). */
-export function useIntegrity(enabled: boolean, onSwitch: () => void) {
+/**
+ * Reports every time the student goes away from the test, and tracks full screen.
+ * "Away" = the tab is hidden OR the window lost focus (another window, alt-tab, a window beside this
+ * one), so changing window counts, not only changing tab. One trip away counts once, however many events
+ * it fires; it counts again only after the student has come back. A 1 s focus check catches trips the
+ * browser doesn't announce. Counting/locking happens in the store (the server for real).
+ * Best effort: a browser cannot see a second device or a phone.
+ */
+export function useIntegrity(enabled: boolean, onSwitch: () => void, onFullscreenExit?: () => void) {
   const [fullscreen, setFullscreen] = useState(true);
   const cb = useRef(onSwitch);
+  const fsCb = useRef(onFullscreenExit);
   useEffect(() => {
     cb.current = onSwitch;
+    fsCb.current = onFullscreenExit;
   });
   useEffect(() => {
     if (!enabled) return;
-    const onVis = () => {
-      if (document.visibilityState === "hidden") cb.current();
+    const focused = () => document.visibilityState === "visible" && document.hasFocus();
+    let away = !focused(); // already away when the test opens: not counted, they must come back first
+    const leave = () => {
+      if (away) return;
+      away = true;
+      cb.current();
     };
-    const onFs = () => setFullscreen(Boolean(document.fullscreenElement));
-    onFs();
-    document.addEventListener("visibilitychange", onVis);
+    const back = () => {
+      if (focused()) away = false;
+    };
+    const check = () => (focused() ? back() : leave());
+    let wasFullscreen = Boolean(document.fullscreenElement);
+    const onFs = () => {
+      const on = Boolean(document.fullscreenElement);
+      if (wasFullscreen && !on) fsCb.current?.();
+      wasFullscreen = on;
+      setFullscreen(on);
+    };
+    onFs(); // pick up the current state once (same pattern as before)
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("blur", leave);
+    window.addEventListener("focus", back);
     document.addEventListener("fullscreenchange", onFs);
+    const poll = setInterval(check, 1000);
     return () => {
-      document.removeEventListener("visibilitychange", onVis);
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("blur", leave);
+      window.removeEventListener("focus", back);
       document.removeEventListener("fullscreenchange", onFs);
+      clearInterval(poll);
     };
   }, [enabled]);
   return { fullscreen, enterFullscreen: () => document.documentElement.requestFullscreen?.().catch(() => {}) };

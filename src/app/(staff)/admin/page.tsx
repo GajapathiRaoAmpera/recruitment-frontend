@@ -7,8 +7,10 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { hire as h, Progress, StatCard } from "@/components/hire/ui";
 import { driveRounds, useStore } from "@/mock/store";
+import { RealAdminOverview } from "@/features/hiring/real-admin-overview";
+import { supabase } from "@/lib/supabase";
 
-export default function AdminDashboard() {
+function MockAdminDashboard() {
   useBreadcrumbs([{ label: "Admin overview" }]);
   const { state } = useStore();
   const selected = state.results.filter((r) => r.status === "selected").length;
@@ -91,4 +93,8 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
+}
+
+export default function AdminDashboard() {
+  return supabase ? <RealAdminOverview /> : <MockAdminDashboard />;
 }
