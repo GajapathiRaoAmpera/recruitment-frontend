@@ -10,6 +10,6 @@ import { useStore } from "@/mock/store";
 export function useDriveOptions(): DriveOption[] {
   const { state } = useStore();
   const real = useAsync(async () => (supabase ? await listDrives() : []), []);
-  if (!supabase) return state.drives.map((d) => ({ id: d.id, label: `${d.roleTitle} — ${d.campus}` }));
-  return (real.data ?? []).map((d) => ({ id: d.id, label: `${d.roleTitle} — ${d.campus}` }));
+  if (!supabase) return state.drives.map((d) => ({ id: d.id, label: `${d.roleTitle} — ${d.campus}`, role: d.roleTitle }));
+  return (real.data ?? []).map((d) => ({ id: d.id, label: `${d.roleTitle} — ${d.campus}`, role: d.roleTitle }));
 }

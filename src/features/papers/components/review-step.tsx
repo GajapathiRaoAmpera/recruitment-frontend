@@ -55,7 +55,7 @@ export function ReviewStep({ draft, onChange }: { draft: DraftDetail; onChange: 
             Integrity checks
           </h2>
           <p className={h.xs}>
-            <ShieldCheck aria-hidden size={14} style={{ verticalAlign: "-2px" }} /> {draft.poolSize} generated · {draft.selectedCount ?? draft.poolSize} selected · {draft.sample.length} in this sample · verified by 2 models
+            <ShieldCheck aria-hidden size={14} style={{ verticalAlign: "-2px" }} /> {draft.poolSize} generated · {draft.selectedCount ?? draft.poolSize} selected · {draft.sample.length} in this sample · check the Technical answers before accepting
             {draft.editedCount ? ` · ${draft.editedCount} edited` : ""}
           </p>
         </div>
@@ -79,7 +79,7 @@ export function ReviewStep({ draft, onChange }: { draft: DraftDetail; onChange: 
           Sample paper
         </h2>
         <p className={h.xs} style={{ marginBottom: "0.75rem" }}>
-          One example of what a candidate receives. Each candidate gets their own mix from the verified pool.
+          One example of what a candidate receives. Each candidate gets their own mix from the selected pool.
         </p>
         <PaperView items={draft.sample} onEdit={editable ? setEditing : undefined} />
       </section>

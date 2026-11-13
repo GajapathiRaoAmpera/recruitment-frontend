@@ -10,8 +10,8 @@ it("nav shows Paper builder for HR and Super Admin, after Question bank", () => 
   }
 });
 
-it("nav shows PDF question banks for HR and Super Admin", () => {
+it("nav no longer offers PDF question banks: papers get Technical questions from the AI", () => {
   for (const role of ["HR", "SUPER_ADMIN"] as const) {
-    expect(navItems(role).find((i) => i.label === "PDF question banks")).toMatchObject({ href: "/hr/question-banks", section: "main" });
+    expect(navItems(role).some((i) => i.href === "/hr/question-banks")).toBe(false);
   }
 });

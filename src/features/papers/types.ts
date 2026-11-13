@@ -14,10 +14,8 @@ export interface PaperSettings {
   differentPerStudent: boolean;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
-  /** IT Technical from the PDF banks: subject name → weight (sum 100); null/absent = even split. */
-  subjects?: Record<string, number> | null;
-  /** Steers bank retrieval when embeddings exist (≤ 200 chars). */
-  focus?: string | null;
+  /** The job the drive hires for: Technical questions are written for it (≤ 120 chars; absent on older drafts). */
+  role?: string | null;
 }
 
 export interface Progress {
@@ -100,6 +98,5 @@ export interface SendResult {
 }
 
 export interface AiStatus {
-  gemini: boolean;
-  groq: boolean;
+  nvidia: boolean;
 }

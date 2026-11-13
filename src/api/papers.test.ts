@@ -45,15 +45,15 @@ it("maps snake_case and surfaces ApiError code/message", async () => {
   expect(sent.settings).toMatchObject({ it_syntax_percent: 50, pool_factor: 2, different_per_student: true, track: "it" });
   expect(d).toMatchObject({ driveRef: "d1", ownerId: "u-1", poolSize: 0, progress: { done: 1, total: 4 }, settings: { itSyntaxPercent: 50, durationMin: 60 } });
 
-  stub({ error: { code: "AI_PROVIDER_NOT_CONFIGURED", message: "Gemini key missing", details: { providers: ["gemini"] } } }, 503);
+  stub({ error: { code: "AI_PROVIDER_NOT_CONFIGURED", message: "NVIDIA key missing", details: { providers: ["nvidia"] } } }, 503);
   const err = await createDraft({ driveRef: "d1", title: "T", settings }).catch((e) => e);
   expect(err).toBeInstanceOf(ApiError);
-  expect(err).toMatchObject({ status: 503, code: "AI_PROVIDER_NOT_CONFIGURED", message: "Gemini key missing" });
+  expect(err).toMatchObject({ status: 503, code: "AI_PROVIDER_NOT_CONFIGURED", message: "NVIDIA key missing" });
 });
 
 it("maps detail, edits, accept, send and the simple calls", async () => {
-  stub({ gemini: true, groq: false });
-  expect(await aiStatus()).toEqual({ gemini: true, groq: false });
+  stub({ nvidia: true });
+  expect(await aiStatus()).toEqual({ nvidia: true });
 
   stub([wireDraft]);
   expect((await listDrafts())[0].driveRef).toBe("d1");
