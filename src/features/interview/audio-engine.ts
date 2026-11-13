@@ -121,6 +121,11 @@ export class AudioEngine {
     return Math.max(0, this.nextStart - this.ctx.currentTime);
   }
 
+  /** The AI voice as it plays (for the avatar's lip sync). */
+  get output(): AudioNode {
+    return this.outAnalyser;
+  }
+
   outLevel(): number {
     if (!this.playing) return 0;
     this.outAnalyser.getFloatTimeDomainData(this.outData);

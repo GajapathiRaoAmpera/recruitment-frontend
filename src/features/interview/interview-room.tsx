@@ -49,6 +49,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   const [box, setBox] = useState<Box | null>(null);
   const [draft, setDraft] = useState("");
   const [finishing, setFinishing] = useState(false);
+  const [voice, setVoice] = useState<AudioNode | null>(null); // AI voice playback, for the avatar's lips
   const net = useNetworkQuality("watch");
 
   const session = useRef<InterviewSession | null>(null);
@@ -152,6 +153,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
         const eng = AudioEngine.create();
         await eng.ctx.resume();
         audio.current = eng;
+        setVoice(eng.output);
         uploader.current = new TurnUploader((turns, ended) => postTranscript(token, turns, ended));
         collector.current = new TurnCollector((t) => {
           uploader.current?.push(t);
@@ -273,7 +275,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
       <div className={s.room}>
         <main className={s.main}>
           <div className={h.card}>
-            <InterviewerCharacter state={link === "lost" ? "idle" : char} getLevel={getLevel} />
+            <InterviewerCharacter state={link === "lost" ? "idle" : char} getLevel={getLevel} voice={voice} />
             {(link === "reconnecting" || net.verdict === "offline") && <p role="status">Connection lost, reconnecting…</p>}
             {link === "lost" && <Button onClick={() => void live.current?.reconnect()}>Reconnect</Button>}
           </div>
