@@ -28,7 +28,7 @@ export function floatToPcm16(input: Float32Array): Int16Array {
   return out;
 }
 
-export function pcm16ToFloat(input: Int16Array): Float32Array {
+export function pcm16ToFloat(input: Int16Array): Float32Array<ArrayBuffer> {
   const out = new Float32Array(input.length);
   for (let i = 0; i < input.length; i++) out[i] = input[i]! / (input[i]! < 0 ? 0x8000 : 0x7fff);
   return out;
@@ -55,7 +55,7 @@ export function encodeMicChunk(input: Float32Array, sampleRate: number): string 
 }
 
 /** Model audio (base64 PCM16 LE) -> float samples for an AudioBuffer at OUT_RATE. */
-export function decodeModelAudio(b64: string): Float32Array {
+export function decodeModelAudio(b64: string): Float32Array<ArrayBuffer> {
   const bytes = base64ToBytes(b64);
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   const pcm = new Int16Array(Math.floor(bytes.byteLength / 2));
