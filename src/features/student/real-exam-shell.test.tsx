@@ -50,6 +50,12 @@ beforeEach(() => {
   api.submitAttempt.mockResolvedValue({ timeTakenSec: 600 });
   api.entryStep.mockResolvedValue(undefined);
   focused = true;
+  Object.defineProperty(document, "fullscreenElement", { value: document.documentElement, configurable: true });
+  const pos = { coords: { latitude: 1, longitude: 2, accuracy: 3 } };
+  Object.defineProperty(navigator, "geolocation", {
+    configurable: true,
+    value: { getCurrentPosition: (ok: (p: unknown) => void) => ok(pos), watchPosition: (ok: (p: unknown) => void) => (ok(pos), 1), clearWatch: () => {} },
+  });
   vi.spyOn(document, "hasFocus").mockImplementation(() => focused);
   Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true });
 });
@@ -188,5 +194,14 @@ describe("Submit and Leave", () => {
     render(<RealExamShell student={student} roundId="r1" />);
     expect(await screen.findByRole("alertdialog", { name: "Test submitted" })).toBeInTheDocument();
     expect(api.submitAttempt).not.toHaveBeenCalled();
+  });
+
+  it("does not start the timer until location and full screen pass the start check", async () => {
+    Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true });
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("Checking before you start");
+    await screen.findByRole("button", { name: "Check again" });
+    expect(api.entryStart).not.toHaveBeenCalled();
+    expect(api.entryStep).toHaveBeenCalledWith("t", "r1", "location", true, expect.anything());
   });
 });

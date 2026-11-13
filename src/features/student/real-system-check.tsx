@@ -1,11 +1,13 @@
 "use client";
 
-import { CheckCircle2, Circle, Maximize, MapPin } from "lucide-react";
+import { CheckCircle2, Circle, Maximize, MapPin, ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { entryStep, type EntryStep, type StudentSession } from "@/api/entry";
+import { useEffect, useState } from "react";
+import { entryConfirm, entryStep, entrySteps, type EntryStep, type StudentSession } from "@/api/entry";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { NotFoundState } from "@/components/ui/states";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
@@ -24,9 +26,49 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
   const router = useRouter();
   const round = student.rounds.find((r) => r.roundId === roundId);
   const [loc, setLoc] = useState<Status>("todo");
+  const [locBusy, setLocBusy] = useState(false);
   const [terms, setTerms] = useState(false);
-  const [fs, setFs] = useState<Status>("todo");
+  const [fsOn, setFsOn] = useState(false); // live: leaving full screen un-ticks this and hides Start
+  const [fsFailed, setFsFailed] = useState(false);
+  const [id, setId] = useState<Status>("todo");
+  const [idBusy, setIdBusy] = useState(false);
+  const [idError, setIdError] = useState<string>();
+  const [studentId, setStudentId] = useState(student.studentId);
+  const [dob, setDob] = useState("");
   const [error, setError] = useState<string>();
+  const idKey = `confirmed:${roundId}`;
+
+  // A refresh must not lose progress: location + terms come back from the server, the ID confirm from this tab.
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem(idKey)) setId("ok"); // eslint-disable-line react-hooks/set-state-in-effect -- read once after mount (not in the initial state: that would not match the server render)
+    } catch {
+      /* private mode: they just confirm again */
+    }
+    let stale = false;
+    entrySteps(student.entryToken, roundId)
+      .then((st) => {
+        if (stale) return;
+        if (st.location) setLoc("ok");
+        if (st.terms) setTerms(true);
+      })
+      .catch(() => {}); // best effort: the student can simply redo the steps
+    return () => {
+      stale = true;
+    };
+  }, [student.entryToken, roundId, idKey]);
+
+  // Full screen is read live and logged on every change, so the server and the screen agree.
+  useEffect(() => {
+    setFsOn(Boolean(document.fullscreenElement)); // eslint-disable-line react-hooks/set-state-in-effect -- one read on mount
+    const onChange = () => {
+      const on = Boolean(document.fullscreenElement);
+      setFsOn(on);
+      void entryStep(student.entryToken, roundId, "fullscreen", on).catch(() => {});
+    };
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, [student.entryToken, roundId]);
 
   if (!round) return <NotFoundState title="Round not found" description="This round isn't open for you. Go back to your dashboard." />;
 
@@ -46,32 +88,57 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
       setLoc("error");
       return void record("location", false, { reason: "unsupported" });
     }
+    setLocBusy(true);
     navigator.geolocation.getCurrentPosition(
-      async (p) => setLoc((await record("location", true, { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy })) ? "ok" : "error"),
-      async () => {
-        setLoc("error");
-        await record("location", false, { reason: "denied" });
+      async (p) => {
+        setLoc((await record("location", true, { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy })) ? "ok" : "error");
+        setLocBusy(false);
       },
-      { timeout: 10000 },
+      async (e) => {
+        setLoc("error");
+        setLocBusy(false);
+        await record("location", false, { reason: e.code === 1 ? "denied" : e.code === 2 ? "unavailable" : "timeout" });
+      },
+      { timeout: 8000, maximumAge: 300000 }, // accept a position up to 5 min old so it is instant when the browser has one
     );
   };
 
+  const confirmId = async () => {
+    setIdBusy(true);
+    setIdError(undefined);
+    try {
+      await entryConfirm(student.entryToken, roundId, studentId, dob);
+      setId("ok");
+      try {
+        window.sessionStorage.setItem(idKey, "1");
+      } catch {
+        /* optional */
+      }
+    } catch (e) {
+      setId("error");
+      setIdError((e as Error).message);
+    } finally {
+      setIdBusy(false);
+    }
+  };
+
+  // Unticking is recorded too, so the server never keeps an old OK the screen no longer shows.
   const acceptTerms = async (checked: boolean) => {
     setTerms(checked);
-    if (checked && !(await record("terms", true))) setTerms(false);
+    if (!(await record("terms", checked))) setTerms(!checked);
   };
 
   const goFullscreen = async () => {
+    setFsFailed(false);
     try {
-      await document.documentElement.requestFullscreen();
-      setFs((await record("fullscreen", true)) ? "ok" : "error");
+      await document.documentElement.requestFullscreen(); // the fullscreenchange listener records it
     } catch {
-      setFs("error");
+      setFsFailed(true);
       await record("fullscreen", false);
     }
   };
 
-  const done = loc === "ok" && terms && fs === "ok";
+  const done = id === "ok" && loc === "ok" && terms && fsOn;
   return (
     <>
       <header className={s.examBar}>
@@ -83,13 +150,29 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
       </header>
       <main className={s.examBody} style={{ maxWidth: "44rem", marginInline: "auto", width: "100%" }}>
         <div className={s.checkList}>
-          <section className={s.checkItem}>
-            <div>
-              <h2 className={h.row} style={{ fontWeight: 500 }}>
-                <Icon st="ok" /> 1. Confirm it&apos;s you
+          <section className={s.checkItem} aria-labelledby="id-h">
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <h2 id="id-h" className={h.row} style={{ fontWeight: 500 }}>
+                <Icon st={id} /> 1. Confirm it&apos;s you
               </h2>
-              <p className={h.xs}>Verified as {student.fullName}</p>
+              {id !== "ok" ? (
+                <div className={h.grid2} style={{ marginTop: 12 }}>
+                  <Field label="Student ID" error={idError}>
+                    <Input value={studentId} onChange={(e) => setStudentId(e.target.value)} />
+                  </Field>
+                  <Field label="Date of birth">
+                    <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+                  </Field>
+                </div>
+              ) : (
+                <p className={h.xs}>Verified as {student.fullName}</p>
+              )}
             </div>
+            {id !== "ok" && (
+              <Button size="sm" onClick={confirmId} loading={idBusy} disabled={!studentId.trim() || !dob}>
+                {!idBusy && <ShieldCheck aria-hidden size={14} style={{ marginRight: 4 }} />} {idBusy ? "Checking…" : "Verify"}
+              </Button>
+            )}
           </section>
 
           <section className={s.checkItem}>
@@ -102,8 +185,8 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
               </p>
             </div>
             {loc !== "ok" && (
-              <Button size="sm" onClick={askLocation}>
-                <MapPin aria-hidden size={14} style={{ marginRight: 4 }} /> Allow location
+              <Button size="sm" onClick={askLocation} loading={locBusy} disabled={id !== "ok"}>
+                {!locBusy && <MapPin aria-hidden size={14} style={{ marginRight: 4 }} />} {locBusy ? "Checking…" : "Allow location"}
               </Button>
             )}
           </section>
@@ -129,11 +212,11 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
               <h2 className={h.row} style={{ fontWeight: 500 }}>
                 <Maximize aria-hidden size={18} /> 4. Enter full screen
               </h2>
-              <p className={h.xs} role={fs === "error" ? "alert" : undefined}>
-                {fs === "error" ? "Full screen didn't start. Try again." : fs === "ok" ? "Full screen on" : "Required for the test."}
+              <p className={h.xs} role={fsFailed ? "alert" : undefined}>
+                {fsFailed ? "Full screen didn't start. Try again." : fsOn ? "Full screen on" : "Required for the test. It must stay on until you start."}
               </p>
             </div>
-            {fs !== "ok" && (
+            {!fsOn && (
               <Button size="sm" disabled={!terms} onClick={goFullscreen}>
                 Enter full screen
               </Button>

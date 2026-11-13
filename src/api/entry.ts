@@ -46,3 +46,13 @@ export type EntryStep = "location" | "terms" | "fullscreen";
 
 export const entryStep = (token: string, roundId: string, step: EntryStep, ok: boolean, meta: Record<string, unknown> = {}) =>
   call<void>("/entry/steps", json({ round_id: roundId, step, ok, meta }, token)).then(() => undefined);
+
+/** Latest result per step for a round (location / terms / fullscreen / id_dob), so a refresh keeps progress. */
+export const entrySteps = (token: string, roundId: string) =>
+  call<Partial<Record<EntryStep | "id_dob", boolean>>>(`/entry/steps?round_id=${encodeURIComponent(roundId)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+/** Per-round "confirm it's you": Student ID + DOB checked again and logged against this round (204). */
+export const entryConfirm = (token: string, roundId: string, studentId: string, dob: string) =>
+  call<void>("/entry/confirm", json({ round_id: roundId, student_id: studentId.trim(), dob }, token)).then(() => undefined);

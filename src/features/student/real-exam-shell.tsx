@@ -3,7 +3,7 @@
 import { CheckCircle2, Clock, Lock, MapPin, Maximize, TimerOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { entryStart, getAttempt, msLeft, reportViolation, saveAnswer, submitAttempt, type AttemptState } from "@/api/attempt";
 import { entryStep, type StudentSession } from "@/api/entry";
 import { ApiError } from "@/api/client";
@@ -28,9 +28,10 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   const [attempt, setAttempt] = useState<{ token: string; state: AttemptState }>();
   const [error, setError] = useState<ApiError | Error>();
   const [tries, setTries] = useState(0);
+  const [checked, setChecked] = useState(false); // location + full screen re-checked; the timer starts only after this
 
   useEffect(() => {
-    if (!round) return;
+    if (!round || !checked) return;
     let stale = false;
     (async () => {
       try {
@@ -44,7 +45,7 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
     return () => {
       stale = true;
     };
-  }, [round, student.entryToken, roundId, tries]);
+  }, [round, checked, student.entryToken, roundId, tries]);
 
   if (!round) return <NotFoundState title="Round not found" description="This round isn't open for you. Go back to your dashboard." />;
   if (error) {
@@ -60,8 +61,57 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
       </main>
     );
   }
+  if (!checked) return <StartCheck student={student} roundId={roundId} onPass={() => setChecked(true)} />;
   if (!attempt) return <LoadingLabel label="Starting your test" />;
   return <Shell student={student} roundId={roundId} type={round.type} token={attempt.token} initial={attempt.state} />;
+}
+
+/** Runs right when the test opens, before the timer starts: location and full screen must both be on. */
+function StartCheck({ student, roundId, onPass }: { student: StudentSession; roundId: string; onPass: () => void }) {
+  const [busy, setBusy] = useState(true);
+  const [loc, setLoc] = useState(false);
+  const [fs, setFs] = useState(false);
+  const run = useCallback(
+    async (enterFs: boolean) => {
+      if (enterFs && !document.fullscreenElement) await document.documentElement.requestFullscreen?.().catch(() => {}); // needs the click that called us
+      const fsOk = Boolean(document.fullscreenElement);
+      const pos = await new Promise<GeolocationPosition | undefined>((res) =>
+        navigator.geolocation ? navigator.geolocation.getCurrentPosition(res, () => res(undefined), { timeout: 8000, maximumAge: 300000 }) : res(undefined),
+      );
+      const locOk = Boolean(pos);
+      // the server's latest "location" log decides whether the test may start, so log this fresh result
+      await entryStep(student.entryToken, roundId, "location", locOk, pos ? { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy } : { reason: "start_check" }).catch(() => {});
+      await entryStep(student.entryToken, roundId, "fullscreen", fsOk).catch(() => {}); // the server requires it to start
+      setLoc(locOk);
+      setFs(fsOk);
+      setBusy(false);
+      if (locOk && fsOk) onPass();
+    },
+    [student.entryToken, roundId, onPass],
+  );
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- state is set after the async check, not synchronously
+    void run(false);
+  }, [run]);
+  return (
+    <main className={s.examBody} style={{ maxWidth: "36rem", marginInline: "auto" }}>
+      <section className={h.card}>
+        <h1 className={h.cardTitle}>Checking before you start</h1>
+        <p className={h.muted}>Location and full screen must be on. The timer starts after this check.</p>
+        {busy ? (
+          <LoadingLabel label="Checking…" />
+        ) : (
+          <>
+            <ul className={h.list}>
+              <li className={h.listItem}>{loc ? "✓" : "✗"} Location</li>
+              <li className={h.listItem}>{fs ? "✓" : "✗"} Full screen</li>
+            </ul>
+            <Button onClick={() => { setBusy(true); void run(true); }}>Check again</Button>
+          </>
+        )}
+      </section>
+    </main>
+  );
 }
 
 function Shell({ student, roundId, type, token, initial }: { student: StudentSession; roundId: string; type: string; token: string; initial: AttemptState }) {
@@ -126,12 +176,12 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
     void entryStep(student.entryToken, roundId, "location", ok, meta).catch(() => {});
   });
 
-  const leaving = useRef(false);
+  // Once the test is over (submitted, expired or locked) leave full screen, and keep leaving if it comes back.
   useEffect(() => {
-    if (!live && !leaving.current) {
-      leaving.current = true;
-      exitFullscreen();
-    }
+    if (live) return;
+    exitFullscreen();
+    document.addEventListener("fullscreenchange", exitFullscreen);
+    return () => document.removeEventListener("fullscreenchange", exitFullscreen);
   }, [live]);
 
   const questions = initial.questions;
