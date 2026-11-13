@@ -9,12 +9,14 @@ import { CodingResults } from "@/features/coding-results/coding-results";
 import { RealRoundProgress } from "@/features/hiring/real-round-progress";
 import { useAsync } from "@/features/papers/use-async";
 import { AdvancePanel } from "./advance-panel";
+import { DecisionPanel } from "./decision-panel";
 
 const TEST_ROUNDS = new Set(["aptitude", "coding", "technical"]);
+const HR_DECIDED = new Set(["ai_interview", "final"]); // AI recommends, HR decides
 
 /**
  * The real-mode HR round page: live progress (RealRoundProgress), the coding test setup (coding rounds), the cut-off &
- * advance panel (test rounds), then the coding results (coding rounds). Advancing remounts the progress view so it shows the new round status.
+ * advance panel (test rounds), HR's pass/fail panel (interview and final rounds), then the coding results (coding rounds). Advancing remounts the progress view so it shows the new round status.
  */
 export function RealRoundPage({ driveId, roundId }: { driveId: string; roundId: string }) {
   const [version, setVersion] = useState(0);
@@ -27,6 +29,7 @@ export function RealRoundPage({ driveId, roundId }: { driveId: string; roundId: 
       {rounds.error && !rounds.data && <ErrorState message={`Couldn't load the round type: ${rounds.error.message}`} onRetry={rounds.reload} />}
       {round?.type === "coding" && <CodingSetup roundId={roundId} />}
       {round && TEST_ROUNDS.has(round.type) && <AdvancePanel roundId={roundId} onAdvanced={() => setVersion((v) => v + 1)} />}
+      {round && HR_DECIDED.has(round.type) && <DecisionPanel roundId={roundId} onDecided={() => setVersion((v) => v + 1)} />}
       {round?.type === "coding" && <CodingResults roundId={roundId} />}
     </div>
   );

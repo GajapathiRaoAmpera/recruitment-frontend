@@ -25,6 +25,7 @@ vi.mock("./advance-panel", () => ({
     return <p>advance panel</p>;
   },
 }));
+vi.mock("./decision-panel", () => ({ DecisionPanel: () => <p>decision panel</p> }));
 vi.mock("@/features/coding-results/coding-results", () => ({ CodingResults: () => <p>coding results</p> }));
 vi.mock("@/features/coding-questions/coding-setup", () => ({ CodingSetup: () => <p>coding setup</p> }));
 
@@ -53,10 +54,10 @@ it("aptitude round: advance panel only", async () => {
   expect(screen.queryByText("coding setup")).not.toBeInTheDocument();
 });
 
-it("non-test round: progress view only", async () => {
-  withType("ai_interview");
+it.each(["ai_interview", "final"])("%s round: HR decision panel, no cut-off", async (type) => {
+  withType(type);
   render(<RealRoundPage driveId="d1" roundId="r1" />);
-  await act(async () => {});
+  expect(await screen.findByText("decision panel")).toBeInTheDocument();
   expect(screen.getByText("progress view")).toBeInTheDocument();
   expect(screen.queryByText("advance panel")).not.toBeInTheDocument();
 });

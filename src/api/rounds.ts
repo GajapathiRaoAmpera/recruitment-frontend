@@ -81,3 +81,46 @@ export async function advanceRound(roundId: string, threshold: number, finalizeL
 
 /** The round's test (404 TEST_NOT_FOUND when none is set up yet). `settings` is passed through untouched. */
 export const getRoundTest = async (roundId: string) => fromWire<RoundTest>(await api<unknown>(`/rounds/${roundId}/test`), new Set(["settings"]));
+
+// HR-decided rounds (ai_interview / final): the AI interview score is advice, HR passes or fails each student.
+// Contract: GET /rounds/{id}/decisions, POST /rounds/{id}/decide.
+
+export type Decision = "pass" | "fail";
+
+export interface DecisionRow {
+  candidateId: string;
+  studentId: string;
+  name: string;
+  status: string; // round_candidates.status
+  interviewId: string | null;
+  interviewStatus: "scheduled" | "live" | "completed" | "failed" | null; // null = never signed in
+  scoring: "pending" | "done" | "error" | null;
+  aiAverage: number | null; // 1-5, a recommendation only
+}
+
+export interface Decisions {
+  roundId: string;
+  roundType: string;
+  roundStatus: RoundStatus;
+  candidates: DecisionRow[];
+}
+
+export interface DecideResult {
+  roundId: string;
+  passed: number;
+  failed: number;
+  nextRoundId: string | null;
+  invited: { candidateId: string; studentId: string; name: string }[];
+  driveClosed: boolean;
+}
+
+export async function getDecisions(roundId: string): Promise<Decisions> {
+  const r = fromWire<Decisions>(await api<unknown>(`/rounds/${roundId}/decisions`));
+  return { ...r, candidates: r.candidates.map((c) => ({ ...c, aiAverage: num(c.aiAverage) })) };
+}
+
+/** HR's final pass/fail for every student. Closes the round; the last round closes the drive. Can't be undone. */
+export const decideRound = async (roundId: string, decisions: Record<string, Decision>) =>
+  fromWire<DecideResult>(
+    await api<unknown>(`/rounds/${roundId}/decide`, json("POST", { decisions: Object.entries(decisions).map(([candidateId, decision]) => ({ candidateId, decision })) })),
+  );
