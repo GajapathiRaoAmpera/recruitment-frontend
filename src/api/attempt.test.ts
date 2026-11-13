@@ -1,5 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { entryStart, getAttempt, isAttemptClosed, msLeft, reportViolation, runCode, saveAnswer, submitCode } from "./attempt";
+import { ApiError } from "./client";
+import { attemptIdOf, codingErrorMessage, entryStart, getAttempt, getCodeDrafts, isAttemptClosed, msLeft, reportViolation, runCode, saveAnswer, saveCodeDraft, submitCode } from "./attempt";
 
 afterEach(() => vi.unstubAllGlobals());
 const reply = (body: unknown, status = 200) => new Response(status === 204 ? null : JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -83,4 +84,58 @@ it("flags a locked or expired attempt, but not other errors", async () => {
 
   vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("fetch failed")));
   await expect(runCode("AT", req)).rejects.toMatchObject({ code: "NETWORK_ERROR" });
+});
+
+// --- Round 2: GET /attempt split, drafts, error text ---------------------------------------------
+
+it("splits multiple choice from coding questions and saved answers from submitted code", async () => {
+  stub(
+    reply({
+      status: "in_progress",
+      deadline_at: "2026-01-01T11:00:00Z",
+      server_now: "2026-01-01T10:00:00Z",
+      tab_switches: 0,
+      max_tab_switches: 3,
+      remaining_sec_on_lock: null,
+      questions: [
+        { kind: "coding", id: "c1", title: "Two sum", statement: "Add two numbers", marks: 10, languages: [{ key: "python", name: "Python 3.8" }], samples: [{ input: "1 2", expected: "3" }] },
+        { kind: "mcq", id: "m1", body: "2+2?", options: ["3", "4"], marks: 1 },
+      ],
+      saved_answers: { m1: 1, c1: { code: "print(3)", language: "python" } },
+    }),
+  );
+  const a = await getAttempt("ATT");
+  expect(a.questions).toEqual([{ id: "m1", body: "2+2?", options: ["3", "4"], marks: 1 }]);
+  expect(a.coding).toEqual([{ id: "c1", title: "Two sum", statement: "Add two numbers", marks: 10, languages: [{ key: "python", name: "Python 3.8" }], samples: [{ input: "1 2", expected: "3" }] }]);
+  expect(a.savedAnswers).toEqual({ m1: 1 });
+  expect(a.savedCode).toEqual({ c1: { code: "print(3)", language: "python" } });
+  expect(a.remainingSecOnLock).toBeNull();
+});
+
+it("saves a code draft with PUT and reads server drafts with their server time", async () => {
+  const f = stub(reply(null, 204), reply({ drafts: { c1: { code: "x = 1", language: "python", saved_at: "2026-01-01T10:05:00Z" } } }));
+  await saveCodeDraft("ATT", "c1", { code: "x = 1", language: "python" });
+  expect(f.mock.calls[0]![0]).toBe("/api/v1/attempt/code-drafts/c1");
+  expect(f.mock.calls[0]![1].method).toBe("PUT");
+  expect(JSON.parse(f.mock.calls[0]![1].body)).toEqual({ code: "x = 1", language: "python" });
+  expect(auth(f)).toBe("Bearer ATT");
+  expect(await getCodeDrafts("ATT")).toEqual({ c1: { code: "x = 1", language: "python", savedAt: Date.parse("2026-01-01T10:05:00Z") } });
+  expect(f.mock.calls[1]![0]).toBe("/api/v1/attempt/code-drafts");
+  expect(auth(f, 1)).toBe("Bearer ATT");
+});
+
+it("reads the attempt id from the token's aid claim, and null for anything unreadable", () => {
+  const payload = btoa(JSON.stringify({ typ: "attempt", cid: "c-1", aid: "a-42" })).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
+  expect(attemptIdOf(`h.${payload}.sig`)).toBe("a-42");
+  expect(attemptIdOf("not-a-jwt")).toBeNull();
+  expect(attemptIdOf("h.%%%.sig")).toBeNull();
+});
+
+it("gives a clear message for busy, unavailable and slow runners", () => {
+  const e = (status: number, code: string) => new ApiError(status, code, "raw server text");
+  expect(codingErrorMessage(e(429, "RUN_IN_PROGRESS"))).toMatch(/previous run is still going/);
+  expect(codingErrorMessage(e(503, "EXECUTION_UNAVAILABLE"))).toMatch(/runner is unavailable/);
+  expect(codingErrorMessage(e(504, "EXECUTION_TIMEOUT"))).toMatch(/took too long/);
+  expect(codingErrorMessage(e(409, "NO_TEST_CASES"))).toMatch(/no test cases/);
+  expect(codingErrorMessage(e(500, "SOMETHING_ELSE"))).toBe("raw server text");
 });

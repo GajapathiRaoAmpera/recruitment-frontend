@@ -160,5 +160,5 @@ function Runner({ roundId }: { roundId: string }) {
 export default function AptitudeTestPage() {
   const { roundId } = useParams<{ roundId: string }>();
   const { real } = useStudent();
-  return real ? <RealExamShell student={real} roundId={roundId} /> : <MockTest />;
+  return real ? <RealExamShell key={roundId} student={real} roundId={roundId} /> : <MockTest />;
 }

@@ -11,15 +11,36 @@ export interface AttemptQuestion {
   marks: number;
 }
 
+/** A Round 2 question. Only sample cases are ever sent; hidden cases never reach the browser (D7). */
+export interface CodingQuestion {
+  id: string;
+  title: string;
+  statement: string;
+  marks: number;
+  languages: { key: string; name: string }[];
+  samples: { input: string; expected: string }[]; // at most 3
+}
+
+/** The last SUBMITTED code for a coding question (drafts come from GET /attempt/code-drafts). */
+export interface SavedCode {
+  code: string;
+  language: string | null;
+}
+
 export interface AttemptState {
   status: "in_progress" | "locked" | "submitted" | "expired" | "not_started";
   deadlineAt: string;
   serverNow: string;
   tabSwitches: number;
   maxTabSwitches: number;
-  questions: AttemptQuestion[];
-  savedAnswers: Record<string, number>;
+  remainingSecOnLock: number | null;
+  questions: AttemptQuestion[]; // multiple choice only
+  savedAnswers: Record<string, number>; // multiple choice: chosen option
+  coding: CodingQuestion[];
+  savedCode: Record<string, SavedCode>; // coding: last submitted code
 }
+
+type RawQuestion = (AttemptQuestion & { kind?: "mcq" }) | (CodingQuestion & { kind: "coding" });
 
 const auth = (token: string): RequestInit => ({ headers: { Authorization: `Bearer ${token}` } });
 
@@ -34,10 +55,51 @@ export async function getAttempt(attemptToken: string): Promise<AttemptState> {
     server_now: string;
     tab_switches: number;
     max_tab_switches: number;
-    questions: AttemptQuestion[];
-    saved_answers: Record<string, number>;
+    remaining_sec_on_lock?: number | null;
+    questions: RawQuestion[];
+    saved_answers: Record<string, number | SavedCode>;
   }>("/attempt", auth(attemptToken));
-  return { status: r.status, deadlineAt: r.deadline_at, serverNow: r.server_now, tabSwitches: r.tab_switches, maxTabSwitches: r.max_tab_switches, questions: r.questions, savedAnswers: r.saved_answers };
+  // One round is either multiple choice or coding; split by each question's `kind` so neither screen sees the other's shape.
+  const questions: AttemptQuestion[] = [];
+  const coding: CodingQuestion[] = [];
+  for (const q of r.questions) {
+    if (q.kind === "coding") coding.push({ id: q.id, title: q.title, statement: q.statement, marks: q.marks, languages: q.languages, samples: q.samples });
+    else questions.push({ id: q.id, body: q.body, options: q.options, marks: q.marks });
+  }
+  const savedAnswers: Record<string, number> = {};
+  const savedCode: Record<string, SavedCode> = {};
+  for (const [id, v] of Object.entries(r.saved_answers)) {
+    if (typeof v === "number") savedAnswers[id] = v;
+    else if (v && typeof v.code === "string") savedCode[id] = { code: v.code, language: v.language ?? null };
+  }
+  return {
+    status: r.status,
+    deadlineAt: r.deadline_at,
+    serverNow: r.server_now,
+    tabSwitches: r.tab_switches,
+    maxTabSwitches: r.max_tab_switches,
+    remainingSecOnLock: r.remaining_sec_on_lock ?? null,
+    questions,
+    savedAnswers,
+    coding,
+    savedCode,
+  };
+}
+
+/**
+ * The attempt id from the attempt token's `aid` claim, used only to name this attempt's browser drafts
+ * (`attempt:<aid>:q:<qid>`). Not verified here: the server checks the token on every call. Null if unreadable.
+ */
+export function attemptIdOf(attemptToken: string): string | null {
+  try {
+    const part = attemptToken.split(".")[1];
+    if (!part) return null;
+    const b64 = part.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(part.length / 4) * 4, "=");
+    const aid = (JSON.parse(atob(b64)) as { aid?: unknown }).aid;
+    return typeof aid === "string" && aid ? aid : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Milliseconds left by the SERVER's clock, so a wrong laptop clock changes nothing. */
@@ -89,3 +151,49 @@ export async function runCode(attemptToken: string, req: CodeRequest): Promise<C
 
 /** Samples + hidden cases; counts only. The API saves the latest submission per question. */
 export const submitCode = (attemptToken: string, req: CodeRequest) => call<{ passed: number; total: number }>("/attempt/submit-code", json(wire(req), attemptToken));
+
+/** Editor autosave on the server (204). Only the draft changes; the submitted code and its marks stay. */
+export const saveCodeDraft = (attemptToken: string, questionId: string, draft: { code: string; language: string }) =>
+  call<void>(`/attempt/code-drafts/${encodeURIComponent(questionId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${attemptToken}` },
+    body: JSON.stringify({ code: draft.code, language: draft.language }),
+  }).then(() => undefined);
+
+export interface ServerDraft {
+  code: string;
+  language: string | null;
+  savedAt: number; // epoch ms on the server's clock
+}
+
+/** Server drafts newer than each question's last submit; a question without one is absent. */
+export async function getCodeDrafts(attemptToken: string): Promise<Record<string, ServerDraft>> {
+  const r = await call<{ drafts: Record<string, { code: string; language: string | null; saved_at: string }> }>("/attempt/code-drafts", auth(attemptToken));
+  const out: Record<string, ServerDraft> = {};
+  for (const [id, d] of Object.entries(r.drafts ?? {})) {
+    const savedAt = Date.parse(d.saved_at);
+    if (typeof d.code === "string" && Number.isFinite(savedAt)) out[id] = { code: d.code, language: d.language ?? null, savedAt };
+  }
+  return out;
+}
+
+/** What to tell the student when Run / Submit fails (the attempt-closed codes are handled separately). */
+export function codingErrorMessage(e: unknown): string {
+  const code = e instanceof ApiError ? e.code : undefined;
+  switch (code) {
+    case "RUN_IN_PROGRESS":
+      return "Your previous run is still going. Wait for it to finish, then try again.";
+    case "EXECUTION_UNAVAILABLE":
+      return "The code runner is unavailable right now. Your code is saved; try again in a moment.";
+    case "EXECUTION_TIMEOUT":
+      return "The code runner took too long to answer. Your code is saved; try again.";
+    case "NO_TEST_CASES":
+      return "This problem has no test cases yet. Tell the invigilator or HR.";
+    case "QUESTION_NOT_FOUND":
+      return "This problem is no longer part of your test. Reload the page.";
+    case "VALIDATION_ERROR":
+      return "The code couldn't be sent: check it isn't empty or longer than 64,000 characters.";
+    default:
+      return e instanceof Error && e.message ? e.message : "Something went wrong. Try again.";
+  }
+}
