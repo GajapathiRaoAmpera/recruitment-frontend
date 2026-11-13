@@ -3,7 +3,6 @@
 import { AlertTriangle, Sparkles } from "lucide-react";
 import { useId, useState, type FormEvent } from "react";
 import { createDraft, aiStatus } from "@/api/papers";
-import { getAvailability } from "@/api/qbank";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
@@ -12,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { Draft, Level, PaperSettings } from "@/features/papers/types";
 import { useAsync } from "@/features/papers/use-async";
 import { supabase } from "@/lib/supabase";
-import { BankTechnical, bankShortfall } from "./bank-technical";
 import { CountSteppers, NumberStepper } from "./count-steppers";
 import { MixEditor, sum } from "./mix-editor";
 import s from "./papers.module.scss";
@@ -37,6 +35,8 @@ export const DEFAULT_SETTINGS: PaperSettings = {
 export interface DriveOption {
   id: string;
   label: string;
+  /** The drive's role title: pre-fills the role the Technical questions are written for. */
+  role?: string;
 }
 
 interface SetupStepProps {
@@ -53,34 +53,28 @@ export function SetupStep(props: SetupStepProps) {
 function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
   const trackLabel = useId();
   const providers = useAsync(aiStatus, []);
-  const availability = useAsync(() => getAvailability("it"), []); // IT Technical comes from the PDF banks
+  const roleOf = (id: string) => drives.find((d) => d.id === id)?.role ?? "";
   const [driveRef, setDriveRef] = useState(drives.some((d) => d.id === initialDrive) ? initialDrive! : (drives[0]?.id ?? ""));
   const [title, setTitle] = useState("Round 1 — Aptitude paper");
-  const [settings, setSettings] = useState<PaperSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<PaperSettings>(() => ({ ...DEFAULT_SETTINGS, role: roleOf(driveRef) }));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string>();
   const set = (patch: Partial<PaperSettings>) => setSettings((v) => ({ ...v, ...patch }));
 
   const total = sum(settings.counts);
   const isIt = settings.track === "it";
-  // IT: Gemini picks the sample paper. Non-IT: Gemini writes the soft-skill questions and Groq checks them.
-  const missing = providers.data
-    ? [!providers.data.gemini && (isIt ? "Gemini (picks the sample paper)" : "Gemini (writes questions)"), !isIt && !providers.data.groq && "Groq (checks answers)"].filter(Boolean)
-    : [];
-  const short = isIt && availability.data ? bankShortfall(settings, availability.data) : {};
-  const shortText = Object.entries(short).map(([lv, n]) => `${lv} ${n}`).join(", ");
+  const role = settings.role?.trim() ?? "";
+  // one NVIDIA key: its model writes the Technical questions and picks the sample paper
+  const keyMissing = providers.data ? !providers.data.nvidia : false;
   const blocker =
     !driveRef ? "Pick a drive." :
     !title.trim() ? "Enter a title." :
+    !role ? "Enter the role the Technical questions are for." :
     total < 1 ? "Add at least one question." :
     sum(settings.mix) !== 100 ? "The section mix must total 100%." :
     providers.loading ? "Checking AI providers…" :
     providers.error ? "Could not check the AI providers." :
-    missing.length ? "An AI provider key is missing." :
-    isIt && availability.loading && !availability.data ? "Checking the question banks…" :
-    isIt && !availability.data ? "Could not load the question banks." :
-    isIt && settings.subjects && sum(settings.subjects) !== 100 ? "The subject mix must total 100%." :
-    shortText ? `The PDF banks are short of approved Technical questions (${shortText}). Upload or approve more, or lower the counts.` : undefined;
+    keyMissing ? "The AI provider key is missing." : undefined;
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -88,8 +82,7 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
     setSubmitting(true);
     setError(undefined);
     try {
-      const sent: PaperSettings = { ...settings, subjects: isIt ? (settings.subjects ?? null) : null, focus: isIt ? settings.focus?.trim() || null : null };
-      onCreated(await createDraft({ driveRef, title: title.trim(), settings: sent }));
+      onCreated(await createDraft({ driveRef, title: title.trim(), settings: { ...settings, role } }));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create the paper. Try again.");
       setSubmitting(false);
@@ -111,11 +104,11 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
               </Button>
             </span>
           </p>
-        ) : missing.length ? (
+        ) : keyMissing ? (
           <p role="alert" className={s.banner}>
             <AlertTriangle aria-hidden size={16} />
             <span>
-              Missing API key for {missing.join(" and ")}. Ask a Super Admin to add it to the backend <code>.env</code> and restart the API.
+              Missing NVIDIA API key. Ask a Super Admin to add <code>NVIDIA_API_KEY</code> to the backend <code>.env</code> and restart the API.
             </span>
           </p>
         ) : null}
@@ -126,7 +119,13 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
           </h2>
           <div className={h.grid2}>
             <Field label="Drive" required>
-              <Select value={driveRef} onChange={(e) => setDriveRef(e.target.value)}>
+              <Select
+                value={driveRef}
+                onChange={(e) => {
+                  setDriveRef(e.target.value);
+                  set({ role: roleOf(e.target.value) });
+                }}
+              >
                 {drives.length === 0 && <option value="">No drives yet</option>}
                 {drives.map((d) => (
                   <option key={d.id} value={d.id}>
@@ -138,6 +137,9 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
             <Field label="Title" required>
               <Input value={title} maxLength={200} onChange={(e) => setTitle(e.target.value)} />
             </Field>
+            <Field label="Role" required hint="The Technical questions are written for this job, for example “Java Backend Developer”.">
+              <Input value={settings.role ?? ""} maxLength={120} onChange={(e) => set({ role: e.target.value })} />
+            </Field>
           </div>
           <div style={{ marginTop: "1rem" }}>
             <p id={trackLabel} className={h.small} style={{ fontWeight: 500, marginBottom: 6 }}>
@@ -145,7 +147,7 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
             </p>
             <TrackToggle labelledBy={trackLabel} value={settings.track} onChange={(track) => set({ track })} />
             <p className={h.xs} style={{ marginTop: 6 }}>
-              {isIt ? "Technical questions come from the approved questions in your PDF question banks." : "Technical section covers workplace soft skills, written and checked by AI."}
+              {isIt ? "Technical questions (code and concepts) are written for the role by AI. You check the answers in review." : "Technical section covers the role’s job knowledge and workplace soft skills, written by AI. You check the answers in review."}
             </p>
           </div>
         </section>
@@ -159,15 +161,6 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
             <MixEditor value={settings.mix} technicalLabel={settings.track === "it" ? "Technical %" : "Soft skills %"} onChange={(mix) => set({ mix })} />
           </div>
         </section>
-
-        {isIt && (
-          <section className={h.card} aria-labelledby="paper-bank">
-            <h2 id="paper-bank" className={h.cardTitle} style={{ marginBottom: "1rem" }}>
-              Technical from your PDF banks
-            </h2>
-            <BankTechnical settings={settings} onChange={set} availability={availability} />
-          </section>
-        )}
 
         <section className={h.card} aria-labelledby="paper-rules">
           <h2 id="paper-rules" className={h.cardTitle} style={{ marginBottom: "1rem" }}>

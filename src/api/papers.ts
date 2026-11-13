@@ -1,10 +1,7 @@
 import { api } from "@/api/client";
-import { fromWire as from, json as toJson } from "@/api/wire";
+import { fromWire, json } from "@/api/wire";
 import type { AiStatus, Draft, DraftDetail, PaperSettings, QuestionEdit, SendResult } from "@/features/papers/types";
 
-const RAW = new Set(["subjects"]); // settings.subjects is keyed by subject name
-const fromWire = <T>(v: unknown) => from<T>(v, RAW);
-const json = (method: string, body: unknown) => toJson(method, body, RAW);
 const draftPath = (id: string) => `/papers/drafts/${encodeURIComponent(id)}`;
 
 export const aiStatus = async () => fromWire<AiStatus>(await api<unknown>("/papers/ai-status"));

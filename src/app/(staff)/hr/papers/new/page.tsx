@@ -16,7 +16,7 @@ export default function NewPaperPage({ searchParams }: { searchParams: Promise<{
 
   return (
     <>
-      <PageHeader title="New Round 1 paper" description="AI writes the questions, a second AI checks every answer, and you review before anything is sent." />
+      <PageHeader title="New Round 1 paper" description="AI writes the Technical questions for the role, and you check and edit every answer before anything is sent." />
       <Stepper current={0} />
       <SetupStep key={drives.length} drives={drives} initialDrive={drive} onCreated={(d) => router.push(`/hr/papers/${encodeURIComponent(d.id)}`)} />
     </>
