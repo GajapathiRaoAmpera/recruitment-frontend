@@ -53,7 +53,7 @@ export function RealDrives() {
             {data.map((d) => (
               <tr key={d.id}>
                 <Td>
-                  <Link href={`/hr/drives/${d.id}/candidates`} className={h.link}>
+                  <Link href={`/hr/drives/${d.id}`} className={h.link}>
                     {d.roleTitle}
                   </Link>
                   <p className={h.xs}>{d.company}</p>

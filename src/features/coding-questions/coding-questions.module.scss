@@ -1,0 +1,84 @@
+// Coding test set-up: question list, bank picker and the question form. Tokens only.
+@use "@/styles/mixins" as *;
+
+// The shared side panel is 28rem; 18 input/expected pairs need more room.
+div.panel {
+  max-width: 52rem;
+}
+
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: sp(3);
+  > :first-child {
+    width: 10rem;
+  }
+}
+
+.subTitle {
+  @include text(base);
+  font-weight: 500;
+  margin-bottom: sp(3);
+}
+
+.order {
+  display: flex;
+  flex-direction: column;
+}
+
+.orderItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: sp(3);
+  border-top: 1px solid var(--ui-color-border);
+  padding-block: sp(3);
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.orderTitle {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.pos {
+  width: 2rem;
+  font-family: var(--ui-font-mono);
+  color: var(--ui-color-text-muted);
+}
+
+.formGrid {
+  display: grid;
+  gap: sp(4);
+  @include up(md) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.caseRow {
+  display: grid;
+  gap: sp(2);
+  align-items: start;
+  border-top: 1px solid var(--ui-color-border);
+  padding-block: sp(3);
+  @include up(md) {
+    grid-template-columns: 6rem minmax(0, 1fr) minmax(0, 1fr);
+  }
+  textarea {
+    font-family: var(--ui-font-mono);
+  }
+}
+
+.caseLabel {
+  @include text(sm);
+  font-weight: 500;
+  padding-top: sp(2);
+}
+
+.error {
+  @include text(sm);
+  color: var(--ui-color-danger);
+}

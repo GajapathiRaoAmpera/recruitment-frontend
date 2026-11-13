@@ -26,6 +26,7 @@ vi.mock("./advance-panel", () => ({
   },
 }));
 vi.mock("@/features/coding-results/coding-results", () => ({ CodingResults: () => <p>coding results</p> }));
+vi.mock("@/features/coding-questions/coding-setup", () => ({ CodingSetup: () => <p>coding setup</p> }));
 
 import { RealRoundPage } from "./real-round-page";
 
@@ -36,12 +37,11 @@ beforeEach(() => {
 
 const withType = (type: string) => listRounds.mockResolvedValue([{ id: "r1", position: 2, type, status: "active" }]);
 
-it("coding round: progress, advance panel and coding results", async () => {
+it("coding round: progress, coding setup, advance panel and coding results, in that order", async () => {
   withType("coding");
-  render(<RealRoundPage driveId="d1" roundId="r1" />);
+  const { container } = render(<RealRoundPage driveId="d1" roundId="r1" />);
   expect(await screen.findByText("advance panel")).toBeInTheDocument();
-  expect(screen.getByText("progress view")).toBeInTheDocument();
-  expect(screen.getByText("coding results")).toBeInTheDocument();
+  expect([...container.querySelectorAll("p")].map((p) => p.textContent)).toEqual(["progress view", "coding setup", "advance panel", "coding results"]);
   expect(listRounds).toHaveBeenCalledWith("d1");
 });
 
@@ -50,6 +50,7 @@ it("aptitude round: advance panel only", async () => {
   render(<RealRoundPage driveId="d1" roundId="r1" />);
   expect(await screen.findByText("advance panel")).toBeInTheDocument();
   expect(screen.queryByText("coding results")).not.toBeInTheDocument();
+  expect(screen.queryByText("coding setup")).not.toBeInTheDocument();
 });
 
 it("non-test round: progress view only", async () => {
