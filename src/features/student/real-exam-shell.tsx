@@ -20,6 +20,7 @@ import { safeStorage } from "@/lib/storage";
 import { useLockdown } from "@/components/student/lockdown";
 import s from "@/components/student/student.module.scss";
 import { TabSwitchBadge } from "@/components/student/tab-switch-badge";
+import { CodingWorkspace } from "@/features/test-runner/coding-workspace";
 import { roundTitle } from "@/mock/data";
 import type { Round } from "@/mock/types";
 
@@ -249,6 +250,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         <div className={s.examTitle}>
           <p>{roundTitle[type as Round["type"]] ?? type}</p>
           <p className={h.xs} aria-live="polite">
+            {offline ? "Offline: reconnecting…" : saveError ?? (type === "coding" ? `${initial.coding.length} coding problem(s)` : `${Object.keys(answers).length} of ${questions.length} answered`)}
             {offline ? "Offline: reconnecting…" : saveError ?? `${Object.keys(answers).length} of ${questions.length} answered · ${markedCount} marked for review`}
           </p>
         </div>
@@ -268,6 +270,9 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         </Button>
       </header>
 
+      {type === "coding" ? (
+        <CodingWorkspace token={token} attempt={initial} live={live} submitted={submitted} onClosed={(k) => (k === "expired" ? setExpired(true) : setLocked(true))} />
+      ) : (
       <main className={s.examBody} style={{ maxWidth: "48rem", marginInline: "auto", width: "100%" }}>
         {!q ? (
           <section className={h.card}>
@@ -309,6 +314,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
           </section>
         )}
       </main>
+      )}
 
       {submitted && (
         <div className={s.overlay} role="alertdialog" aria-labelledby="done-h">
