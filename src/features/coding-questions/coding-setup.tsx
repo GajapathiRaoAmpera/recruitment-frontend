@@ -16,6 +16,7 @@ import { fmt } from "@/features/advance/messages";
 import { useAsync } from "@/features/papers/use-async";
 import { BankPicker, DIFFICULTY_TONE, label, LIST_LIMIT } from "./bank-picker";
 import s from "./coding-questions.module.scss";
+import { GenerateDialog } from "./generate-dialog";
 import { codingErrorMessage, FLAG_LABEL } from "./messages";
 import { QuestionForm } from "./question-form";
 
@@ -58,6 +59,7 @@ export function CodingSetup({ roundId }: { roundId: string }) {
   const [listBusy, setListBusy] = useState(false);
   const [listMsg, setListMsg] = useState<{ ok: boolean; text: string }>();
   const [form, setForm] = useState<{ id?: string } | null>(null);
+  const [generating, setGenerating] = useState(false);
 
   if (test.error && !noTest && !test.data) {
     if (test.error.code === "ROUND_HAS_NO_TEST") return null;
@@ -233,6 +235,8 @@ export function CodingSetup({ roundId }: { roundId: string }) {
           locked={locked}
           reloadKey={bankKey}
           onNew={() => setForm({})}
+          onGenerate={() => setGenerating(true)}
+          onApproved={onSaved}
           onEdit={(id) => setForm({ id })}
           onAdd={(q) => {
             if (ids.length >= MAX_QUESTIONS) return setListMsg({ ok: false, text: `A test can have at most ${MAX_QUESTIONS} questions.` });
@@ -242,6 +246,16 @@ export function CodingSetup({ roundId }: { roundId: string }) {
         />
       </div>
 
+      {generating && (
+        <GenerateDialog
+          onClose={() => setGenerating(false)}
+          onGenerated={() => setBankKey((k) => k + 1)}
+          onReview={(id) => {
+            setGenerating(false);
+            setForm({ id });
+          }}
+        />
+      )}
       {form && <QuestionForm key={form.id ?? "new"} questionId={form.id} onClose={() => setForm(null)} onSaved={onSaved} />}
     </section>
   );

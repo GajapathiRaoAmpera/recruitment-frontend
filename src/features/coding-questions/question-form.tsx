@@ -1,9 +1,10 @@
 "use client";
 
-import { ClipboardPaste } from "lucide-react";
+import { ClipboardPaste, Code2 } from "lucide-react";
 import { useState } from "react";
 import { ApiError } from "@/api/client";
 import {
+  approveCodingQuestion,
   createCodingQuestion,
   DIFFICULTIES,
   getCodingQuestion,
@@ -16,6 +17,7 @@ import {
   type QuestionSummary,
 } from "@/api/coding-questions";
 import { hire as h } from "@/components/hire/ui";
+import student from "@/components/student/student.module.scss";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -24,9 +26,12 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/states";
 import { useAsync } from "@/features/papers/use-async";
+// A next/dynamic wrapper: Monaco is fetched only when the reference solution is first shown.
+import { CodeEditor } from "@/features/test-runner/code-editor";
 import { caseCounts, emptyCaseSet, fromTestCases, parseCasesJson, PASTE_EXAMPLE, toTestCases, type CaseRow, type CaseSet } from "./cases";
 import s from "./coding-questions.module.scss";
 import { codingErrorMessage, fieldErrors, type FieldErrors } from "./messages";
+import { marksProblem, parseTags, tagsProblem } from "./validate";
 
 interface FormState {
   body: string;
@@ -37,18 +42,17 @@ interface FormState {
 }
 
 const blankForm = (): FormState => ({ body: "", difficulty: "easy", marks: "10", tags: "", cases: emptyCaseSet() });
+const noop = () => {};
+export const DRAFT_NOTE = "Expected outputs came from running the reference solution. If you change an input, update its expected output yourself.";
 const toForm = (q: CodingQuestion): FormState => ({ body: q.body, difficulty: q.difficulty, marks: String(q.marks), tags: q.tags.join(", "), cases: fromTestCases(q.testCases) });
-export const parseTags = (t: string) => [...new Set(t.split(",").map((x) => x.trim()).filter(Boolean))];
-
 /** Mirrors the backend validators so Save is only offered for a question the API will accept. */
 export function formProblems(f: FormState): string[] {
   const out: string[] = [];
   if (!f.body.trim()) out.push("write the statement");
-  const marks = Number(f.marks);
-  if (!f.marks.trim() || !(marks > 0 && marks <= 999)) out.push("set marks above 0 and at most 999");
-  else if (Math.round(marks * 100) !== marks * 100) out.push("use at most 2 decimals in marks");
-  const tags = parseTags(f.tags);
-  if (tags.length > 10 || tags.some((t) => t.length > 40)) out.push("use at most 10 tags of up to 40 characters");
+  const marks = marksProblem(f.marks);
+  if (marks) out.push(marks);
+  const tags = tagsProblem(f.tags);
+  if (tags) out.push(tags);
   const c = caseCounts(f.cases);
   if (!c.complete) out.push(`fill every expected output (${SAMPLE_CASES - c.sample + HIDDEN_CASES - c.hidden} left)`);
   return out;
@@ -86,6 +90,10 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
   const [pasteError, setPasteError] = useState<string>();
+  const [approving, setApproving] = useState(false);
+  const [showRef, setShowRef] = useState(false);
+  const loaded = questionId ? existing.data : null;
+  const isDraft = loaded?.approved === false; // an AI draft: review, then approve
 
   // The loaded question fills the form once (adjusted during render, not in an effect).
   if (questionId && existing.data && form === null) {
@@ -124,15 +132,37 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
       }
       onClose();
     } catch (e) {
-      const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Nothing was saved; try again.");
-      if (err.code === "VALIDATION_ERROR") setErrors(fieldErrors(err));
-      setFormError(codingErrorMessage(err));
+      fail(e);
     } finally {
       setSaving(false);
     }
   };
 
+  /** Approve, saving any edits in the same PATCH. Only approved questions can be added to a round. */
+  const approve = async () => {
+    if (!form || !questionId || !original) return;
+    setApproving(true);
+    setErrors({});
+    setFormError(undefined);
+    try {
+      onSaved(await approveCodingQuestion(questionId, changes(toInput(form), toInput(original))), false);
+      onClose();
+    } catch (e) {
+      fail(e);
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const fail = (e: unknown) => {
+    const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Nothing was saved; try again.");
+    if (err.code === "VALIDATION_ERROR") setErrors(fieldErrors(err));
+    setFormError(codingErrorMessage(err));
+  };
+
   const problems = form ? formProblems(form) : [];
+  const dirty = Boolean(form && original && Object.keys(changes(toInput(form), toInput(original))).length);
+  const busy = saving || approving;
   const counts = form ? caseCounts(form.cases) : null;
 
   const caseRows = (kind: keyof CaseSet) => {
@@ -167,21 +197,26 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
   };
 
   return (
-    <Dialog open onOpenChange={(o) => !o && !saving && onClose()}>
+    <Dialog open onOpenChange={(o) => !o && !busy && onClose()}>
       <DialogContent
         side
         className={s.panel}
-        title={questionId ? "Edit coding question" : "New coding question"}
+        title={isDraft ? "Review AI draft" : questionId ? "Edit coding question" : "New coding question"}
         description="The first line of the statement is shown to students as the title."
         footer={
           form && (
             <>
-              <Button variant="secondary" disabled={saving} onClick={onClose}>
+              <Button variant="secondary" disabled={busy} onClick={onClose}>
                 Cancel
               </Button>
-              <Button disabled={problems.length > 0} loading={saving} onClick={() => void save()}>
+              <Button variant={isDraft ? "secondary" : "primary"} disabled={problems.length > 0 || approving} loading={saving} onClick={() => void save()}>
                 {questionId ? "Save changes" : "Create question"}
               </Button>
+              {isDraft && (
+                <Button disabled={problems.length > 0 || saving} loading={approving} onClick={() => void approve()}>
+                  {dirty ? "Save & approve" : "Approve"}
+                </Button>
+              )}
             </>
           )
         }
@@ -197,6 +232,38 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
           )
         ) : (
           <div className={h.stack}>
+            {isDraft && (
+              <div className={h.row}>
+                <Badge tone="info">Draft (AI)</Badge>
+                <Badge tone="warning">Not approved</Badge>
+                <span className={h.xs}>Check the statement and cases, then approve it to use it in a round.</span>
+              </div>
+            )}
+            {loaded?.referenceSolution && (
+              <section aria-labelledby="ref-h">
+                <div className={h.between}>
+                  <h3 id="ref-h" className={s.subTitle} style={{ marginBottom: 0 }}>
+                    Reference solution ({loaded.referenceLanguage ?? "python"})
+                  </h3>
+                  <Button size="sm" variant="secondary" aria-expanded={showRef} onClick={() => setShowRef((v) => !v)}>
+                    <Code2 aria-hidden size={14} style={{ marginRight: 4 }} /> {showRef ? "Hide reference solution" : "Show reference solution"}
+                  </Button>
+                </div>
+                <p className={h.xs}>{DRAFT_NOTE} The solution itself can&apos;t be edited.</p>
+                {showRef && (
+                  <div className={student.editorWrap} style={{ marginTop: 8 }}>
+                    <CodeEditor
+                      value={loaded.referenceSolution}
+                      language={loaded.referenceLanguage ?? "python"}
+                      onChange={noop}
+                      readOnly
+                      label="Reference solution"
+                      path={`reference/${loaded.id}`}
+                    />
+                  </div>
+                )}
+              </section>
+            )}
             <Field label="Statement" hint="First line = title. Describe the input and output format." error={errors.body}>
               <Textarea rows={8} value={form.body} onChange={(e) => set({ body: e.target.value })} />
             </Field>

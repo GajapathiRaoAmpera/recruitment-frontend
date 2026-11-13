@@ -12,13 +12,15 @@ import { CodingSetup } from "./coding-setup";
 
 const json = (status: number, body: unknown) => ({ ok: status < 300, status, json: async () => body });
 const q = (id: string, body: string, difficulty: string, marks: string, approved = true) => ({ id, kind: "coding", body, difficulty, tags: ["t"], marks, approved, created_at: "2026-01-01T00:00:00Z" });
-const BANK = [q("q1", "Sum two numbers\nRead a, b.", "easy", "10.00"), q("q2", "Max of array", "medium", "20.00"), q("q3", "Shortest path", "advanced", "30.00"), q("q4", "Draft from AI", "easy", "5.00", false)];
+const bank = () => [q("q1", "Sum two numbers\nRead a, b.", "easy", "10.00"), q("q2", "Max of array", "medium", "20.00"), q("q3", "Shortest path", "advanced", "30.00"), q("q4", "Draft from AI", "easy", "5.00", false)];
+let BANK = bank();
 
 let test: { exists: boolean; locked: boolean; ids: string[]; durationSec: number };
 let questionsReply: { status: number; body: unknown } | null;
 let fetchMock: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
+  BANK = bank();
   test = { exists: true, locked: false, ids: ["q1", "q2"], durationSec: 3600 };
   questionsReply = null;
   fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -36,6 +38,16 @@ beforeEach(() => {
     if (u.pathname === "/api/v1/questions") {
       const d = u.searchParams.get("difficulty");
       return json(200, BANK.filter((x) => !d || x.difficulty === d));
+    }
+    if (u.pathname.startsWith("/api/v1/questions/q") && method === "PATCH") {
+      const row = BANK.find((x) => x.id === u.pathname.split("/").pop())!;
+      Object.assign(row, body);
+      return json(200, { ...row, test_cases: [] });
+    }
+    if (u.pathname === "/api/v1/questions/generate" && method === "POST") {
+      const created = { ...q("q9", "Palindrome check\nRead a string.", body.difficulty, "10.00", false), reference_solution: "print(1)", reference_language: "python", test_cases: [] };
+      BANK.unshift(created);
+      return json(201, { created: [created], failed: [] });
     }
     if (u.pathname === "/api/v1/tests/t1/questions" && method === "PUT") {
       if (questionsReply) return json(questionsReply.status, questionsReply.body);
@@ -194,4 +206,46 @@ it("shows an error with a retry when the test can't load", async () => {
   view();
   expect(await screen.findByRole("alert")).toHaveTextContent("Server is down");
   expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+});
+
+it("approves a draft from its row after a confirm; then it can be added", async () => {
+  view();
+  await screen.findByRole("table", { name: "Question bank" });
+  const row = bankRow("Draft from AI");
+  expect(row.getByText("Draft (AI)")).toBeInTheDocument();
+  expect(row.getByRole("button", { name: "Add Draft from AI to round" })).toBeDisabled();
+  expect(row.getByRole("button", { name: "Review Draft from AI" })).toBeInTheDocument();
+  fireEvent.click(row.getByRole("button", { name: "Approve Draft from AI" }));
+  const confirm = within(await screen.findByRole("alertdialog"));
+  expect(confirm.getByText('Approve "Draft from AI" without reviewing?')).toBeInTheDocument();
+  fireEvent.click(confirm.getByRole("button", { name: "Approve" }));
+
+  await waitFor(() => expect(bankRow("Draft from AI").getByRole("button", { name: "Add Draft from AI to round" })).toBeEnabled());
+  const patch = calls("PATCH", "/api/v1/questions/q4");
+  expect(patch).toHaveLength(1);
+  expect(JSON.parse(String(patch[0]![1].body))).toEqual({ approved: true });
+  expect(bankRow("Draft from AI").queryByText("Draft (AI)")).not.toBeInTheDocument();
+  expect(bankRow("Draft from AI").queryByRole("button", { name: "Approve Draft from AI" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+
+  fireEvent.click(bankRow("Draft from AI").getByRole("button", { name: "Add Draft from AI to round" }));
+  await waitFor(() => expect(titles()).toContain("Draft from AI"));
+});
+
+it("Generate with AI reloads the bank with the new draft; Review opens it", async () => {
+  view();
+  await screen.findByRole("table", { name: "Question bank" });
+  const listCalls = calls("GET", "/api/v1/questions?").length;
+  fireEvent.click(screen.getByRole("button", { name: "Generate with AI" }));
+  const gen = within(await screen.findByRole("dialog", { name: "Generate with AI" }));
+  fireEvent.click(gen.getByRole("button", { name: "Generate" }));
+  expect(await gen.findByText("1 created, 0 failed")).toBeInTheDocument();
+  await waitFor(() => expect(calls("GET", "/api/v1/questions?").length).toBeGreaterThan(listCalls));
+  fireEvent.click(gen.getByRole("button", { name: "Review Palindrome check" }));
+  expect(screen.getByText("form for q9")).toBeInTheDocument();
+  expect(screen.queryByRole("dialog", { name: "Generate with AI" })).not.toBeInTheDocument();
+  const row = await waitFor(() => bankRow("Palindrome check")); // the bank behind the dialog was reloaded
+  expect(row.getByText("Draft (AI)")).toBeInTheDocument();
+  expect(row.getByText("Not approved")).toBeInTheDocument();
+  expect(row.getByRole("button", { name: "Add Palindrome check to round" })).toBeDisabled();
 });

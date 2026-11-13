@@ -1,7 +1,7 @@
 // AC-5: every coding question / test set-up error gets a clear message; 422 details map onto the form fields.
 import { expect, it } from "vitest";
 import { ApiError } from "@/api/client";
-import { codingErrorMessage, fieldErrors } from "./messages";
+import { codingErrorMessage, failureReasons, fieldErrors } from "./messages";
 
 it.each([
   ["QUESTION_IN_USE", /already answered this question, so its test cases can't change/],
@@ -14,6 +14,12 @@ it.each([
   ["ROUND_HAS_NO_TEST", /no test to set up/],
   ["TEST_NOT_FOUND", /isn't set up yet/],
   ["VALIDATION_ERROR", /highlighted fields/],
+  ["AI_PROVIDER_NOT_CONFIGURED", /AI generation isn't set up on the server/],
+  ["EXECUTION_UNAVAILABLE", /code runner \(Judge0\) is down.*Nothing was saved/],
+  ["AI_BAD_OUTPUT", /couldn't write a question that passed the checks, so nothing was saved\. Try again/],
+  ["AI_PROVIDER_ERROR", /AI provider failed for every question/],
+  ["AI_PROVIDER_RATE_LIMITED", /busy \(rate limited\)/],
+  ["GENERATE_TIMEOUT", /almost 3 minutes.*question bank has been reloaded/],
 ])("%s", (code, text) => {
   expect(codingErrorMessage(new ApiError(409, code, "raw"))).toMatch(text);
 });
@@ -42,4 +48,12 @@ it("maps 422 locations onto the fields and the case rows", () => {
     other: "Input should be 'coding'",
   });
   expect(fieldErrors(new ApiError(422, "VALIDATION_ERROR", "x"))).toEqual({});
+});
+
+it("AI_BAD_OUTPUT lists each failure reason", () => {
+  const e = new ApiError(502, "AI_BAD_OUTPUT", "raw", { failed: [{ index: 0, reason: "solution crashed" }, { index: 1, reason: "same output for every input." }] });
+  expect(codingErrorMessage(e)).toBe(
+    "The AI couldn't write a question that passed the checks, so nothing was saved. Question 1: solution crashed. Question 2: same output for every input. Try again, or change the topic.",
+  );
+  expect(failureReasons("nope")).toBe("");
 });

@@ -64,3 +64,33 @@ it("titleOf is the statement's first line", () => {
   expect(titleOf("  Sum two numbers  \nRead a and b.")).toBe("Sum two numbers");
   expect(titleOf("   ")).toBe("Untitled question");
 });
+
+it("generates AI drafts with a timeout signal; empty topic is left out", async () => {
+  const { generateCodingQuestions } = await import("./coding-questions");
+  const draft = { ...Q, approved: false, reference_solution: "print(1)", reference_language: "python", test_cases: [] };
+  const f = stub(reply({ created: [draft], failed: [{ index: 1, reason: "solution timed out" }] }, 201));
+  const r = await generateCodingQuestions({ difficulty: "medium", topic: "   ", tags: ["dp"], marks: 10, count: 2 });
+  expect([f.mock.calls[0]![0], f.mock.calls[0]![1].method]).toEqual(["/api/v1/questions/generate", "POST"]);
+  expect(JSON.parse(f.mock.calls[0]![1].body)).toEqual({ difficulty: "medium", tags: ["dp"], marks: 10, count: 2 });
+  expect(f.mock.calls[0]![1].signal).toBeInstanceOf(AbortSignal);
+  expect(r.created[0]).toMatchObject({ approved: false, marks: 10, referenceSolution: "print(1)", referenceLanguage: "python" });
+  expect(r.failed).toEqual([{ index: 1, reason: "solution timed out" }]);
+});
+
+it("aborts generation after the client timeout", async () => {
+  const { generateCodingQuestions } = await import("./coding-questions");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((_: string, init: RequestInit) => new Promise((_, reject) => init.signal!.addEventListener("abort", () => reject(init.signal!.reason)))),
+  );
+  await expect(generateCodingQuestions({ difficulty: "easy", tags: [], marks: 10, count: 1 }, 20)).rejects.toMatchObject({ name: "TimeoutError" });
+});
+
+it("approves a draft, with any edits in the same PATCH", async () => {
+  const { approveCodingQuestion } = await import("./coding-questions");
+  const f = stub(reply({ ...Q, test_cases: [] }), reply({ ...Q, test_cases: [] }));
+  await approveCodingQuestion("q1");
+  expect([f.mock.calls[0]![0], f.mock.calls[0]![1].method, JSON.parse(f.mock.calls[0]![1].body)]).toEqual(["/api/v1/questions/q1", "PATCH", { approved: true }]);
+  await approveCodingQuestion("q1", { marks: 15 });
+  expect(JSON.parse(f.mock.calls[1]![1].body)).toEqual({ marks: 15, approved: true });
+});

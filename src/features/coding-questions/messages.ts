@@ -23,9 +23,31 @@ export function codingErrorMessage(e: ApiError): string {
       return "This round's test isn't set up yet. Save the test settings first; that creates it.";
     case "VALIDATION_ERROR":
       return "Some fields need fixing; see the highlighted fields.";
+    case "AI_PROVIDER_NOT_CONFIGURED":
+      return "AI generation isn't set up on the server (no AI provider key). Ask a Super Admin, or write the question by hand.";
+    case "EXECUTION_UNAVAILABLE":
+      return "The code runner (Judge0) is down, so the AI's solutions can't be checked. Nothing was saved; try again later.";
+    case "AI_BAD_OUTPUT": {
+      const reasons = failureReasons(e.details.failed);
+      return `The AI couldn't write a question that passed the checks, so nothing was saved.${reasons ? ` ${reasons}` : ""} Try again, or change the topic.`;
+    }
+    case "AI_PROVIDER_ERROR":
+      return "The AI provider failed for every question. Nothing was saved; try again in a few minutes.";
+    case "AI_PROVIDER_RATE_LIMITED":
+      return "The AI provider is busy (rate limited). Nothing was saved; wait a minute and try again.";
+    case "GENERATE_TIMEOUT":
+      return "No answer after almost 3 minutes. Some drafts may still have been saved: the question bank has been reloaded, so check it before trying again.";
     default:
       return e.message;
   }
+}
+
+/** "Question 1: reason. Question 3: reason." from a generate `failed` list (index is 0-based). */
+export function failureReasons(failed: unknown): string {
+  if (!Array.isArray(failed)) return "";
+  return (failed as { index?: number; reason?: string }[])
+    .map((f) => `Question ${(typeof f.index === "number" ? f.index : 0) + 1}: ${(f.reason ?? "failed").replace(/\.$/, "")}.`)
+    .join(" ");
 }
 
 /** Why each flagged question was refused, for the badge next to it. */

@@ -29,7 +29,26 @@ export interface TestCase {
 
 export interface CodingQuestion extends QuestionSummary {
   testCases: (TestCase & { id: string; position: number })[];
+  /** AI drafts only: the program whose Judge0 output became each `expected`. Not editable. */
+  referenceSolution: string | null;
+  referenceLanguage: string | null;
 }
+
+export interface GenerateInput {
+  difficulty: Difficulty;
+  topic?: string;
+  tags: string[];
+  marks: number;
+  count: number; // 1-3
+}
+
+export interface GenerateResult {
+  created: CodingQuestion[];
+  failed: { index: number; reason: string }[]; // index: 0-based within `count`
+}
+
+/** Above the server's 150 s budget for one generate request. */
+export const GENERATE_TIMEOUT_MS = 170_000;
 
 export interface QuestionInput {
   body: string;
@@ -69,8 +88,21 @@ export const createCodingQuestion = async (q: QuestionInput) =>
   summary(fromWire<CodingQuestion>(await api<unknown>("/questions", json("POST", { kind: "coding", ...q }))));
 
 /** Only the sent fields change; `testCases` replaces the whole set (409 QUESTION_IN_USE once students answered it). */
-export const updateCodingQuestion = async (id: string, patch: Partial<QuestionInput>) =>
+export const updateCodingQuestion = async (id: string, patch: Partial<QuestionInput> & { approved?: boolean }) =>
   summary(fromWire<CodingQuestion>(await api<unknown>(`/questions/${id}`, json("PATCH", patch))));
+
+/** Approves an AI draft, optionally saving edits in the same PATCH. Only approved questions can go in a round. */
+export const approveCodingQuestion = (id: string, edits: Partial<QuestionInput> = {}) => updateCodingQuestion(id, { ...edits, approved: true });
+
+/**
+ * AI drafts (approved: false). Synchronous: about 11 s per question, up to 150 s; partial success is normal.
+ * Aborts after `timeoutMs` with a DOMException named "TimeoutError".
+ */
+export async function generateCodingQuestions(input: GenerateInput, timeoutMs = GENERATE_TIMEOUT_MS): Promise<GenerateResult> {
+  const body = { ...input, topic: input.topic?.trim() || undefined };
+  const r = fromWire<GenerateResult>(await api<unknown>("/questions/generate", { ...json("POST", body), signal: AbortSignal.timeout(timeoutMs) }));
+  return { created: r.created.map(summary), failed: r.failed };
+}
 
 /** Creates the round's test if it has none. Duration 60-36000 seconds. */
 export const saveTestSettings = async (roundId: string, s: { durationSec: number }) =>

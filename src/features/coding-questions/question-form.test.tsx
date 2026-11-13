@@ -1,9 +1,16 @@
 // FR-13/FR-14, AC-5: HR writes a coding question; Save needs 3 sample + 15 hidden cases with an expected output each.
 // fetch is stubbed with a small fake of /questions.
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/supabase", () => ({ supabase: null }));
+const editorRenders = vi.hoisted(() => ({ n: 0 }));
+vi.mock("@/features/test-runner/code-editor", () => ({
+  CodeEditor: ({ value, label, readOnly }: { value: string; label: string; readOnly?: boolean }) => {
+    editorRenders.n++;
+    return <textarea aria-label={label} value={value} readOnly={readOnly} onChange={() => {}} />;
+  },
+}));
 
 import { QuestionForm } from "./question-form";
 
@@ -144,4 +151,59 @@ it("edit: QUESTION_IN_USE explains that the cases can't change", async () => {
   const patch = fetchMock.mock.calls.find(([, i]) => i?.method === "PATCH")!;
   expect(Object.keys(JSON.parse(String(patch[1].body)))).toEqual(["test_cases"]);
   expect(onSaved).not.toHaveBeenCalled();
+});
+
+describe("AI draft review", () => {
+  const DRAFT = { ...SUMMARY, id: "d1", approved: false, reference_solution: "a, b = map(int, input().split())\nprint(a + b)", reference_language: "python", test_cases: wireCases() };
+  beforeEach(() => {
+    editorRenders.n = 0;
+    fetchMock.mockImplementation(async (url: string, init?: RequestInit) => {
+      if (url === "/api/v1/questions/d1" && !init?.method) return json(200, DRAFT);
+      if (url === "/api/v1/questions/q1" && !init?.method) return json(200, { ...SUMMARY, reference_solution: null, reference_language: null, test_cases: wireCases() });
+      if (url === "/api/v1/questions/d1" && init?.method === "PATCH") return json(200, { ...DRAFT, ...JSON.parse(String(init.body)), marks: "15.00" });
+      return json(404, { error: { code: "NOT_FOUND", message: "no route" } });
+    });
+  });
+  const patchBody = () => JSON.parse(String(fetchMock.mock.calls.find(([, i]) => i?.method === "PATCH")![1].body));
+
+  it("shows the draft badges, the note and the reference solution only on request (lazy editor)", async () => {
+    render(<QuestionForm questionId="d1" onClose={onClose} onSaved={onSaved} />);
+    expect(await screen.findByRole("dialog", { name: "Review AI draft" })).toBeInTheDocument();
+    await screen.findByRole("spinbutton", { name: "Marks" });
+    expect(dialog().getByText("Draft (AI)")).toBeInTheDocument();
+    expect(dialog().getByText("Not approved")).toBeInTheDocument();
+    expect(dialog().getByText(/Expected outputs came from running the reference solution\. If you change an input, update its expected output yourself\./)).toBeInTheDocument();
+    expect(editorRenders.n).toBe(0);
+    fireEvent.click(dialog().getByRole("button", { name: "Show reference solution" }));
+    const code = dialog().getByRole("textbox", { name: "Reference solution" });
+    expect(code).toHaveValue("a, b = map(int, input().split())\nprint(a + b)");
+    expect(code).toHaveAttribute("readonly");
+    fireEvent.click(dialog().getByRole("button", { name: "Hide reference solution" }));
+    expect(dialog().queryByRole("textbox", { name: "Reference solution" })).not.toBeInTheDocument();
+  });
+
+  it("Approve sends PATCH {approved: true}", async () => {
+    render(<QuestionForm questionId="d1" onClose={onClose} onSaved={onSaved} />);
+    await screen.findByRole("spinbutton", { name: "Marks" });
+    fireEvent.click(dialog().getByRole("button", { name: "Approve" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalledWith(expect.objectContaining({ id: "d1", approved: true }), false));
+    expect(patchBody()).toEqual({ approved: true });
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it("with edits the button reads Save & approve and sends both in one PATCH", async () => {
+    render(<QuestionForm questionId="d1" onClose={onClose} onSaved={onSaved} />);
+    fireEvent.change(await screen.findByRole("spinbutton", { name: "Marks" }), { target: { value: "15" } });
+    fireEvent.click(dialog().getByRole("button", { name: "Save & approve" }));
+    await waitFor(() => expect(onSaved).toHaveBeenCalled());
+    expect(patchBody()).toEqual({ marks: 15, approved: true });
+  });
+
+  it("an approved question has no Approve button", async () => {
+    render(<QuestionForm questionId="q1" onClose={onClose} onSaved={onSaved} />);
+    await screen.findByRole("spinbutton", { name: "Marks" });
+    expect(screen.getByRole("dialog", { name: "Edit coding question" })).toBeInTheDocument();
+    expect(dialog().queryByRole("button", { name: /Approve/ })).not.toBeInTheDocument();
+    expect(dialog().queryByText("Draft (AI)")).not.toBeInTheDocument();
+  });
 });
