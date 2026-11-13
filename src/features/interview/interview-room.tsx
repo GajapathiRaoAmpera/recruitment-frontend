@@ -235,7 +235,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
     const sess = session.current;
     if (!box || !draft.trim() || !sess) return;
     const text = draft.trim();
-    uploader.current?.push({ role: "candidate", kind: "typed", text: text.slice(0, 2000), language: box.language ?? null, ts: new Date().toISOString() });
+    uploader.current?.push({ role: "candidate", kind: "typed", text, language: box.language ?? null, ts: new Date().toISOString() });
     live.current?.sendText(`${sess.protocol.typedPrefix}${box.language ? ` (${box.language})` : ""}:\n${text}`);
     setLines((l) => [...l, { role: "candidate", text: "(typed answer submitted)" }]);
     setBox(null);
@@ -246,9 +246,14 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
     return (
       <div className={s.center}>
         <p role="alert">{error}</p>
-        <Button variant="secondary" onClick={() => void finish()}>
-          End interview
-        </Button>
+        {lines.length === 0 && !finishing ? (
+          // nothing recorded yet: rejoining resumes the same interview, so never show "complete"
+          <Button onClick={() => window.location.reload()}>Try again</Button>
+        ) : (
+          <Button variant="secondary" onClick={() => void finish()}>
+            End interview
+          </Button>
+        )}
       </div>
     );
 
@@ -275,7 +280,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
           {box && (
             <div className={`${h.card} ${s.answer}`}>
               <p style={{ fontWeight: 500 }}>{box.question}</p>
-              <Textarea aria-label="Your answer" rows={8} value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={box.mode === "text"} />
+              <Textarea aria-label="Your answer" rows={8} maxLength={8000} value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={box.mode === "text"} />
               <Button onClick={submitBox} disabled={!draft.trim()}>
                 <Send aria-hidden size={16} style={{ marginRight: 4 }} /> Submit answer
               </Button>

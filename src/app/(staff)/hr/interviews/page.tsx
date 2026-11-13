@@ -7,9 +7,15 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h, Person } from "@/components/hire/ui";
+import { RealInterviews } from "@/features/interview/real-interviews";
+import { supabase } from "@/lib/supabase";
 import { candidateById, useStore } from "@/mock/store";
 
 export default function InterviewsPage() {
+  return supabase ? <RealInterviews /> : <MockInterviews />;
+}
+
+function MockInterviews() {
   useBreadcrumbs([{ label: "Interviews" }]);
   const { state } = useStore();
   return (

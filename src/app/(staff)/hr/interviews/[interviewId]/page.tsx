@@ -12,9 +12,16 @@ import { Textarea } from "@/components/ui/input";
 import { NotFoundState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { Chips, hire as h, Progress, ResultBadge } from "@/components/hire/ui";
+import { RealInterviewDetail } from "@/features/interview/real-interviews";
+import { supabase } from "@/lib/supabase";
 import { candidateById, useStore } from "@/mock/store";
 
-export default function InterviewConsole() {
+export default function InterviewConsolePage() {
+  const { interviewId } = useParams<{ interviewId: string }>();
+  return supabase ? <RealInterviewDetail id={interviewId} /> : <MockInterviewConsole />;
+}
+
+function MockInterviewConsole() {
   const { interviewId } = useParams<{ interviewId: string }>();
   const { state, dispatch } = useStore();
   const toast = useToast();
