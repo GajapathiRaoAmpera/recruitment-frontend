@@ -6,7 +6,8 @@
 ```
 stitch_ampera_campus_recruitment_platform/   design mockups (code.html + screen.png per screen) — reference, not shipped
   ampera_campus_hire/DESIGN.md               design tokens & rules — source of truth for styling
-src/app/          Next.js App Router pages; (staff)/(student) layouts are the role guards
+src/app/          Next.js App Router pages; (staff)/(student) layouts are the role guards. A page.tsx only
+                  renders a screen from src/features/<area>/ (plus metadata); no logic in route files
 src/api/          client.ts: fetch to /api/v1 (same-origin rewrite to FastAPI) with the Supabase token
 src/components/   shared UI built from Stitch tokens
 src/features/     auth/ (real staff sign-in), test-runner/ (danger zone); more as screens move off mocks
