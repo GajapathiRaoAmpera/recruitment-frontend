@@ -36,7 +36,8 @@ export function RealStudentHome({ student }: { student: StudentSession }) {
               <li key={r.roundId} className={h.listItem}>
                 <p>{title(r.type)}</p>
                 <Button asChild>
-                  <Link href={`/exam/${r.roundId}`}>
+                  {/* the AI interview has its own sign-in and checks, not the exam system check */}
+                  <Link href={r.type === "ai_interview" ? "/interview" : `/exam/${r.roundId}`}>
                     Start <ArrowRight aria-hidden size={16} style={{ marginLeft: 6 }} />
                   </Link>
                 </Button>
