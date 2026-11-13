@@ -1,24 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { use } from "react";
-import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
-import { PageHeader } from "@/components/shell/page-header";
-import { SetupStep } from "@/features/papers/components/setup-step";
-import { Stepper } from "@/features/papers/components/stepper";
-import { useDriveOptions } from "@/features/papers/use-drive-options";
+import type { ComponentProps } from "react";
+import { NewPaperScreen } from "@/features/papers/new-paper-screen";
 
-export default function NewPaperPage({ searchParams }: { searchParams: Promise<{ drive?: string }> }) {
-  const { drive } = use(searchParams);
-  useBreadcrumbs([{ label: "Paper builder", href: "/hr/papers" }, { label: "New paper" }]);
-  const router = useRouter();
-  const drives = useDriveOptions();
-
-  return (
-    <>
-      <PageHeader title="New Round 1 paper" description="AI writes the Technical questions for the role, and you check and edit every answer before anything is sent." />
-      <Stepper current={0} />
-      <SetupStep key={drives.length} drives={drives} initialDrive={drive} onCreated={(d) => router.push(`/hr/papers/${encodeURIComponent(d.id)}`)} />
-    </>
-  );
+export default function NewPaperPage(props: ComponentProps<typeof NewPaperScreen>) {
+  return <NewPaperScreen {...props} />;
 }

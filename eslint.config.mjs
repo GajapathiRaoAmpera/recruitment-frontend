@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Agent skill packs (templates/examples), not app code.
     ".claude/**",
+    // Vendored minified files copied from node_modules (avatar lip-sync worklet).
+    "public/interview/**",
   ]),
 ]);
 
