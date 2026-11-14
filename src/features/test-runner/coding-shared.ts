@@ -1,4 +1,5 @@
-import type { CaseStatus } from "@/api/attempt";
+import type { CaseStatus, CodingQuestion } from "@/api/attempt";
+import type { Signature } from "@/api/coding-questions";
 
 // Shared by the real coding workspace and the prototype (mock) coding page.
 
@@ -15,6 +16,16 @@ export const LANGS = {
 export type Lang = keyof typeof LANGS;
 
 export const starterFor = (language: string) => (language in LANGS ? LANGS[language as Lang].starter : "");
+
+/**
+ * What a new or empty draft opens with. Function mode: the API's `starter_code` for that language (empty if it sent none).
+ * stdin mode: the LANGS template, as before.
+ */
+export const starterOf = (q: Pick<CodingQuestion, "mode" | "starterCode">, language: string) =>
+  q.mode === "function" ? (q.starterCode?.[language] ?? "") : starterFor(language);
+
+/** Language-neutral one-liner, e.g. `twoSum(nums: int[], target: int): int[]`. */
+export const signatureText = (sig: Signature) => `${sig.functionName}(${sig.parameters.map((p) => `${p.name}: ${p.type}`).join(", ")}): ${sig.returnType}`;
 
 /** Monaco's language id for an API language key (syntax colouring only). */
 export const monacoLanguage = (language: string) => (language in LANGS ? language : "plaintext");

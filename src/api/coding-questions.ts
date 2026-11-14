@@ -11,6 +11,20 @@ export const DIFFICULTIES: Difficulty[] = ["easy", "medium", "advanced"];
 export const SAMPLE_CASES = 3;
 export const HIDDEN_CASES = 15;
 
+/** "stdin": a whole program (stdin/stdout). "function": students write one function; a hidden driver calls it. */
+export type CodingMode = "stdin" | "function";
+/** The fixed type set a function-mode signature may use (contract: Function-mode coding questions). */
+export const PARAM_TYPES = ["int", "long", "double", "bool", "string", "int[]", "string[]", "int[][]"] as const;
+export type ParamType = (typeof PARAM_TYPES)[number];
+export const MAX_PARAMS = 6;
+
+/** Wire: `{function_name, parameters:[{name, type}], return_type}`. */
+export interface Signature {
+  functionName: string;
+  parameters: { name: string; type: ParamType }[];
+  returnType: ParamType;
+}
+
 export interface QuestionSummary {
   id: string;
   body: string;
@@ -32,6 +46,9 @@ export interface CodingQuestion extends QuestionSummary {
   /** AI drafts only: the program whose Judge0 output became each `expected`. Not editable. */
   referenceSolution: string | null;
   referenceLanguage: string | null;
+  mode: CodingMode;
+  /** Set for and only for mode "function". */
+  signature: Signature | null;
 }
 
 export interface GenerateInput {
@@ -56,6 +73,10 @@ export interface QuestionInput {
   tags: string[];
   marks: number;
   testCases: TestCase[];
+  /** Omitted = "stdin" (the API default). */
+  mode?: CodingMode;
+  /** Required for and only for mode "function". */
+  signature?: Signature;
 }
 
 export interface TestQuestions {
@@ -80,7 +101,7 @@ export async function listCodingQuestions(f: { difficulty?: Difficulty; tags?: s
 
 export async function getCodingQuestion(id: string): Promise<CodingQuestion> {
   const r = summary(fromWire<CodingQuestion>(await api<unknown>(`/questions/${id}`)));
-  return { ...r, testCases: [...r.testCases].sort((a, b) => a.position - b.position) };
+  return { ...r, mode: r.mode === "function" ? "function" : "stdin", signature: r.signature ?? null, testCases: [...r.testCases].sort((a, b) => a.position - b.position) };
 }
 
 /** Manual questions are approved at once. Needs exactly 3 sample + 15 hidden cases (else 422). */

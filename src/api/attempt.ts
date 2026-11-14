@@ -1,5 +1,7 @@
 import { ApiError } from "@/api/client";
+import type { CodingMode, Signature } from "@/api/coding-questions";
 import { call, json } from "@/api/entry";
+import { fromWire } from "@/api/wire";
 
 // The running test (backend app/attempts + app/integrity). The server owns the deadline, the
 // tab-switch count and the lock; this client only displays them.
@@ -18,8 +20,40 @@ export interface CodingQuestion {
   statement: string;
   marks: number;
   languages: { key: string; name: string }[];
-  samples: { input: string; expected: string }[]; // at most 3
+  /** At most 3. `inputDisplay` is the readable form (function mode: "nums = [1,2,3], target = 5"; stdin: same as `input`). */
+  samples: { input: string; expected: string; inputDisplay: string }[];
+  mode: CodingMode;
+  /** Function mode only; null for stdin. */
+  signature: Signature | null;
+  /** Function mode only: the editor's initial code per language key. Null for stdin (the editor uses LANGS). */
+  starterCode: Record<string, string> | null;
 }
+
+/** A coding question as GET /attempt sends it. */
+interface RawCoding {
+  kind: "coding";
+  id: string;
+  title: string;
+  statement: string;
+  marks: number;
+  languages: { key: string; name: string }[];
+  samples: { input: string; expected: string; input_display?: string }[];
+  mode?: CodingMode;
+  signature?: unknown;
+  starter_code?: Record<string, string> | null;
+}
+
+const toCoding = (q: RawCoding): CodingQuestion => ({
+  id: q.id,
+  title: q.title,
+  statement: q.statement,
+  marks: q.marks,
+  languages: q.languages,
+  samples: q.samples.map((c) => ({ input: c.input, expected: c.expected, inputDisplay: c.input_display ?? c.input })),
+  mode: q.mode === "function" ? "function" : "stdin",
+  signature: q.mode === "function" && q.signature ? fromWire<Signature>(q.signature) : null,
+  starterCode: q.mode === "function" ? (q.starter_code ?? null) : null,
+});
 
 /** The last SUBMITTED code for a coding question (drafts come from GET /attempt/code-drafts). */
 export interface SavedCode {
@@ -40,7 +74,7 @@ export interface AttemptState {
   savedCode: Record<string, SavedCode>; // coding: last submitted code
 }
 
-type RawQuestion = (AttemptQuestion & { kind?: "mcq" }) | (CodingQuestion & { kind: "coding" });
+type RawQuestion = (AttemptQuestion & { kind?: "mcq" }) | RawCoding;
 
 const auth = (token: string): RequestInit => ({ headers: { Authorization: `Bearer ${token}` } });
 
@@ -63,7 +97,7 @@ export async function getAttempt(attemptToken: string): Promise<AttemptState> {
   const questions: AttemptQuestion[] = [];
   const coding: CodingQuestion[] = [];
   for (const q of r.questions) {
-    if (q.kind === "coding") coding.push({ id: q.id, title: q.title, statement: q.statement, marks: q.marks, languages: q.languages, samples: q.samples });
+    if (q.kind === "coding") coding.push(toCoding(q));
     else questions.push({ id: q.id, body: q.body, options: q.options, marks: q.marks });
   }
   const savedAnswers: Record<string, number> = {};
@@ -193,6 +227,8 @@ export function codingErrorMessage(e: unknown): string {
       return "This problem is no longer part of your test. Reload the page.";
     case "VALIDATION_ERROR":
       return "The code couldn't be sent: check it isn't empty or longer than 64,000 characters.";
+    case "LANGUAGE_NOT_ALLOWED":
+      return "This problem can't be solved in that language. Pick another one from the list.";
     default:
       return e instanceof Error && e.message ? e.message : "Something went wrong. Try again.";
   }

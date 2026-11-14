@@ -39,7 +39,7 @@ const round2: AttemptState = {
   status: "in_progress",
   tabSwitches: 0,
   questions: [],
-  coding: [{ id: "c1", title: "Sum", statement: "Add the numbers.", marks: 10, languages: [{ key: "python", name: "Python 3.8" }], samples: [] }],
+  coding: [{ id: "c1", title: "Sum", statement: "Add the numbers.", marks: 10, languages: [{ key: "python", name: "Python 3.8" }], samples: [], mode: "stdin", signature: null, starterCode: null }],
 };
 
 beforeEach(() => {

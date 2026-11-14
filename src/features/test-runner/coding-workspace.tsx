@@ -20,7 +20,7 @@ import { LoadingLabel } from "@/components/ui/skeleton";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
 import { CodeEditor } from "./code-editor";
-import { failText, starterFor } from "./coding-shared";
+import { failText, signatureText, starterOf } from "./coding-shared";
 import { clearAttemptDrafts, pickRestore, readLocal, writeLocal, type Restored } from "./drafts";
 
 export const LOCAL_SAVE_MS = 500;
@@ -70,7 +70,9 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         const out: Record<string, Restored> = {};
         for (const q of questions) {
           const allowed = q.languages.map((l) => l.key);
-          out[q.id] = pickRestore(allowed, attemptId ? readLocal(attemptId, q.id) : null, server[q.id], attempt.savedCode[q.id]);
+          const r = pickRestore(allowed, attemptId ? readLocal(attemptId, q.id) : null, server[q.id], attempt.savedCode[q.id]);
+          // Function mode: a blank saved draft counts as new, so it opens with the API's starter code.
+          out[q.id] = q.mode === "function" ? { ...r, code: Object.fromEntries(Object.entries(r.code).filter(([, c]) => c.trim())) } : r;
         }
         setDocs(out);
       });
@@ -91,7 +93,10 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
   const pendingServer = useRef(new Set<string>()); // questions changed since the last PUT /attempt/code-drafts
   const localTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const codeOf = (d: Restored) => d.code[d.language] ?? starterFor(d.language);
+  const codeOf = (questionId: string, d: Restored) => {
+    const q = questions.find((x) => x.id === questionId);
+    return d.code[d.language] ?? (q ? starterOf(q, d.language) : "");
+  };
 
   const flushServer = async (only?: string) => {
     const ids = only ? [only].filter((id) => pendingServer.current.has(id)) : [...pendingServer.current];
@@ -100,7 +105,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
       if (!d || !liveRef.current) return;
       pendingServer.current.delete(id);
       try {
-        await saveCodeDraft(token, id, { code: codeOf(d), language: d.language });
+        await saveCodeDraft(token, id, { code: codeOf(id, d), language: d.language });
         setServerSaveFailed(false);
       } catch (e) {
         pendingServer.current.add(id); // retried on the next tick
@@ -163,7 +168,9 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
 
   const p = questions[Math.min(current, questions.length - 1)]!;
   const doc = docs[p.id]!;
-  const code = codeOf(doc);
+  const code = codeOf(p.id, doc);
+  const isFunction = p.mode === "function";
+  const noStarter = isFunction && !p.starterCode?.[doc.language];
 
   const change = (next: Restored) => {
     setDocs((d) => (d ? { ...d, [p.id]: next } : d));
@@ -242,6 +249,23 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         <h1 id="p-h" className={h.cardTitle}>
           {p.title}
         </h1>
+        {isFunction && (
+          <div style={{ marginTop: 12 }}>
+            <h2 className={h.eyebrow} style={{ marginBottom: 8 }}>
+              Function to write
+            </h2>
+            {p.signature ? (
+              <pre className={h.code} aria-label="Function signature">
+                {signatureText(p.signature)}
+              </pre>
+            ) : (
+              <p className={h.muted}>The signature isn&apos;t available; follow the starter code in the editor.</p>
+            )}
+            <p className={h.xs} style={{ marginTop: 8 }}>
+              Write only this function and return the answer. It is called once per test case; don&apos;t read input or print the result.
+            </p>
+          </div>
+        )}
         <p style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>{p.statement}</p>
         {p.samples.length > 0 && (
           <>
@@ -253,7 +277,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
                 <div key={i} className={s.caseGrid}>
                   <div>
                     <p className={h.xs}>Input {i + 1}</p>
-                    <pre className={h.code}>{c.input}</pre>
+                    <pre className={h.code}>{isFunction ? c.inputDisplay : c.input}</pre>
                   </div>
                   <div>
                     <p className={h.xs}>Expected output</p>
@@ -296,6 +320,9 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
             onChange={(v) => change({ ...doc, code: { ...doc.code, [doc.language]: v } })}
           />
         </div>
+        {noStarter && !doc.code[doc.language] && (
+          <p className={h.xs}>No starter code came for this language. Write the function{p.signature ? ` ${p.signature.functionName}` : ""} yourself.</p>
+        )}
         {loadNote && <p className={h.xs}>{loadNote}</p>}
 
         <div className={h.between}>

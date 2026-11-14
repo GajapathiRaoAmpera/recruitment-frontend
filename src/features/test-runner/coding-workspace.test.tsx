@@ -28,8 +28,8 @@ const attempt = (over: Partial<AttemptState> = {}): AttemptState => ({
   questions: [],
   savedAnswers: {},
   coding: [
-    { id: "q1", title: "Sum", statement: "Add the numbers.", marks: 10, languages: [{ key: "python", name: "Python 3.8" }, { key: "cpp", name: "C++ (GCC 9)" }], samples: [{ input: "1 2", expected: "3" }, { input: "2 2", expected: "4" }] },
-    { id: "q2", title: "Max", statement: "Print the max.", marks: 20, languages: [{ key: "java", name: "Java 13" }], samples: [] },
+    { id: "q1", title: "Sum", statement: "Add the numbers.", marks: 10, languages: [{ key: "python", name: "Python 3.8" }, { key: "cpp", name: "C++ (GCC 9)" }], samples: [{ input: "1 2", expected: "3", inputDisplay: "1 2" }, { input: "2 2", expected: "4", inputDisplay: "2 2" }], mode: "stdin", signature: null, starterCode: null },
+    { id: "q2", title: "Max", statement: "Print the max.", marks: 20, languages: [{ key: "java", name: "Java 13" }], samples: [], mode: "stdin", signature: null, starterCode: null },
   ],
   savedCode: {},
   ...over,

@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardPaste, Code2 } from "lucide-react";
+import { ClipboardPaste, Code2, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { ApiError } from "@/api/client";
 import {
@@ -9,10 +9,14 @@ import {
   DIFFICULTIES,
   getCodingQuestion,
   HIDDEN_CASES,
+  MAX_PARAMS,
+  PARAM_TYPES,
   SAMPLE_CASES,
   updateCodingQuestion,
+  type CodingMode,
   type CodingQuestion,
   type Difficulty,
+  type ParamType,
   type QuestionInput,
   type QuestionSummary,
 } from "@/api/coding-questions";
@@ -24,14 +28,14 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
-import { ErrorState } from "@/components/ui/states";
+import { ErrorState, ForbiddenState } from "@/components/ui/states";
 import { useAsync } from "@/features/papers/use-async";
 // A next/dynamic wrapper: Monaco is fetched only when the reference solution is first shown.
 import { CodeEditor } from "@/features/test-runner/code-editor";
 import { caseCounts, emptyCaseSet, fromTestCases, parseCasesJson, PASTE_EXAMPLE, toTestCases, type CaseRow, type CaseSet } from "./cases";
 import s from "./coding-questions.module.scss";
 import { codingErrorMessage, fieldErrors, type FieldErrors } from "./messages";
-import { marksProblem, parseTags, tagsProblem } from "./validate";
+import { functionNameProblem, marksProblem, parametersProblem, parseTags, tagsProblem } from "./validate";
 
 interface FormState {
   body: string;
@@ -39,12 +43,26 @@ interface FormState {
   marks: string;
   tags: string; // comma separated
   cases: CaseSet;
+  mode: CodingMode;
+  // Function mode only (kept while HR flips the mode, sent only for "function").
+  functionName: string;
+  params: { name: string; type: ParamType }[];
+  returnType: ParamType;
 }
 
-const blankForm = (): FormState => ({ body: "", difficulty: "easy", marks: "10", tags: "", cases: emptyCaseSet() });
+const blankSignature = { functionName: "", params: [{ name: "", type: "int" as ParamType }], returnType: "int" as ParamType };
+const blankForm = (): FormState => ({ body: "", difficulty: "easy", marks: "10", tags: "", cases: emptyCaseSet(), mode: "stdin", ...blankSignature });
 const noop = () => {};
 export const DRAFT_NOTE = "Expected outputs came from running the reference solution. If you change an input, update its expected output yourself.";
-const toForm = (q: CodingQuestion): FormState => ({ body: q.body, difficulty: q.difficulty, marks: String(q.marks), tags: q.tags.join(", "), cases: fromTestCases(q.testCases) });
+const toForm = (q: CodingQuestion): FormState => ({
+  body: q.body,
+  difficulty: q.difficulty,
+  marks: String(q.marks),
+  tags: q.tags.join(", "),
+  cases: fromTestCases(q.testCases),
+  mode: q.mode,
+  ...(q.signature ? { functionName: q.signature.functionName, params: q.signature.parameters.map((p) => ({ ...p })), returnType: q.signature.returnType } : blankSignature),
+});
 /** Mirrors the backend validators so Save is only offered for a question the API will accept. */
 export function formProblems(f: FormState): string[] {
   const out: string[] = [];
@@ -53,12 +71,28 @@ export function formProblems(f: FormState): string[] {
   if (marks) out.push(marks);
   const tags = tagsProblem(f.tags);
   if (tags) out.push(tags);
+  if (f.mode === "function") {
+    const fn = functionNameProblem(f.functionName);
+    if (fn) out.push(fn);
+    const params = parametersProblem(f.params.map((p) => p.name), MAX_PARAMS);
+    if (params) out.push(params);
+  }
   const c = caseCounts(f.cases);
   if (!c.complete) out.push(`fill every expected output (${SAMPLE_CASES - c.sample + HIDDEN_CASES - c.hidden} left)`);
   return out;
 }
 
-const toInput = (f: FormState): QuestionInput => ({ body: f.body.trim(), difficulty: f.difficulty, marks: Number(f.marks), tags: parseTags(f.tags), testCases: toTestCases(f.cases) });
+/** stdin questions send no mode/signature at all (the API default), so their requests are as before. */
+const toInput = (f: FormState): QuestionInput => ({
+  body: f.body.trim(),
+  difficulty: f.difficulty,
+  marks: Number(f.marks),
+  tags: parseTags(f.tags),
+  testCases: toTestCases(f.cases),
+  ...(f.mode === "function"
+    ? { mode: "function" as const, signature: { functionName: f.functionName.trim(), parameters: f.params.map((p) => ({ name: p.name.trim(), type: p.type })), returnType: f.returnType } }
+    : {}),
+});
 
 /** Only the fields that changed: a question students answered refuses new test cases, but not a statement fix. */
 function changes(now: QuestionInput, was: QuestionInput): Partial<QuestionInput> {
@@ -68,6 +102,11 @@ function changes(now: QuestionInput, was: QuestionInput): Partial<QuestionInput>
   if (now.marks !== was.marks) patch.marks = now.marks;
   if (JSON.stringify(now.tags) !== JSON.stringify(was.tags)) patch.tags = now.tags;
   if (JSON.stringify(now.testCases) !== JSON.stringify(was.testCases)) patch.testCases = now.testCases;
+  // "stdin" clears the stored signature; "function" needs one, so it is sent whenever the mode switches to it.
+  const nowMode = now.mode ?? "stdin";
+  const modeChanged = nowMode !== (was.mode ?? "stdin");
+  if (modeChanged) patch.mode = nowMode;
+  if (nowMode === "function" && (modeChanged || JSON.stringify(now.signature) !== JSON.stringify(was.signature))) patch.signature = now.signature;
   return patch;
 }
 
@@ -104,6 +143,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
   }
 
   const set = (patch: Partial<FormState>) => setForm((f) => (f ? { ...f, ...patch } : f));
+  const setParam = (i: number, patch: Partial<FormState["params"][number]>) => setForm((f) => (f ? { ...f, params: f.params.map((p, j) => (j === i ? { ...p, ...patch } : p)) } : f));
   const setCase = (kind: keyof CaseSet, i: number, patch: Partial<CaseRow>) =>
     setForm((f) => (f ? { ...f, cases: { ...f.cases, [kind]: f.cases[kind].map((r, j) => (j === i ? { ...r, ...patch } : r)) } } : f));
 
@@ -157,13 +197,14 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
   const fail = (e: unknown) => {
     const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Nothing was saved; try again.");
     if (err.code === "VALIDATION_ERROR") setErrors(fieldErrors(err));
-    setFormError(codingErrorMessage(err));
+    setFormError(err.status === 403 ? "You don't have permission to change this question. Nothing was saved." : codingErrorMessage(err));
   };
 
   const problems = form ? formProblems(form) : [];
   const dirty = Boolean(form && original && Object.keys(changes(toInput(form), toInput(original))).length);
   const busy = saving || approving;
   const counts = form ? caseCounts(form.cases) : null;
+  const isFunction = form?.mode === "function";
 
   const caseRows = (kind: keyof CaseSet) => {
     const label = kind === "sample" ? "Sample" : "Hidden";
@@ -175,12 +216,18 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
           <span className={s.caseLabel}>
             {label} {i + 1}
           </span>
-          <Textarea rows={2} aria-label={`${label} ${i + 1} input`} placeholder="Input (stdin)" value={r.input} onChange={(e) => setCase(kind, i, { input: e.target.value })} />
+          <Textarea
+            rows={2}
+            aria-label={`${label} ${i + 1} input`}
+            placeholder={isFunction ? "One JSON value per line, one line per parameter" : "Input (stdin)"}
+            value={r.input}
+            onChange={(e) => setCase(kind, i, { input: e.target.value })}
+          />
           <div>
             <Textarea
               rows={2}
               aria-label={`${label} ${i + 1} expected output`}
-              placeholder="Expected output"
+              placeholder={isFunction ? "Return value (JSON)" : "Expected output"}
               value={r.expected}
               aria-invalid={err ? true : undefined}
               onChange={(e) => setCase(kind, i, { expected: e.target.value })}
@@ -223,7 +270,11 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
       >
         {!form ? (
           existing.error ? (
-            <ErrorState message={codingErrorMessage(existing.error)} onRetry={existing.reload} />
+            existing.error.status === 403 ? (
+              <ForbiddenState />
+            ) : (
+              <ErrorState message={codingErrorMessage(existing.error)} onRetry={existing.reload} />
+            )
           ) : (
             <>
               <LoadingLabel label="Loading question" />
@@ -264,7 +315,11 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
                 )}
               </section>
             )}
-            <Field label="Statement" hint="First line = title. Describe the input and output format." error={errors.body}>
+            <Field
+              label="Statement"
+              hint={isFunction ? "First line = title. Describe what the function gets and must return." : "First line = title. Describe the input and output format."}
+              error={errors.body}
+            >
               <Textarea rows={8} value={form.body} onChange={(e) => set({ body: e.target.value })} />
             </Field>
             <div className={s.formGrid}>
@@ -284,6 +339,75 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
                 <Input value={form.tags} placeholder="arrays, strings" onChange={(e) => set({ tags: e.target.value })} />
               </Field>
             </div>
+
+            <Field
+              label="Mode"
+              hint={isFunction ? "Students write one function; a fixed driver calls it for each case." : "Students write a whole program that reads stdin and prints to stdout."}
+              error={errors.mode}
+            >
+              <Select value={form.mode} onChange={(e) => set({ mode: e.target.value as CodingMode })}>
+                <option value="stdin">Full program (stdin / stdout)</option>
+                <option value="function">Function (LeetCode style)</option>
+              </Select>
+            </Field>
+
+            {isFunction && (
+              <section aria-labelledby="sig-h" className={h.cardTight}>
+                <h3 id="sig-h" className={s.subTitle}>
+                  Function signature
+                </h3>
+                <p className={h.xs} style={{ marginBottom: 12 }}>
+                  Starter code for all six languages is generated from this. Each case input is one JSON value per line, one line per parameter in this order; the
+                  expected output is the return value.
+                </p>
+                <div className={s.formGrid}>
+                  <Field label="Function name" hint="lowerCamelCase, e.g. twoSum">
+                    <Input value={form.functionName} className={h.mono} onChange={(e) => set({ functionName: e.target.value })} />
+                  </Field>
+                  <Field label="Return type">
+                    <Select value={form.returnType} onChange={(e) => set({ returnType: e.target.value as ParamType })}>
+                      {PARAM_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                </div>
+                <h4 className={h.small} style={{ marginTop: 16, marginBottom: 8, fontWeight: 500 }}>
+                  Parameters ({form.params.length}/{MAX_PARAMS}, in call order)
+                </h4>
+                {form.params.map((p, i) => (
+                  <div key={i} className={s.paramRow}>
+                    <Input aria-label={`Parameter ${i + 1} name`} className={h.mono} placeholder="nums" value={p.name} onChange={(e) => setParam(i, { name: e.target.value })} />
+                    <Select aria-label={`Parameter ${i + 1} type`} value={p.type} onChange={(e) => setParam(i, { type: e.target.value as ParamType })}>
+                      {PARAM_TYPES.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </Select>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      aria-label={`Remove parameter ${i + 1}`}
+                      disabled={form.params.length === 1}
+                      onClick={() => set({ params: form.params.filter((_, j) => j !== i) })}
+                    >
+                      <Trash2 aria-hidden size={14} />
+                    </Button>
+                  </div>
+                ))}
+                <Button size="sm" variant="secondary" disabled={form.params.length >= MAX_PARAMS} onClick={() => set({ params: [...form.params, { name: "", type: "int" }] })}>
+                  <Plus aria-hidden size={14} style={{ marginRight: 4 }} /> Add parameter
+                </Button>
+                {errors.signature && (
+                  <p role="alert" className={s.error}>
+                    {errors.signature}
+                  </p>
+                )}
+              </section>
+            )}
 
             <section aria-labelledby="cases-h">
               <div className={h.between}>
