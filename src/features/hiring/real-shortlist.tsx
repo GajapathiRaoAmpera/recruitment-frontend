@@ -42,7 +42,7 @@ export function RealShortlist({ driveId }: { driveId: string }) {
     () => listCandidates(driveId, { skills: f.skills, minCgpa: f.minCgpa, minMatch: f.minMatch, shortlisted: f.show === "all" ? undefined : f.show === "yes" }),
     [driveId, f.skills, f.minCgpa, f.minMatch, f.show],
   );
-  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive" }, { label: "Shortlist" }]);
+  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive", href: `/hr/drives/${driveId}` }, { label: "Shortlist" }]);
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
   const rows: CandidateRow[] = list.data ?? [];
@@ -75,6 +75,11 @@ export function RealShortlist({ driveId }: { driveId: string }) {
       <PageHeader
         title="Resume shortlist"
         description={drive.data ? `${drive.data.roleTitle} · ${drive.data.campus} · ${drive.data.candidates} candidates imported` : "Loading…"}
+        actions={
+          <Button asChild variant="secondary">
+            <Link href={`/hr/drives/${driveId}`}>Rounds</Link>
+          </Button>
+        }
       />
 
       <ImportPanel driveId={driveId} onChanged={() => { drive.reload(); list.reload(); }} />

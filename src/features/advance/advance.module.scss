@@ -1,0 +1,39 @@
+// Layout for the cut-off & advance panel. Tokens only.
+@use "@/styles/mixins" as *;
+
+.counts {
+  display: grid;
+  gap: sp(3);
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
+.controls {
+  display: grid;
+  gap: sp(4);
+  align-items: end;
+  @include up(md) {
+    grid-template-columns: minmax(0, 1fr) 8rem auto;
+  }
+}
+
+.below {
+  opacity: 0.6;
+}
+
+.locked {
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-input);
+  padding: sp(3);
+}
+
+.checkRow {
+  display: flex;
+  align-items: flex-start;
+  gap: sp(2);
+  margin-top: sp(3);
+}
+
+.error {
+  color: var(--ui-color-danger);
+  @include text(sm);
+}
