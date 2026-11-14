@@ -10,7 +10,7 @@ import { ApiError } from "@/api/client";
 import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RobotLoader } from "@/components/ui/robot-loader";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ErrorState, NotFoundState } from "@/components/ui/states";
 import { hire as h } from "@/components/hire/ui";
@@ -72,7 +72,7 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
     );
   }
   if (!checked) return <StartCheck student={student} roundId={roundId} onPass={() => setChecked(true)} />;
-  if (!attempt) return <RobotLoader label="Starting your test" />;
+  if (!attempt) return <RocketLoader label="Starting your test" />;
   // Keyed by attempt: a new round is a new attempt, so no timer, count or draft state carries over (AC-6).
   return <Shell key={attempt.token} student={student} roundId={roundId} type={round.type} token={attempt.token} initial={attempt.state} />;
 }
@@ -143,7 +143,7 @@ function StartCheck({ student, roundId, onPass }: { student: StudentSession; rou
         <h1 className={h.cardTitle}>Before you start</h1>
         <p className={h.muted}>Location and full screen must both be on. Your timer starts only after this check passes.</p>
         {busy ? (
-          <RobotLoader size="inline" label="Checking location and full screen" />
+          <RocketLoader size="inline" still label="Checking location and full screen" />
         ) : (
           <>
             <ul className={h.list} style={{ marginBlock: 16 }}>
@@ -462,7 +462,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
               </Button>
             </>
           ) : (
-            <RobotLoader size="inline" label="Submitting your answers" />
+            <RocketLoader size="inline" still label="Submitting your answers" />
           )}
         </Overlay>
       )}

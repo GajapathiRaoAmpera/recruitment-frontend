@@ -22,7 +22,8 @@
   color: var(--ui-color-danger);
 }
 
-.hint {
-  @include text(sm);
-  color: var(--ui-color-text-muted);
+.labelRow {
+  display: inline-flex;
+  align-items: center;
+  gap: sp(1);
 }

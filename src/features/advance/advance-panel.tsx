@@ -24,11 +24,15 @@ export const PREVIEW_DEBOUNCE_MS = 400;
 const clamp = (n: number) => Math.min(100, Math.max(0, Math.round(n)));
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 /** Refusals after which the preview is out of date and must be fetched again. */
-const STALE_CODES = new Set(["ROUND_ALREADY_ADVANCED", "ROUND_NOT_ACTIVE", "ROUND_STILL_RUNNING", "LOCKED_ATTEMPTS"]);
+const STALE_CODES = new Set(["ROUND_ALREADY_ADVANCED", "ROUND_NOT_ACTIVE", "ROUND_STILL_RUNNING", "LOCKED_ATTEMPTS", "NOT_STARTED"]);
 
-function ResultCell({ row }: { row: RankingRow }) {
+const notStarted = (row: RankingRow) => row.attemptStatus === null || row.attemptStatus === "not_started";
+
+/** `open`: the round is still running, so a student with no attempt hasn't started yet; only an advanced round makes them absent. */
+function ResultCell({ row, open }: { row: RankingRow; open: boolean }) {
+  if (open && notStarted(row)) return <Badge tone="neutral">Not started</Badge>;
   if (row.wouldPass === true) return <Badge tone="success">Pass</Badge>;
-  if (row.wouldPass === false) return row.attemptStatus === null || row.attemptStatus === "not_started" ? <Badge tone="neutral">Absent</Badge> : <Badge tone="danger">Fail</Badge>;
+  if (row.wouldPass === false) return notStarted(row) ? <Badge tone="neutral">Absent</Badge> : <Badge tone="danger">Fail</Badge>;
   const st = row.attemptStatus ? ATTEMPT_STATUS[row.attemptStatus] : undefined;
   return st ? <Badge tone={st.tone}>{st.label}</Badge> : <span className={h.xs}>—</span>;
 }
@@ -45,6 +49,7 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
   const [result, setResult] = useState<AdvanceResult | null>(null);
   const [open, setOpen] = useState(false);
   const [finalize, setFinalize] = useState(false);
+  const [markAbsent, setMarkAbsent] = useState(false); // students who never started block Advance until ticked
   const [busy, setBusy] = useState(false);
   const [advanceError, setAdvanceError] = useState<string>();
   const reasonId = useId();
@@ -95,19 +100,20 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
         : !synced
           ? "Updating the preview…"
           : null;
-  const canConfirm = editable && !blockReason && (lockedRows.length === 0 || finalize) && !busy;
+  const canConfirm = editable && !blockReason && (lockedRows.length === 0 || finalize) && (counts.absent === 0 || markAbsent) && !busy;
 
   const setFrom = (n: number) => setThreshold(clamp(n));
   const openConfirm = () => {
     setAdvanceError(undefined);
     setFinalize(false);
+    setMarkAbsent(false);
     setOpen(true);
   };
   const confirm = async () => {
     setBusy(true);
     setAdvanceError(undefined);
     try {
-      const r = await advanceRound(roundId, value, finalize);
+      const r = await advanceRound(roundId, value, finalize, markAbsent);
       setResult(r);
       setOpen(false);
       onAdvanced();
@@ -149,7 +155,7 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
                 ? "This was the last round, so nobody was invited to another round."
                 : `${plural(result.invited.length, "student")} invited to the next round.`}
             </p>
-            <p className={h.xs}>No emails were sent; let invited students know separately.</p>
+            <p className={h.xs}>Invited students get an email with the sign-in link.</p>
           </div>
         )}
 
@@ -191,7 +197,7 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
         <div className={a.counts} role="group" aria-label="Counts at this cut-off">
           <StatCard label="Pass" value={counts.pass ?? "—"} icon={CheckCircle2} />
           <StatCard label="Fail" value={counts.fail ?? "—"} icon={XCircle} />
-          <StatCard label="Absent" value={counts.absent} icon={UserX} />
+          <StatCard label={editable ? "Not started" : "Absent"} value={counts.absent} icon={UserX} />
           <StatCard label="Still writing" value={counts.stillWriting} icon={Clock} />
           <StatCard label="Locked" value={counts.locked} icon={AlertTriangle} />
         </div>
@@ -221,7 +227,7 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
                   <Td>{c.percent === null ? "—" : `${fmt(c.percent)}%`}</Td>
                   <Td>{formatDuration(c.timeTakenSec)}</Td>
                   <Td>
-                    <ResultCell row={c} />
+                    <ResultCell row={c} open={editable} />
                   </Td>
                 </tr>
               ))}
@@ -249,8 +255,20 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
         >
           <div className={h.stackSm}>
             <p>
-              {counts.pass ?? 0} pass, {counts.fail ?? 0} fail, {counts.absent} absent. Pass students go to the next round. This can&apos;t be undone.
+              {counts.pass ?? 0} pass, {counts.fail ?? 0} fail. Pass students go to the next round. This can&apos;t be undone.
             </p>
+            {counts.absent > 0 && (
+              <div className={a.locked}>
+                <p className={h.small}>
+                  <strong>{plural(counts.absent, "student hasn't", "students haven't")} started the test.</strong> Advancing now marks them absent, and
+                  they can&apos;t sit it any more. Only do this once the test window has closed.
+                </p>
+                <label className={a.checkRow}>
+                  <input type="checkbox" className={h.check} checked={markAbsent} onChange={(e) => setMarkAbsent(e.target.checked)} />
+                  <span className={h.small}>Mark {plural(counts.absent, "student")} absent</span>
+                </label>
+              </div>
+            )}
             {lockedRows.length > 0 && (
               <div className={a.locked}>
                 <p className={h.small}>

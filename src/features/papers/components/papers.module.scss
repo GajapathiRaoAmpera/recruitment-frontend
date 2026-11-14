@@ -118,9 +118,56 @@
 }
 
 .counter {
+  display: flex;
+  align-items: baseline;
+  gap: sp(2);
   @include text(2xl);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
+}
+
+.pct {
+  margin-left: auto;
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+/* Generate: rocket + stage on top, then the count and bar */
+.launch {
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+}
+
+.launchRocket {
+  // the rocket reads larger here than in a form slot
+  svg {
+    width: sp(16);
+  }
+}
+
+.launchBody {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+}
+
+/* Review: Accept stays in reach while HR scrolls the pool */
+.acceptBar {
+  position: sticky;
+  bottom: sp(3);
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+  padding: sp(3) sp(4);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-md);
+  @include text(sm);
 }
 
 @include down(sm) {
