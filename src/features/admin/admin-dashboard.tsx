@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { hire as h, Progress, StatCard } from "@/components/hire/ui";
 import { driveRounds, useStore } from "@/mock/store";
 import { RealAdminOverview } from "@/features/hiring/real-admin-overview";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 function MockAdminDashboard() {
   useBreadcrumbs([{ label: "Admin overview" }]);
@@ -96,5 +96,5 @@ function MockAdminDashboard() {
 }
 
 export function AdminDashboard() {
-  return supabase ? <RealAdminOverview /> : <MockAdminDashboard />;
+  return liveApi ? <RealAdminOverview /> : <MockAdminDashboard />;
 }

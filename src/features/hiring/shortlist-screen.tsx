@@ -9,14 +9,14 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Input, Select } from "@/components/ui/input";
+import { Input, Range, Select } from "@/components/ui/input";
 import { EmptyState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { Chips, DemoNote, hire as h, Person } from "@/components/hire/ui";
 import { RoundActions } from "@/components/hire/round-actions";
 import { driveRounds, useStore } from "@/mock/store";
 import { RealShortlist } from "@/features/hiring/real-shortlist";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 function MockShortlist() {
   const { driveId } = useParams<{ driveId: string }>();
@@ -70,7 +70,7 @@ function MockShortlist() {
           <Input type="number" step={0.1} min={0} max={10} value={minCgpa} onChange={(e) => setMinCgpa(Number(e.target.value))} />
         </Field>
         <Field label={`Min JD match: ${minMatch}%`}>
-          <input className={h.range} type="range" min={0} max={100} step={5} value={minMatch} onChange={(e) => setMinMatch(Number(e.target.value))} />
+          <Range className={h.range} min={0} max={100} step={5} value={minMatch} onChange={(e) => setMinMatch(Number(e.target.value))} />
         </Field>
         <Field label="Show">
           <Select value={show} onChange={(e) => setShow(e.target.value as typeof show)}>
@@ -150,5 +150,5 @@ function MockShortlist() {
 
 export function ShortlistScreen() {
   const { driveId } = useParams<{ driveId: string }>();
-  return supabase ? <RealShortlist driveId={driveId} /> : <MockShortlist />;
+  return liveApi ? <RealShortlist driveId={driveId} /> : <MockShortlist />;
 }

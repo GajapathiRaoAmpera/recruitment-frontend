@@ -1,6 +1,6 @@
 import { ApiError } from "@/api/client";
 
-// Student entry (backend app/auth/entry.py). Students have no Supabase account: their 2-hour entry
+// Student entry (backend app/auth/entry.py). Students have no staff account: their 2-hour entry
 // token comes from Student ID + DOB, so these calls use it directly and never touch the staff session.
 
 export interface StudentSession {

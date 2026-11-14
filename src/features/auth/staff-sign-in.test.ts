@@ -1,83 +1,87 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const auth = vi.hoisted(() => ({
-  signInWithPassword: vi.fn(),
-  signOut: vi.fn(),
-  resetPasswordForEmail: vi.fn(),
-  getSession: vi.fn(),
-}));
-vi.mock("@/lib/supabase", () => ({ supabase: { auth }, linkHash: null }));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), liveApi: true }));
 
+import { getToken, setToken } from "@/lib/auth";
 import { requestPasswordReset, signInStaff } from "./staff-sign-in";
 
-const me = (role: string) => ({ id: "u-1", email: "a@x.com", full_name: "Asha Rao", role });
+const user = (role: string) => ({ id: "u-1", email: "a@x.com", full_name: "Asha Rao", role });
+const login = (role: string) => ({ access_token: "tok", expires_in: 28800, user: user(role) });
 const reply = (status: number, body: unknown) => vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(body), { status })));
+const err = (code: string, message = "x") => ({ error: { code, message, details: {} } });
 
 beforeEach(() => {
   vi.clearAllMocks();
-  auth.signInWithPassword.mockResolvedValue({ error: null });
-  auth.getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
+  window.localStorage.clear();
 });
 
-describe("real staff sign-in: Supabase password, role from GET /me (AC-1)", () => {
-  it("HR signs in at /hr/login and the token is sent to /me", async () => {
-    reply(200, me("hr"));
+describe("real staff sign-in: password checked by POST /auth/login, role from the API (AC-1)", () => {
+  it("HR signs in at /hr/login and the token is kept for later calls", async () => {
+    reply(200, login("hr"));
     const res = await signInStaff("hr", " A@X.com ", "pw");
     expect(res).toMatchObject({ home: "/hr", session: { role: "HR", userId: "u-1", staff: { name: "Asha Rao" } } });
-    expect(auth.signInWithPassword).toHaveBeenCalledWith({ email: "a@x.com", password: "pw" });
     const [url, init] = vi.mocked(fetch).mock.calls[0];
-    expect(url).toBe("/api/v1/me");
-    expect(new Headers(init?.headers).get("Authorization")).toBe("Bearer tok");
+    expect(url).toBe("/api/v1/auth/login");
+    expect(JSON.parse(init!.body as string)).toEqual({ email: "a@x.com", password: "pw" });
+    expect(getToken()).toBe("tok");
   });
 
   it("Super Admin signs in at /admin/login", async () => {
-    reply(200, me("super_admin"));
+    reply(200, login("super_admin"));
     expect(await signInStaff("admin", "a@x.com", "pw")).toMatchObject({ home: "/admin", session: { role: "SUPER_ADMIN" } });
   });
 
   it("wrong password gives the role's mismatch message", async () => {
-    auth.signInWithPassword.mockResolvedValue({ error: { code: "invalid_credentials", message: "Invalid login credentials" } });
+    reply(401, err("INVALID_CREDENTIALS"));
     expect(await signInStaff("hr", "a@x.com", "bad")).toEqual({ error: "That email and password don't match an HR account." });
+    expect(getToken()).toBeNull();
   });
 
-  it("an HR account at the admin page is rejected like a wrong password, and signed out", async () => {
-    reply(200, me("hr"));
+  it("an HR account at the admin page is rejected like a wrong password, and no token is kept", async () => {
+    reply(200, login("hr"));
     expect(await signInStaff("admin", "a@x.com", "pw")).toEqual({ error: "That email and password don't match a Super Admin account." });
-    expect(auth.signOut).toHaveBeenCalled();
+    expect(getToken()).toBeNull();
   });
 
-  it("a Supabase user missing from users gets NOT_STAFF and is signed out", async () => {
-    reply(403, { error: { code: "NOT_STAFF", message: "no", details: {} } });
-    expect(await signInStaff("hr", "a@x.com", "pw")).toHaveProperty("error", expect.stringContaining("no access"));
-    expect(auth.signOut).toHaveBeenCalled();
+  it("lockout shows the API's message", async () => {
+    reply(429, err("TOO_MANY_ATTEMPTS", "Too many attempts. Try again in 15 minutes"));
+    expect(await signInStaff("hr", "a@x.com", "pw")).toEqual({ error: "Too many attempts. Try again in 15 minutes" });
   });
 
-  it("API down: signed out with a retry message", async () => {
+  it("API down: a retry message", async () => {
     reply(502, "bad gateway");
-    expect(await signInStaff("hr", "a@x.com", "pw")).toHaveProperty("error", expect.stringContaining("Try again"));
-    expect(auth.signOut).toHaveBeenCalled();
+    expect(await signInStaff("hr", "a@x.com", "pw")).toHaveProperty("error", expect.stringContaining("try again"));
   });
 
-  it("empty fields never call Supabase", async () => {
+  it("empty fields never call the API", async () => {
+    vi.stubGlobal("fetch", vi.fn());
     expect(await signInStaff("hr", "", "")).toHaveProperty("error");
-    expect(auth.signInWithPassword).not.toHaveBeenCalled();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("an expired saved token reads as signed out", () => {
+    setToken("old", -1);
+    expect(getToken()).toBeNull();
   });
 });
 
 describe("forgot password", () => {
-  it("sends a lowercased email with the /set-password redirect", async () => {
-    auth.resetPasswordForEmail.mockResolvedValue({ error: null });
-    expect(await requestPasswordReset(" Jay@X.com ", "http://localhost:3000")).toBeUndefined();
-    expect(auth.resetPasswordForEmail).toHaveBeenCalledWith("jay@x.com", { redirectTo: "http://localhost:3000/set-password" });
+  it("posts the lowercased email", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(null, { status: 204 })));
+    expect(await requestPasswordReset(" Jay@X.com ")).toBeUndefined();
+    const [url, init] = vi.mocked(fetch).mock.calls[0];
+    expect(url).toBe("/api/v1/auth/forgot-password");
+    expect(JSON.parse(init!.body as string)).toEqual({ email: "jay@x.com" });
   });
 
-  it("rejects a malformed email without calling Supabase", async () => {
-    expect(await requestPasswordReset("nope", "http://x")).toBe("Enter your work email.");
-    expect(auth.resetPasswordForEmail).not.toHaveBeenCalled();
+  it("rejects a malformed email without calling the API", async () => {
+    vi.stubGlobal("fetch", vi.fn());
+    expect(await requestPasswordReset("nope")).toBe("Enter your work email.");
+    expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("explains the rate limit", async () => {
-    auth.resetPasswordForEmail.mockResolvedValue({ error: { status: 429, message: "rate limit" } });
-    expect(await requestPasswordReset("a@x.com", "http://x")).toContain("Wait a few minutes");
+  it("explains a failed request", async () => {
+    reply(500, err("BOOM"));
+    expect(await requestPasswordReset("a@x.com")).toContain("Try again");
   });
 });

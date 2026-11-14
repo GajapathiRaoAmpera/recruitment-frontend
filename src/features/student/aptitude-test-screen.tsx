@@ -165,5 +165,6 @@ function Runner({ roundId }: { roundId: string }) {
 export function AptitudeTestScreen() {
   const { roundId } = useParams<{ roundId: string }>();
   const { real } = useStudent();
-  return real ? <RealExamShell student={real} roundId={roundId} /> : <MockTest />;
+  // Keyed by round so switching rounds re-runs the start check and never shows the previous round's attempt.
+  return real ? <RealExamShell key={roundId} student={real} roundId={roundId} /> : <MockTest />;
 }

@@ -2,7 +2,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({ supabase: null }));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), liveApi: false }));
 const editorRenders = vi.hoisted(() => ({ n: 0 }));
 vi.mock("@/features/test-runner/code-editor", () => ({
   CodeEditor: ({ value, label, readOnly, language }: { value: string; label: string; readOnly?: boolean; language: string }) => {

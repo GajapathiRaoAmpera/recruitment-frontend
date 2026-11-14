@@ -7,7 +7,7 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { DraftList } from "@/features/papers/components/draft-list";
 import { PrototypeState } from "@/features/papers/components/prototype-state";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { useStore } from "@/mock/store";
 
 export function PapersScreen() {
@@ -22,7 +22,7 @@ export function PapersScreen() {
         title="Paper builder"
         description="Round 1 aptitude papers generated and checked by AI, reviewed by you."
         actions={
-          supabase && (
+          liveApi && (
             <Button asChild>
               <Link href="/hr/papers/new">
                 <Plus aria-hidden size={16} style={{ marginRight: 6 }} /> New paper
@@ -31,7 +31,7 @@ export function PapersScreen() {
           )
         }
       />
-      {supabase ? <DraftList showOwner={isSuperAdmin} ownerName={ownerName} /> : <PrototypeState />}
+      {liveApi ? <DraftList showOwner={isSuperAdmin} ownerName={ownerName} /> : <PrototypeState />}
     </>
   );
 }

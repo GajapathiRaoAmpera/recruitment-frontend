@@ -9,7 +9,7 @@ import { hire as h, StatCard } from "@/components/hire/ui";
 import { useStore } from "@/mock/store";
 import { MockDrivesCards } from "@/features/hiring/drives-table";
 import { RealAdminOverview } from "@/features/hiring/real-admin-overview";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 function MockAdminDashboard() {
   useBreadcrumbs([{ label: "Admin overview" }]);
@@ -77,5 +77,5 @@ function MockAdminDashboard() {
 }
 
 export default function AdminDashboard() {
-  return supabase ? <RealAdminOverview /> : <MockAdminDashboard />;
+  return liveApi ? <RealAdminOverview /> : <MockAdminDashboard />;
 }

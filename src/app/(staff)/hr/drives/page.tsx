@@ -6,7 +6,7 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { DrivesTable } from "@/features/hiring/drives-table";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 export default function DrivesPage() {
   useBreadcrumbs([{ label: "Drives" }]);
@@ -14,7 +14,7 @@ export default function DrivesPage() {
     <>
       <PageHeader
         title="Campus drives"
-        description={supabase ? "Create a drive, import the Google Form export, then shortlist from the resumes." : "Every drive runs shortlist → aptitude → coding → AI interview → final. You can skip or add rounds."}
+        description={liveApi ? "Create a drive, import the Google Form export, then shortlist from the resumes." : "Every drive runs shortlist → aptitude → coding → AI interview → final. You can skip or add rounds."}
         actions={
           <Button asChild>
             <Link href="/hr/drives/new">

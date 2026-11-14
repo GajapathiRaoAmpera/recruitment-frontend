@@ -34,7 +34,7 @@ export function ForgotPasswordScreen({ portal }: { portal: "hr" | "admin" }) {
               onSubmit={async (e) => {
                 e.preventDefault();
                 setPending(true);
-                const err = await requestPasswordReset(email, window.location.origin);
+                const err = await requestPasswordReset(email);
                 setPending(false);
                 if (err) return setError(err);
                 setSentTo(email.trim());
