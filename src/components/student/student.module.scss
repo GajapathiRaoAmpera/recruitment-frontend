@@ -135,6 +135,144 @@
   }
 }
 
+/* Round 1 MCQ: full-viewport split, only the question area and the palette scroll */
+.mcqRoot {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.mcqMain {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+}
+
+.mcq {
+  display: flex;
+  min-height: 0;
+  width: 100%;
+  flex: 1;
+  gap: sp(3);
+  background: var(--ui-color-surface-muted);
+  padding: sp(3);
+  @media (max-width: 767px) {
+    flex-direction: column-reverse;
+  }
+}
+
+.mcqLeft,
+.mcqSide {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  border: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+}
+
+.mcqLeft {
+  flex: 0 0 auto;
+  width: 78%;
+  @media (max-width: 767px) {
+    width: 100%;
+    flex: 1;
+  }
+}
+
+.mcqSide {
+  flex: 1;
+  min-width: 0;
+  @media (max-width: 767px) {
+    flex: 0 0 auto;
+    max-height: 40%;
+  }
+}
+
+.mcqScroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: sp(5);
+}
+
+.mcqRough {
+  display: flex;
+  flex: 0 0 38%;
+  min-height: 7rem;
+  flex-direction: column;
+  gap: sp(2);
+  border-top: 1px solid var(--ui-color-border);
+  padding: sp(3);
+}
+
+.mcqRoughArea {
+  min-height: 0;
+  flex: 1;
+  resize: none;
+  overflow-y: auto; /* scrolls when the rough work outgrows the box */
+  border: 1px solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-surface);
+  padding: sp(3);
+  font: inherit;
+  line-height: 1.5;
+  &:focus-visible {
+    outline: 2px solid var(--ui-color-focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+.mcqActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: sp(2);
+  border-top: 1px solid var(--ui-color-border);
+  padding: sp(3) sp(5);
+}
+
+.mcqSpacer {
+  flex: 1;
+}
+
+.mcqTimer {
+  border-bottom: 1px solid var(--ui-color-border);
+  padding: sp(3);
+}
+
+.mcqClock {
+  display: flex;
+  gap: sp(2);
+  margin-top: sp(2);
+  font-family: var(--ui-font-mono);
+  span {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+  }
+  b {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  small {
+    font-size: 0.7rem;
+    color: var(--ui-color-text-muted);
+  }
+  &[data-low="true"] {
+    color: var(--ui-color-danger);
+  }
+}
+
+.mcqNav {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: sp(3);
+}
+
 .palette {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -147,18 +285,26 @@
   border-radius: var(--ui-radius-input);
   @include text(sm);
   @include focus-ring;
+  background: var(--ui-color-surface-muted);
   &[data-state="answered"] {
     border-color: var(--ui-color-success);
-    background: var(--ui-color-success-subtle);
+    background: var(--ui-color-success);
+    color: #fff;
+  }
+  &[data-state="visited"] {
+    border-color: var(--ui-color-warning);
+    background: var(--ui-color-warning);
+    color: #fff;
   }
   &[data-state="marked"] {
-    border-color: var(--ui-color-warning);
-    background: var(--ui-color-warning-subtle);
+    border-color: var(--ui-color-text-muted);
+    background: var(--ui-color-text-muted);
+    color: #fff;
   }
-  &[aria-current="true"],
-  &[aria-current="step"] {
-    outline: 2px solid var(--ui-color-primary);
-    outline-offset: 1px;
+  &[data-state="current"] {
+    border-color: var(--ui-color-primary);
+    background: var(--ui-color-primary);
+    color: #fff;
   }
 }
 
@@ -184,11 +330,22 @@
   }
   &[data-state="answered"]::before {
     border-color: var(--ui-color-success);
-    background: var(--ui-color-success-subtle);
+    background: var(--ui-color-success);
+  }
+  &[data-state="visited"]::before {
+    border-color: var(--ui-color-warning);
+    background: var(--ui-color-warning);
   }
   &[data-state="marked"]::before {
-    border-color: var(--ui-color-warning);
-    background: var(--ui-color-warning-subtle);
+    border-color: var(--ui-color-text-muted);
+    background: var(--ui-color-text-muted);
+  }
+  &[data-state="current"]::before {
+    border-color: var(--ui-color-primary);
+    background: var(--ui-color-primary);
+  }
+  &[data-state="todo"]::before {
+    background: var(--ui-color-surface-muted);
   }
 }
 
@@ -317,8 +474,102 @@
   gap: sp(3);
 }
 
+.checkPage {
+  /* 10% either side, 20% above, 10% below */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  align-content: start;
+  padding: 20vh 10vw 10vh;
+}
+
+.checkThumb {
+  width: 72px;
+  height: 54px;
+  flex: none;
+  border: 2px solid var(--ui-color-success);
+  border-radius: var(--ui-radius-input);
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.checkPage .checkText {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  color: var(--ui-color-text-muted);
+}
+
+.checkTitle {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.stepper {
+  display: flex;
+  margin: 0 0 sp(6);
+  padding: 0;
+  list-style: none;
+}
+
+.stepperItem {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: sp(2);
+  &:not(:first-child)::before {
+    content: "";
+    position: absolute;
+    top: 16px;
+    right: 50%;
+    left: -50%;
+    height: 2px;
+    background: var(--ui-color-border-strong);
+  }
+  &[data-state="done"]::before,
+  &[data-state="active"]::before {
+    background: var(--ui-color-primary);
+  }
+}
+
+.stepperDot {
+  position: relative;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 2px solid var(--ui-color-border-strong);
+  border-radius: 50%;
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text-muted);
+  @include text(sm);
+  [data-state="done"] > & {
+    border-color: var(--ui-color-primary);
+    background: var(--ui-color-primary);
+    color: #fff;
+  }
+  [data-state="active"] > & {
+    border-color: var(--ui-color-primary);
+    box-shadow: 0 0 0 4px var(--ui-color-primary-subtle);
+    color: var(--ui-color-primary);
+  }
+}
+
+.stepperLabel {
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+  [data-state="active"] > &,
+  [data-state="done"] > & {
+    color: var(--ui-color-text);
+    font-weight: 500;
+  }
+}
+
 .checkItem {
   display: flex;
+  font-size: 1.0625rem;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
