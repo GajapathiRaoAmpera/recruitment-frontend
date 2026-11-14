@@ -8,7 +8,7 @@ import { Field } from "@/components/ui/field";
 import { Input, PasswordInput } from "@/components/ui/input";
 import { entryVerify } from "@/api/entry";
 import { signInStaff } from "@/features/auth/staff-sign-in";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { signIn, type Portal } from "@/mock/auth";
 import { DEMO_STUDENT } from "@/mock/data";
 import { useStore } from "@/mock/store";
@@ -55,8 +55,8 @@ export function LoginScreen({ portal }: { portal: Portal }) {
   const copy = COPY[portal];
   const [pending, setPending] = useState(false);
   const student = portal === "student";
-  // Staff use real Supabase sign-in once it's configured; students stay on the prototype until Phase 1.3.
-  const realStaff = !student && supabase !== null;
+  // Staff sign in through the API when it's on (NEXT_PUBLIC_LIVE_API); otherwise the prototype.
+  const realStaff = !student && liveApi;
   const clear = () => setError(undefined);
 
   return (
@@ -73,7 +73,7 @@ export function LoginScreen({ portal }: { portal: Portal }) {
             onSubmit={async (e) => {
               e.preventDefault();
               setPending(true);
-              if (student && supabase) {
+              if (student && liveApi) {
                 // Real student sign-in: the API checks Student ID + DOB against the imported candidates.
                 if (!identifier.trim() || !secret) {
                   setPending(false);
@@ -117,7 +117,7 @@ export function LoginScreen({ portal }: { portal: Portal }) {
             </Button>
           </form>
         </div>
-        {!realStaff && !(student && supabase) && <p className={s.demo}>{copy.demo}</p>}
+        {!realStaff && !(student && liveApi) && <p className={s.demo}>{copy.demo}</p>}
     </AuthFrame>
   );
 }

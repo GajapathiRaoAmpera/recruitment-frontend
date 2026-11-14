@@ -1,9 +1,7 @@
 // FR-13/FR-14, AC-5: coding question authoring and Round 2 test set-up calls (wire shapes).
 import { afterEach, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: { auth: { getSession: async () => ({ data: { session: { access_token: "tok" } } }), signOut: async () => ({ error: null }) } },
-}));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), getToken: () => "tok" }));
 
 import { createCodingQuestion, getCodingQuestion, listCodingQuestions, saveTestQuestions, saveTestSettings, titleOf, updateCodingQuestion } from "./coding-questions";
 

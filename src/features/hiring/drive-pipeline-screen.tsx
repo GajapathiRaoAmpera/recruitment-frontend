@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Input, Select } from "@/components/ui/input";
+import { Input, Range, Select } from "@/components/ui/input";
 import { NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -18,7 +18,7 @@ import { RoundActions } from "@/components/hire/round-actions";
 import { driveRounds, pct, useStore } from "@/mock/store";
 import type { Candidate, Round, RoundResult } from "@/mock/types";
 import { RealDriveHome } from "@/features/hiring/real-drive-home";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 function MockPipeline() {
   const { driveId } = useParams<{ driveId: string }>();
@@ -149,7 +149,7 @@ function MockPipeline() {
           <Input placeholder="Name, ID or skill" value={q} onChange={(e) => setQ(e.target.value)} />
         </Field>
         <Field label={`Min JD match: ${minMatch}%`}>
-          <input className={h.range} type="range" min={0} max={100} step={5} value={minMatch} onChange={(e) => setMinMatch(Number(e.target.value))} />
+          <Range className={h.range} min={0} max={100} step={5} value={minMatch} onChange={(e) => setMinMatch(Number(e.target.value))} />
         </Field>
         <label className={h.row} style={{ paddingBottom: 8 }}>
           <input type="checkbox" className={h.check} checked={hideOut} onChange={(e) => setHideOut(e.target.checked)} /> Hide not advanced
@@ -245,5 +245,5 @@ function CandidateCard({ c, last }: { c: Candidate; last?: RoundResult }) {
 }
 
 export function DrivePipelineScreen() {
-  return supabase ? <RealDriveHome /> : <MockPipeline />;
+  return liveApi ? <RealDriveHome /> : <MockPipeline />;
 }

@@ -199,9 +199,55 @@ describe("Submit and Leave", () => {
   it("does not start the timer until location and full screen pass the start check", async () => {
     Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true });
     render(<RealExamShell student={student} roundId="r1" />);
-    await screen.findByText("Checking before you start");
-    await screen.findByRole("button", { name: "Check again" });
+    await screen.findByText("Before you start");
+    // Full screen is off, so the one button both enters it and re-checks.
+    await screen.findByRole("button", { name: "Enter full screen and check" });
     expect(api.entryStart).not.toHaveBeenCalled();
     expect(api.entryStep).toHaveBeenCalledWith("t", "r1", "location", true, expect.anything());
   });
 });
+
+describe("navigation and saving", () => {
+  it("jumps straight to a question from the navigator and shows its state", async () => {
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+    fireEvent.click(screen.getByRole("button", { name: "Question 2, not answered" }));
+    expect(screen.getByText("Pick one")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: /A\. x/ }));
+    expect(screen.getByRole("button", { name: "Question 2, answered" })).toBeInTheDocument();
+  });
+
+  it("keeps a failed save, says so, and retries until the server has it", async () => {
+    api.saveAnswer.mockRejectedValueOnce(new ApiError(0, "NETWORK_ERROR", "offline")).mockResolvedValue(undefined);
+    render(<RealExamShell student={student} roundId="r1" />);
+    fireEvent.click(await screen.findByRole("radio", { name: /B\. 4/ }));
+    expect(await screen.findByText("1 answer not saved yet, retrying…")).toBeInTheDocument();
+    act(() => window.dispatchEvent(new Event("online")));
+    await screen.findByText(/1 of 2 answered/);
+    expect(api.saveAnswer).toHaveBeenLastCalledWith("ATT", "q1", 1);
+  });
+
+  it("sends only the latest choice when the student changes their mind mid-save", async () => {
+    let release!: () => void;
+    api.saveAnswer.mockImplementationOnce(() => new Promise<void>((r) => (release = r))).mockResolvedValue(undefined);
+    render(<RealExamShell student={student} roundId="r1" />);
+    fireEvent.click(await screen.findByRole("radio", { name: /A\. 3/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /B\. 4/ }));
+    await act(async () => release());
+    await waitFor(() => expect(api.saveAnswer).toHaveBeenLastCalledWith("ATT", "q1", 1));
+    expect(api.saveAnswer).toHaveBeenCalledTimes(2);
+  });
+
+  it("closes an open dialog and makes the page inert when full screen drops", async () => {
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+    fireEvent.click(screen.getByRole("button", { name: "Submit test" }));
+    expect(await screen.findByRole("alertdialog", { name: "Submit your test?" })).toBeInTheDocument();
+    Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true });
+    act(() => document.dispatchEvent(new Event("fullscreenchange")));
+    expect(await screen.findByRole("alertdialog", { name: "Return to full screen" })).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog", { name: "Submit your test?" })).not.toBeInTheDocument();
+    expect(document.querySelector("main")).toHaveAttribute("inert");
+  });
+});
+

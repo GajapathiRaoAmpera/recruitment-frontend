@@ -7,7 +7,7 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RobotLoader } from "@/components/ui/robot-loader";
 import { EmptyState, ErrorState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -22,14 +22,7 @@ export function RealCandidate({ candidateId }: { candidateId: string }) {
 
   if (error?.status === 404) return <NotFoundState title="Candidate not found" />;
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (loading || !c)
-    return (
-      <div className={h.stackSm}>
-        <LoadingLabel label="Loading candidate" />
-        <Skeleton style={{ height: 80 }} />
-        <Skeleton style={{ height: 200 }} />
-      </div>
-    );
+  if (loading || !c) return <RobotLoader label="Loading candidate" />;
 
   const open = async () => {
     setOpening(true);

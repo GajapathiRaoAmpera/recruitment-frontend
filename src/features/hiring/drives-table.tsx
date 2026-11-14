@@ -10,7 +10,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h, PipelineSteps, roundLabel } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { activeRound, driveRounds, useStore } from "@/mock/store";
 
 /** The drives list shared by the Drives page and both dashboards (the API scopes it: HR sees own drives, Super Admin sees all). */
@@ -87,7 +87,10 @@ export function RealDrivesTable() {
               <Link href={`/hr/drives/${d.id}`} className={h.link}>
                 {d.roleTitle}
               </Link>
-              <p className={h.xs}>{d.company}</p>
+              <p className={h.xs}>
+                {d.company}
+                {d.ownerName ? ` · Run by ${d.ownerName}` : ""}
+              </p>
             </Td>
             <Td>{d.campus}</Td>
             <Td>{d.candidates}</Td>
@@ -101,7 +104,7 @@ export function RealDrivesTable() {
   );
 }
 
-export const DrivesTable = () => (supabase ? <RealDrivesTable /> : <MockDrivesTable />);
+export const DrivesTable = () => (liveApi ? <RealDrivesTable /> : <MockDrivesTable />);
 
 /** Card layout of the same drives list, used on the dashboards. */
 export function MockDrivesCards() {
@@ -167,6 +170,7 @@ export function RealDrivesCards() {
               <h3 style={{ fontWeight: 500 }}>{d.roleTitle}</h3>
               <p className={h.xs}>
                 {d.company} · {d.campus}
+                {d.ownerName ? ` · Run by ${d.ownerName}` : ""}
               </p>
             </div>
             <Badge>{d.status}</Badge>
@@ -187,4 +191,4 @@ export function RealDrivesCards() {
   );
 }
 
-export const DrivesCards = () => (supabase ? <RealDrivesCards /> : <MockDrivesCards />);
+export const DrivesCards = () => (liveApi ? <RealDrivesCards /> : <MockDrivesCards />);

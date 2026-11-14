@@ -7,7 +7,7 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RobotLoader } from "@/components/ui/robot-loader";
 import { EmptyState, ErrorState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h, StatCard } from "@/components/hire/ui";
@@ -45,14 +45,7 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
 
   if (error?.status === 404) return <NotFoundState title="Round not found" />;
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (!data)
-    return (
-      <div className={h.stackSm}>
-        <LoadingLabel label="Loading progress" />
-        <Skeleton style={{ height: 80 }} />
-        <Skeleton style={{ height: 200 }} />
-      </div>
-    );
+  if (!data) return <RobotLoader label="Loading progress" />;
 
   const rows = data.candidates;
   const count = (f: (r: ProgressRow) => boolean) => rows.filter(f).length;

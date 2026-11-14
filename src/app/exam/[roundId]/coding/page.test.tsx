@@ -5,7 +5,7 @@ import { MockStoreProvider } from "@/mock/store";
 import CodingTestPage from "./page";
 
 const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
-vi.mock("@/lib/supabase", () => ({ supabase: null, linkHash: null }));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), liveApi: false }));
 vi.mock("next/navigation", () => ({ useParams: () => ({ roundId: "d1-r2" }), useRouter: () => nav }));
 // Monaco needs a real browser; a textarea stands in for it.
 vi.mock("@/features/test-runner/code-editor", () => ({

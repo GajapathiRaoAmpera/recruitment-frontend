@@ -8,8 +8,8 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Input, Select } from "@/components/ui/input";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { Input, Range, Select } from "@/components/ui/input";
+import { RobotLoader } from "@/components/ui/robot-loader";
 import { EmptyState, ErrorState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -45,6 +45,7 @@ export function RealShortlist({ driveId }: { driveId: string }) {
   useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive", href: `/hr/drives/${driveId}` }, { label: "Shortlist" }]);
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
+  if ((!drive.data && !drive.error) || (!list.data && !list.error)) return <RobotLoader label="Loading candidates" />;
   const rows: CandidateRow[] = list.data ?? [];
   const filtering = Boolean(skills.trim() || minCgpa || minMatch || show !== "all");
   const allSelected = rows.length > 0 && rows.every((c) => selected.has(c.id));
@@ -74,7 +75,7 @@ export function RealShortlist({ driveId }: { driveId: string }) {
     <div className={h.stack}>
       <PageHeader
         title="Resume shortlist"
-        description={drive.data ? `${drive.data.roleTitle} · ${drive.data.campus} · ${drive.data.candidates} candidates imported` : "Loading…"}
+        description={drive.data ? `${drive.data.roleTitle} · ${drive.data.campus} · ${drive.data.candidates} candidates imported` : undefined}
         actions={
           <Button asChild variant="secondary">
             <Link href={`/hr/drives/${driveId}`}>Rounds</Link>
@@ -92,7 +93,7 @@ export function RealShortlist({ driveId }: { driveId: string }) {
           <Input type="number" step={0.1} min={0} max={10} value={minCgpa} onChange={(e) => setMinCgpa(Math.min(10, Math.max(0, Number(e.target.value))))} />
         </Field>
         <Field label={`Min JD match: ${minMatch}%`}>
-          <input className={h.range} type="range" min={0} max={100} step={5} value={minMatch} onChange={(e) => setMinMatch(Number(e.target.value))} />
+          <Range className={h.range} min={0} max={100} step={5} value={minMatch} onChange={(e) => setMinMatch(Number(e.target.value))} />
         </Field>
         <Field label="Show">
           <Select value={show} onChange={(e) => setShow(e.target.value as typeof show)}>
@@ -117,13 +118,6 @@ export function RealShortlist({ driveId }: { driveId: string }) {
 
       {list.error ? (
         <ErrorState message={list.error.message} onRetry={list.reload} />
-      ) : list.loading && !list.data ? (
-        <div className={h.stackSm}>
-          <LoadingLabel label="Loading candidates" />
-          <Skeleton style={{ height: 48 }} />
-          <Skeleton style={{ height: 48 }} />
-          <Skeleton style={{ height: 48 }} />
-        </div>
       ) : rows.length === 0 ? (
         filtering ? (
           <EmptyState title="No candidates match these filters" description="Lower the CGPA or JD-match filter, or change the skills." />
