@@ -1,5 +1,5 @@
 import { api, ApiError } from "@/api/client";
-import { supabase } from "@/lib/supabase";
+import { getToken } from "@/lib/auth";
 
 // Drives, candidate import, resumes and shortlisting (backend app/drives + app/candidates).
 // Wire snake_case is mapped by hand here: candidate form_data keys are spreadsheet headers and must stay untouched.
@@ -12,6 +12,9 @@ export interface Drive {
   jdText: string;
   status: string;
   candidates: number;
+  /** The HR who runs the drive (a Super Admin can hand it to another HR). */
+  ownerId: string | null;
+  ownerName: string | null;
 }
 
 export interface CandidateRow {
@@ -59,7 +62,7 @@ export interface CandidateFilters {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- wire shapes are mapped field by field below */
-const toDrive = (d: any): Drive => ({ id: d.id, company: d.company, campus: d.campus, roleTitle: d.role_title, jdText: d.jd_text, status: d.status, candidates: d.candidates });
+const toDrive = (d: any): Drive => ({ id: d.id, company: d.company, campus: d.campus, roleTitle: d.role_title, jdText: d.jd_text, status: d.status, candidates: d.candidates, ownerId: d.owner_id ?? null, ownerName: d.owner_name ?? null });
 const toRow = (c: any): CandidateRow => ({ id: c.id, studentId: c.student_id, fullName: c.full_name, email: c.email, cgpa: c.cgpa, skills: c.skills, jdMatch: c.jd_match, parseStatus: c.parse_status, shortlisted: c.shortlisted });
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -76,8 +79,24 @@ export interface RoundSetup {
 }
 
 /** `rounds` is the pipeline in order; the server saves it with the drive. */
-export const createDrive = async (b: { company: string; campus: string; roleTitle: string; jdText: string; rounds: RoundSetup[] }) =>
-  toDrive(await api<unknown>("/drives", json("POST", { company: b.company, campus: b.campus, role_title: b.roleTitle, jd_text: b.jdText, rounds: b.rounds.map((r) => ({ type: r.type, mode: r.mode, threshold: r.threshold, duration_min: r.durationMin })) })));
+/** `ownerId` (Super Admin only): the HR who runs the drive; omitted = the caller owns it. */
+export const createDrive = async (b: { company: string; campus: string; roleTitle: string; jdText: string; rounds: RoundSetup[]; ownerId?: string }) =>
+  toDrive(
+    await api<unknown>(
+      "/drives",
+      json("POST", {
+        company: b.company,
+        campus: b.campus,
+        role_title: b.roleTitle,
+        jd_text: b.jdText,
+        rounds: b.rounds.map((r) => ({ type: r.type, mode: r.mode, threshold: r.threshold, duration_min: r.durationMin })),
+        ...(b.ownerId ? { owner_id: b.ownerId } : {}),
+      }),
+    ),
+  );
+
+/** Super Admin hands a drive to another active HR; it moves to that HR's portal. */
+export const reassignDrive = async (driveId: string, ownerId: string) => toDrive(await api<unknown>(`/drives/${driveId}/owner`, json("PATCH", { owner_id: ownerId })));
 
 /** Google Form export (.xlsx / .csv). Bad rows come back in `errors`; good rows are imported. */
 export const importCandidates = (driveId: string, sheet: File) => {
@@ -137,7 +156,7 @@ export async function getCandidate(id: string): Promise<CandidateProfile> {
 
 /** The resume PDF sits behind the HR login, so a plain link would be rejected: fetch it with the token and open the blob. */
 export async function openResume(candidateId: string): Promise<void> {
-  const token = (await supabase?.auth.getSession())?.data.session?.access_token;
+  const token = getToken();
   const res = await fetch(`/api/v1/candidates/${candidateId}/resume`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
   if (!res.ok) {
     const body = await res.json().catch(() => null);
@@ -219,3 +238,9 @@ export async function getProgressOverview(): Promise<DriveProgress[]> {
     })),
   }));
 }
+
+/** Active HR users a Super Admin can give a drive to (Super Admin only: GET /admin/users). */
+export const listHrOwners = async () =>
+  (await api<{ items: { id: string; full_name: string; email: string; role: string; is_active?: boolean }[] }>("/admin/users")).items
+    .filter((u) => u.role === "hr" && u.is_active !== false)
+    .map((u) => ({ id: u.id, name: u.full_name, email: u.email }));

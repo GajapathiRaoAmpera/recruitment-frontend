@@ -15,7 +15,7 @@ import { useToast } from "@/components/ui/toast";
 import { Chips, hire as h, Person, Progress, ResultBadge } from "@/components/hire/ui";
 import { candidateById, useStore } from "@/mock/store";
 
-/** Prototype mode (no Supabase): the interview list from the in-memory mock store. */
+/** Prototype mode (live API off): the interview list from the in-memory mock store. */
 export function MockInterviews() {
   useBreadcrumbs([{ label: "Interviews" }]);
   const { state } = useStore();
@@ -65,7 +65,7 @@ export function MockInterviews() {
   );
 }
 
-/** Prototype mode (no Supabase): one interview from the in-memory mock store. */
+/** Prototype mode (live API off): one interview from the in-memory mock store. */
 export function MockInterviewConsole({ interviewId }: { interviewId: string }) {
   const { state, dispatch } = useStore();
   const toast = useToast();

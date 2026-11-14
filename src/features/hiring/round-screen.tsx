@@ -16,14 +16,14 @@ import { hire as h, Person, Progress, ResultBadge, RoundStatusBadge, StatCard, T
 import { RoundActions } from "@/components/hire/round-actions";
 import { BuildPaperLink } from "@/features/papers/components/build-paper-link";
 import { RealRoundProgress } from "@/features/hiring/real-round-progress";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { candidateById, pct, rank, roundResults, useStore } from "@/mock/store";
 
 type Tab = "overview" | "ranking" | "alerts" | "questions" | "emails";
 
 export function RoundScreen() {
   const { driveId, roundId } = useParams<{ driveId: string; roundId: string }>();
-  return <Suspense>{supabase ? <RealRoundProgress driveId={driveId} roundId={roundId} /> : <RoundDashboard />}</Suspense>;
+  return <Suspense>{liveApi ? <RealRoundProgress driveId={driveId} roundId={roundId} /> : <RoundDashboard />}</Suspense>;
 }
 
 function RoundDashboard() {

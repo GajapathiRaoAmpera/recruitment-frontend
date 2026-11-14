@@ -155,7 +155,8 @@
     border-color: var(--ui-color-warning);
     background: var(--ui-color-warning-subtle);
   }
-  &[aria-current="true"] {
+  &[aria-current="true"],
+  &[aria-current="step"] {
     outline: 2px solid var(--ui-color-primary);
     outline-offset: 1px;
   }
@@ -170,6 +171,27 @@
   color: var(--ui-color-text-muted);
 }
 
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: sp(1.5);
+  &::before {
+    content: "";
+    width: 12px;
+    height: 12px;
+    border: 1px solid var(--ui-color-border-strong);
+    border-radius: 3px;
+  }
+  &[data-state="answered"]::before {
+    border-color: var(--ui-color-success);
+    background: var(--ui-color-success-subtle);
+  }
+  &[data-state="marked"]::before {
+    border-color: var(--ui-color-warning);
+    background: var(--ui-color-warning-subtle);
+  }
+}
+
 .option {
   display: flex;
   cursor: pointer;
@@ -178,7 +200,6 @@
   border: 1px solid var(--ui-color-border-strong);
   border-radius: var(--ui-radius-card);
   padding: sp(4);
-  transition: border-color var(--ui-duration-fast);
   &:hover {
     border-color: var(--ui-color-primary);
   }

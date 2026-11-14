@@ -58,3 +58,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
     </select>
   );
 });
+
+/** Range slider wired to the surrounding <Field> label (raw inputs aren't). */
+export const Range = forwardRef<HTMLInputElement, Omit<InputHTMLAttributes<HTMLInputElement>, "type">>(function Range(props, ref) {
+  const field = useFieldControl();
+  return <input ref={ref} {...field} {...props} type="range" />;
+});

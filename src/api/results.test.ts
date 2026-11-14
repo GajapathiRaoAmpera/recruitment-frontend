@@ -1,7 +1,7 @@
 // FR-10/FR-23, AC-5: HR reads coding results (decimals arrive as strings).
 import { afterEach, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({ supabase: null }));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), liveApi: false }));
 
 import { getAttemptResult, getTestResults } from "./results";
 

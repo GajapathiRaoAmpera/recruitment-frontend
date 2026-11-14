@@ -66,7 +66,7 @@ export function ImportPanel({ driveId, onChanged }: { driveId: string; onChanged
         </div>
         {busy === "fetch" && <p className={h.xs}>Downloading and reading resumes. This takes about a minute per 100 candidates.</p>}
         {error && (
-          <p role="alert" style={{ color: "var(--color-danger, #b3261e)" }}>
+          <p role="alert" style={{ color: "var(--ui-color-danger)" }}>
             {error}
           </p>
         )}

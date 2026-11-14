@@ -15,14 +15,14 @@ import { SendStep } from "@/features/papers/components/send-step";
 import { Stepper } from "@/features/papers/components/stepper";
 import type { DraftDetail, DraftStatus } from "@/features/papers/types";
 import { useAsync } from "@/features/papers/use-async";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 const STEP: Record<DraftStatus, number> = { generating: 1, failed: 1, draft: 2, accepted: 3 };
 
 export function PaperDraftScreen() {
   const { draftId } = useParams<{ draftId: string }>();
   useBreadcrumbs([{ label: "Paper builder", href: "/hr/papers" }, { label: "Paper" }]);
-  return supabase ? <DraftView id={draftId} /> : <PrototypeState />;
+  return liveApi ? <DraftView id={draftId} /> : <PrototypeState />;
 }
 
 function DraftView({ id }: { id: string }) {

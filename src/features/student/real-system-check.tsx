@@ -224,7 +224,7 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
           </section>
 
           {error && (
-            <p role="alert" className={h.xs} style={{ color: "var(--ui-color-danger, #b3261e)" }}>
+            <p role="alert" className={h.xs} style={{ color: "var(--ui-color-danger)" }}>
               {error}
             </p>
           )}

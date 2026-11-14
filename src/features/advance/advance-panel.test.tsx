@@ -3,7 +3,7 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({ supabase: null }));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), liveApi: false }));
 
 import { AdvancePanel } from "./advance-panel";
 
