@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { type CharacterState, hasWebGL, stateLabel } from "./character-state";
 import s from "./interview.module.scss";
+import { dressForInterview } from "./outfit";
 
 type Head = import("@met4citizen/talkinghead").TalkingHead;
 
@@ -59,6 +60,7 @@ export function InterviewerCharacter({ state, getLevel, voice = null }: Props) {
       });
       await h.showAvatar({ url: AVATAR_URL, body: "F", avatarMood: "neutral", lipsyncLang: "en" });
       if (dead) return h.dispose();
+      dressForInterview(h.armature);
       document.addEventListener("visibilitychange", onVis);
       headRef.current = h;
       setReady(true);

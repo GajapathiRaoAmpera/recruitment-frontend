@@ -71,7 +71,17 @@ describe("RealExamShell (server-driven)", () => {
     expect(await screen.findByText("What is 2+2?")).toBeInTheDocument();
     expect(api.entryStart).toHaveBeenCalledWith("t", "r1");
     expect(api.getAttempt).toHaveBeenCalledWith("ATT");
-    expect(screen.getByRole("timer")).toHaveTextContent(/4[45]:\d\d/);
+    expect(screen.getByRole("timer")).toHaveAccessibleName(/Time left 00:4[45]:\d\d/);
+  });
+
+  it("keeps one shared rough-work box across questions, never sending it to the server", async () => {
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+    fireEvent.change(screen.getByLabelText(/Rough work/), { target: { value: "2+2=4" } });
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Pick one");
+    expect(screen.getByLabelText(/Rough work/)).toHaveValue("2+2=4");
+    expect(api.saveAnswer).not.toHaveBeenCalled();
   });
 
   it("autosaves a chosen option to the server", async () => {
@@ -136,6 +146,22 @@ describe("RealExamShell (server-driven)", () => {
     expect(screen.getByRole("link", { name: "Go to system check" })).toHaveAttribute("href", "/exam/r1");
   });
 
+  it("waits when the exam isn't open yet and moves in by itself once it opens", async () => {
+    api.entryStart.mockRejectedValueOnce(new ApiError(409, "ROUND_NOT_OPEN", "not open")).mockResolvedValue("ATT");
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      render(<RealExamShell student={student} roundId="r1" />);
+      expect(await screen.findByText("The exam hasn't started yet")).toBeInTheDocument();
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5100);
+      });
+      expect(await screen.findByText("What is 2+2?")).toBeInTheDocument();
+      expect(api.entryStart).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("refuses a round the student isn't invited to", () => {
     render(<RealExamShell student={student} roundId="other" />);
     expect(screen.getByText("Round not found")).toBeInTheDocument();
@@ -147,6 +173,7 @@ describe("Submit and Leave", () => {
   it("Submit warns about unanswered questions, then makes the answers final and shows the time taken", async () => {
     render(<RealExamShell student={student} roundId="r1" />);
     (await screen.findByRole("radio", { name: /B\. 4/ })).click();
+    fireEvent.click(await screen.findByRole("button", { name: "Next" }));
     fireEvent.click(await screen.findByRole("button", { name: "Submit test" }));
     expect(await screen.findByText(/1 question\(s\) are unanswered/)).toBeInTheDocument();
     expect(api.submitAttempt).not.toHaveBeenCalled(); // not until confirmed
@@ -169,6 +196,7 @@ describe("Submit and Leave", () => {
   it("shows the server's reason if submitting fails, and lets them try again", async () => {
     api.submitAttempt.mockRejectedValueOnce(new ApiError(0, "NETWORK_ERROR", "Can't reach the server.")).mockResolvedValue({ timeTakenSec: 60 });
     render(<RealExamShell student={student} roundId="r1" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Next" }));
     fireEvent.click(await screen.findByRole("button", { name: "Submit test" }));
     fireEvent.click(screen.getAllByRole("button", { name: "Submit test" }).at(-1)!);
     expect(await screen.findByText(/Can't reach the server/)).toBeInTheDocument();
@@ -188,7 +216,7 @@ describe("Submit and Leave", () => {
     api.getAttempt.mockResolvedValue(state({ status: "locked", tabSwitches: 3 }));
     const { unmount } = render(<RealExamShell student={student} roundId="r1" />);
     await screen.findByRole("alertdialog", { name: "Your test is paused" });
-    expect(screen.getByRole("button", { name: "Submit test" })).toBeDisabled();
+    expect(screen.getByRole("main", { hidden: true })).toHaveAttribute("inert"); // nothing in the test can be used, including Submit
     unmount();
     api.getAttempt.mockResolvedValue(state({ status: "submitted" }));
     render(<RealExamShell student={student} roundId="r1" />);
@@ -211,7 +239,7 @@ describe("navigation and saving", () => {
   it("jumps straight to a question from the navigator and shows its state", async () => {
     render(<RealExamShell student={student} roundId="r1" />);
     await screen.findByText("What is 2+2?");
-    fireEvent.click(screen.getByRole("button", { name: "Question 2, not answered" }));
+    fireEvent.click(screen.getByRole("button", { name: "Question 2, not visited" }));
     expect(screen.getByText("Pick one")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("radio", { name: /A\. x/ }));
     expect(screen.getByRole("button", { name: "Question 2, answered" })).toBeInTheDocument();
@@ -241,6 +269,7 @@ describe("navigation and saving", () => {
   it("closes an open dialog and makes the page inert when full screen drops", async () => {
     render(<RealExamShell student={student} roundId="r1" />);
     await screen.findByText("What is 2+2?");
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
     fireEvent.click(screen.getByRole("button", { name: "Submit test" }));
     expect(await screen.findByRole("alertdialog", { name: "Submit your test?" })).toBeInTheDocument();
     Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true });

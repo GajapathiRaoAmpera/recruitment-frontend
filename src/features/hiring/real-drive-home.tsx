@@ -1,10 +1,10 @@
 "use client";
 
-import { ListChecks, Trophy, UserCheck, UserRoundCog, Users } from "lucide-react";
+import { FileDown, ListChecks, Trophy, UserCheck, UserRoundCog, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { getDrive, getRoundProgress, listCandidates, listRounds, reassignDrive } from "@/api/hiring";
+import { downloadDriveReport, getDrive, getRoundProgress, listCandidates, listRounds, reassignDrive } from "@/api/hiring";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -65,6 +65,8 @@ export function RealDriveHome() {
   const { data, error, reload } = useAsync(() => listRounds(driveId), [driveId]);
   const analysis = useAsync(() => (data ? analyseDrive(driveId, data) : Promise.resolve(undefined)), [driveId, data]);
   const [reassigning, setReassigning] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const toast = useToast();
   useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive" }]);
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
@@ -77,6 +79,16 @@ export function RealDriveHome() {
   const finalRound = data.find((r) => r.type === "final");
   const selectedTotal = finalRound ? stats?.byRound[finalRound.id]?.cleared : undefined;
   const dash = (n: number | undefined) => (stats ? n : "—");
+  const download = async () => {
+    setDownloading(true);
+    try {
+      await downloadDriveReport(d.id, `${d.company}-${d.roleTitle}-report.pdf`);
+    } catch (e) {
+      toast({ tone: "danger", title: "Couldn't create the report", description: e instanceof Error ? e.message : "Try again in a moment." });
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className={h.stack}>
@@ -84,11 +96,18 @@ export function RealDriveHome() {
         title={d.roleTitle}
         description={`${d.company} · ${d.campus}${d.ownerName ? ` · Run by ${d.ownerName}` : ""}`}
         actions={
-          isAdmin && (
-            <Button variant="secondary" onClick={() => setReassigning(true)}>
-              <UserRoundCog aria-hidden size={16} style={{ marginRight: 6 }} /> Change HR
-            </Button>
-          )
+          <>
+            {d.status === "closed" && (
+              <Button onClick={() => void download()} loading={downloading}>
+                <FileDown aria-hidden size={16} style={{ marginRight: 6 }} /> Download report
+              </Button>
+            )}
+            {isAdmin && (
+              <Button variant="secondary" onClick={() => setReassigning(true)}>
+                <UserRoundCog aria-hidden size={16} style={{ marginRight: 6 }} /> Change HR
+              </Button>
+            )}
+          </>
         }
       />
       <section className={h.card} aria-labelledby="rounds-h">
@@ -152,7 +171,7 @@ export function RealDriveHome() {
                 </div>
                 <Button asChild variant={r.status === "active" ? "primary" : "secondary"} size="sm">
                   <Link href={isShortlist ? `/hr/drives/${driveId}/candidates` : `/hr/drives/${driveId}/rounds/${r.id}`}>
-                    {isShortlist ? "Review resumes" : "View progress"}
+                    {isShortlist ? "Review resumes" : r.type === "coding" && r.status === "pending" ? "Set up test" : "View progress"}
                   </Link>
                 </Button>
               </li>
