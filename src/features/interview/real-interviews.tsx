@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
-import { LoadingLabel } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -70,7 +70,7 @@ export function RealInterviews() {
   const { data, error, reload } = useAsync(() => listInterviews(), []);
   useAutoReload(reload, true);
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (!data) return <LoadingLabel label="Loading interviews" />;
+  if (!data) return <RocketLoader label="Loading interviews" />;
   const live = data.filter((r) => r.status === "live");
   return (
     <div className={h.stack}>
@@ -138,7 +138,7 @@ export function RealInterviewDetail({ id }: { id: string }) {
 
   if (error?.status === 404) return <NotFoundState title="Interview not found" />;
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (!iv) return <LoadingLabel label="Loading interview" />;
+  if (!iv) return <RocketLoader label="Loading interview" />;
 
   const run = async (kind: "notes" | "score") => {
     setBusy(kind);

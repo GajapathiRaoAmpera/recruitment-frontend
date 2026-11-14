@@ -33,7 +33,8 @@ beforeEach(() => {
 
 it("track toggle is a radiogroup operable by arrow keys", async () => {
   renderSetup();
-  const group = screen.getByRole("radiogroup", { name: "Track" });
+  // The form appears once the AI provider check is done (one loader before it).
+  const group = await screen.findByRole("radiogroup", { name: "Track" });
   const it_ = screen.getByRole("radio", { name: "IT" });
   expect(group).toBeInTheDocument();
   expect(it_).toHaveAttribute("aria-checked", "true");
@@ -111,7 +112,7 @@ it("successful create hands the draft to the page", async () => {
 it("role is pre-filled from the drive, required, and sent trimmed for both tracks", async () => {
   api.createDraft.mockResolvedValue({ id: "p-1" });
   renderSetup();
-  const role = screen.getByLabelText(/role/i);
+  const role = await screen.findByLabelText(/role/i);
   expect(role).toHaveValue("Analyst"); // initialDrive d2
   fireEvent.change(screen.getByLabelText(/drive/i), { target: { value: "d1" } });
   expect(role).toHaveValue("SDE");
@@ -127,9 +128,9 @@ it("role is pre-filled from the drive, required, and sent trimmed for both track
   expect(sent).not.toHaveProperty("subjects"); // the PDF banks are no longer part of a paper
 });
 
-it("level counts stop at the backend limit of 100", () => {
+it("level counts stop at the backend limit of 100", async () => {
   renderSetup();
-  fireEvent.change(screen.getByLabelText("Easy"), { target: { value: "150" } });
+  fireEvent.change(await screen.findByLabelText("Easy"), { target: { value: "150" } });
   expect(screen.getByLabelText("Easy")).toHaveValue(100);
   expect(screen.getByRole("button", { name: "Increase Easy" })).toBeDisabled();
 });

@@ -152,9 +152,64 @@
   }
 }
 
+/* Round 2 coding: one viewport tall like Round 1; the exam bar stays put and long content scrolls
+   inside its own section (problem, output), never the whole page. */
+.codingRoot {
+  display: flex;
+  height: 100dvh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.codingFrame {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  width: 100%;
+}
+
 .coding {
+  min-height: 0;
+  align-content: start;
+  overflow-y: auto; // narrow screens: the stacked columns scroll here, under the fixed exam bar
+  overscroll-behavior: contain;
   @include up(lg) {
     grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-rows: minmax(0, 1fr);
+    align-content: stretch;
+    overflow: hidden;
+  }
+}
+
+.codingProblem,
+.codingOutput {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.codingProblem {
+  max-height: min(40rem, 70dvh);
+  @include up(lg) {
+    max-height: none;
+  }
+}
+
+.codingPane {
+  min-height: 0;
+  @include up(lg) {
+    overflow-y: auto; // fallback on short screens; normally only the output card scrolls
+    overscroll-behavior: contain;
+  }
+}
+
+.codingOutput {
+  flex-shrink: 0;
+  max-height: min(30rem, 60dvh);
+  @include up(lg) {
+    flex: 1 1 auto;
+    min-height: 8rem;
+    max-height: none;
   }
 }
 

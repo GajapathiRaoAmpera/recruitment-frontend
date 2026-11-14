@@ -10,7 +10,7 @@ import { hire as h, RoundStatusBadge } from "@/components/hire/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useAsync } from "@/features/papers/use-async";
@@ -66,12 +66,7 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
   if (!data) {
     if (error?.code === "ROUND_NOT_HR_DECIDED") return null;
     if (error) return <ErrorState message={error.message} onRetry={reload} />;
-    return (
-      <div className={h.stackSm}>
-        <LoadingLabel label="Loading students" />
-        <Skeleton style={{ height: 160 }} />
-      </div>
-    );
+    return <RocketLoader label="Loading students" />;
   }
 
   const final = data.roundType === "final";

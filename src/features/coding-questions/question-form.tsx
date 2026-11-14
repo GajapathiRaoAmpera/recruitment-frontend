@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ErrorState, ForbiddenState } from "@/components/ui/states";
 import { useAsync } from "@/features/papers/use-async";
 // A next/dynamic wrapper: Monaco is fetched only when the reference solution is first shown.
@@ -291,10 +291,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
               <ErrorState message={codingErrorMessage(existing.error)} onRetry={existing.reload} />
             )
           ) : (
-            <>
-              <LoadingLabel label="Loading question" />
-              <Skeleton style={{ height: 320 }} />
-            </>
+            <RocketLoader label="Loading question" />
           )
         ) : (
           <div className={h.stack}>

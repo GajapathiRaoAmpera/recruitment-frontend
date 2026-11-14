@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useAsync } from "@/features/papers/use-async";
@@ -102,10 +102,7 @@ export function BankPicker({ inRound, locked, onAdd, onEdit, onNew, onGenerate, 
       {error && !data ? (
         <ErrorState message={codingErrorMessage(error)} onRetry={reload} />
       ) : !data ? (
-        <>
-          <LoadingLabel label="Loading question bank" />
-          <Skeleton style={{ height: 120 }} />
-        </>
+        <RocketLoader label="Loading question bank" />
       ) : data.length === 0 ? (
         <EmptyState
           title={difficulty ? `No ${difficulty} coding questions yet` : "No coding questions yet"}

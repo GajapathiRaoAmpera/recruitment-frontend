@@ -17,7 +17,7 @@ import {
 } from "@/api/attempt";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
 import { CodeEditor } from "./code-editor";
@@ -179,7 +179,8 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         </section>
       </main>
     );
-  if (!docs) return <LoadingLabel label="Loading your code" />;
+  // One loader for the whole body until the drafts are in; still, because student test screens never animate.
+  if (!docs) return <RocketLoader still label="Loading your code" />;
 
   const p = questions[Math.min(current, questions.length - 1)]!;
   const doc = docs[p.id]!;
@@ -252,7 +253,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
 
   return (
     <main className={`${s.examBody} ${s.coding}`}>
-      <section className={h.card} aria-labelledby="p-h">
+      <section className={`${h.card} ${s.codingProblem}`} aria-labelledby="p-h" tabIndex={0}>
         <div role="tablist" aria-label="Problems" className={s.problemTabs} style={{ marginBottom: 16 }}>
           {questions.map((x, i) => (
             <button key={x.id} role="tab" type="button" aria-selected={x.id === p.id} className={h.segmentBtn} onClick={() => switchTo(i)}>
@@ -353,7 +354,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         </p>
       </section>
 
-      <section className={h.stackSm} aria-label="Editor" data-allow-select>
+      <section className={`${h.stackSm} ${s.codingPane}`} aria-label="Editor" data-allow-select>
         <div className={s.editorWrap}>
           <div className={s.editorBar}>
             <label>
@@ -397,7 +398,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
           </div>
         </div>
 
-        <div className={h.card} aria-live="polite">
+        <div className={`${h.card} ${s.codingOutput}`} aria-live="polite" tabIndex={0}>
           {callError && (
             <p role="alert" style={{ color: "var(--ui-color-danger)" }}>
               {callError}

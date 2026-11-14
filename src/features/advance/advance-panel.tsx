@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useAsync } from "@/features/papers/use-async";
@@ -62,12 +62,7 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
   if (!data) {
     if (error?.code === "ROUND_HAS_NO_TEST") return null;
     if (error) return <ErrorState message={error.message} onRetry={reload} />;
-    return (
-      <div className={h.stackSm}>
-        <LoadingLabel label="Loading ranking" />
-        <Skeleton style={{ height: 160 }} />
-      </div>
-    );
+    return <RocketLoader label="Loading ranking" />;
   }
 
   const title = (

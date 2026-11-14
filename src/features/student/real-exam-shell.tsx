@@ -33,6 +33,7 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   const [error, setError] = useState<ApiError | Error>();
   const [tries, setTries] = useState(0);
   const [checked, setChecked] = useState(false); // location + full screen re-checked; the timer starts only after this
+  const [checking, setChecking] = useState(true); // start check running: shown on the same loader as "Starting your test"
 
   useEffect(() => {
     if (!round || !checked) return;
@@ -71,8 +72,14 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
       </main>
     );
   }
-  if (!checked) return <StartCheck student={student} roundId={roundId} onPass={() => setChecked(true)} />;
-  if (!attempt) return <RocketLoader label="Starting your test" />;
+  // One loader for the whole start: it stays mounted and only its text changes (check → start), so it doesn't flash twice.
+  if (!attempt)
+    return (
+      <>
+        {!checked && <StartCheck student={student} roundId={roundId} busy={checking} setBusy={setChecking} onPass={() => setChecked(true)} />}
+        {(checked || checking) && <RocketLoader label={checked ? "Starting your test" : "Checking location and full screen"} />}
+      </>
+    );
   // Keyed by attempt: a new round is a new attempt, so no timer, count or draft state carries over (AC-6).
   return <Shell key={attempt.token} student={student} roundId={roundId} type={round.type} token={attempt.token} initial={attempt.state} />;
 }
@@ -100,8 +107,8 @@ function WaitingRoom({ onRetry }: { onRetry: () => void }) {
 }
 
 /** Runs right when the test opens, before the timer starts: location and full screen must both be on. */
-function StartCheck({ student, roundId, onPass }: { student: StudentSession; roundId: string; onPass: () => void }) {
-  const [busy, setBusy] = useState(true);
+/** While busy the parent shows the shared loader; this card appears only when a check fails. */
+function StartCheck({ student, roundId, busy, setBusy, onPass }: { student: StudentSession; roundId: string; busy: boolean; setBusy: (b: boolean) => void; onPass: () => void }) {
   const [loc, setLoc] = useState(false);
   const [fs, setFs] = useState(false);
   const run = useCallback(
@@ -120,7 +127,7 @@ function StartCheck({ student, roundId, onPass }: { student: StudentSession; rou
       setBusy(false);
       if (locOk && fsOk) onPass();
     },
-    [student.entryToken, roundId, onPass],
+    [student.entryToken, roundId, onPass, setBusy],
   );
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- state is set after the async check, not synchronously
@@ -137,22 +144,17 @@ function StartCheck({ student, roundId, onPass }: { student: StudentSession; rou
       </div>
     </li>
   );
+  if (busy) return null; // the parent's loader is showing
   return (
     <main className={`${s.examBody} ${s.examGate}`}>
       <section className={`${h.card} ${s.examGateCard}`}>
         <h1 className={h.cardTitle}>Before you start</h1>
         <p className={h.muted}>Location and full screen must both be on. Your timer starts only after this check passes.</p>
-        {busy ? (
-          <RocketLoader size="inline" still label="Checking location and full screen" />
-        ) : (
-          <>
-            <ul className={h.list} style={{ alignSelf: "stretch" }}>
-              {item(loc, "Location", "Click the lock or pin icon in the address bar, allow location, then check again.")}
-              {item(fs, "Full screen", "The button below switches the test to full screen.")}
-            </ul>
-            <Button onClick={() => { setBusy(true); void run(true); }}>{fs ? "Check again" : "Enter full screen and check"}</Button>
-          </>
-        )}
+        <ul className={h.list} style={{ alignSelf: "stretch" }}>
+          {item(loc, "Location", "Click the lock or pin icon in the address bar, allow location, then check again.")}
+          {item(fs, "Full screen", "The button below switches the test to full screen.")}
+        </ul>
+        <Button onClick={() => { setBusy(true); void run(true); }}>{fs ? "Check again" : "Enter full screen and check"}</Button>
       </section>
     </main>
   );
@@ -353,7 +355,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
 
   return (
     <>
-      <div className={isCoding ? undefined : s.mcqRoot}>
+      <div className={isCoding ? s.codingRoot : s.mcqRoot}>
       <header className={s.examBar} inert={blocked}>
         <Logo height={22} />
         <div className={s.examTitle}>
@@ -384,7 +386,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
 
       {isCoding ? (
         // The workspace renders its own <main>; the wrapper makes it inert under an overlay.
-        <div inert={blocked} style={{ width: "100%" }}>
+        <div inert={blocked} className={s.codingFrame}>
           <CodingWorkspace token={token} attempt={initial} live={live} submitted={submitted} onClosed={(k) => (k === "expired" ? setExpired(true) : setLocked(true))} />
         </div>
       ) : (

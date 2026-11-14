@@ -9,7 +9,7 @@ import student from "@/components/student/student.module.scss";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { ATTEMPT_STATUS, fmt } from "@/features/advance/messages";
@@ -34,13 +34,7 @@ export function CodingResults({ roundId }: { roundId: string }) {
   const body = (() => {
     if (error?.code === "TEST_NOT_FOUND") return <EmptyState title="No results yet" description="The coding test hasn't been set up for this round." />;
     if (error && !data) return <ErrorState message={error.message} onRetry={reload} />;
-    if (!data)
-      return (
-        <>
-          <LoadingLabel label="Loading coding results" />
-          <Skeleton style={{ height: 160 }} />
-        </>
-      );
+    if (!data) return <RocketLoader label="Loading coding results" />;
     if (data.candidates.length === 0) return <EmptyState title="No results yet" description="Results appear once students start the coding test." />;
     return (
       <Table aria-label="Coding results">
@@ -120,13 +114,7 @@ function SubmittedCode({ testId, attemptId, questions }: { testId: string; attem
   const [tab, setTab] = useState(questions[0]?.questionId ?? "");
 
   if (error && !data) return <ErrorState message={error.message} onRetry={reload} />;
-  if (!data)
-    return (
-      <>
-        <LoadingLabel label="Loading submitted code" />
-        <Skeleton style={{ height: 240 }} />
-      </>
-    );
+  if (!data) return <RocketLoader label="Loading submitted code" />;
   if (questions.length === 0) return <EmptyState title="No coding questions in this test" />;
 
   const q = questions.find((x) => x.questionId === tab) ?? questions[0]!;

@@ -6,7 +6,7 @@ import { listDrafts } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import type { Draft } from "@/features/papers/types";
 import { useAsync } from "@/features/papers/use-async";
@@ -57,10 +57,7 @@ export function RoundPaperPanel({ driveId }: { driveId: string }) {
 
       <div style={{ marginTop: 16 }}>
         {loading && !data ? (
-          <div className={h.stackSm}>
-            <LoadingLabel label="Loading the round's paper" />
-            <Skeleton style={{ height: 72 }} />
-          </div>
+          <RocketLoader label="Loading the round's paper" />
         ) : error && !data ? (
           <ErrorState message={`Couldn't load the paper: ${error.message}`} onRetry={reload} />
         ) : !main ? (
