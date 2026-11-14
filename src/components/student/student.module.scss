@@ -123,6 +123,21 @@
   }
 }
 
+/* Pre-test gate ("Before you start"): card at its natural height, centred in the page */
+.examGate {
+  width: 100%;
+  max-width: 36rem;
+  margin-inline: auto;
+  align-content: center;
+}
+
+.examGateCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: sp(3);
+}
+
 .aptitude {
   @include up(lg) {
     grid-template-columns: 16rem minmax(0, 1fr);
@@ -549,6 +564,7 @@
 
 .stepperDot {
   position: relative;
+  z-index: 1; /* sit above the connector line drawn by the next step */
   display: grid;
   width: 32px;
   height: 32px;
@@ -589,6 +605,237 @@
   gap: sp(3);
   @include card;
   padding: sp(4);
+}
+
+/* System check, stage 0: camera panel (left) + compact checklist (right) */
+.checkPageCompact {
+  gap: sp(2);
+  padding: sp(6) sp(4);
+  @include up(sm) {
+    padding-inline: sp(6);
+  }
+  @include up(lg) {
+    padding: clamp(#{sp(4)}, 5vh, #{sp(12)}) 8vw sp(6);
+  }
+}
+
+.checkGrid {
+  display: grid;
+  gap: sp(4);
+  align-items: start;
+  @include up(lg) {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: sp(6);
+  }
+}
+
+.camPanel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: sp(3);
+  @include card;
+  padding: sp(4);
+}
+
+.camHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(2);
+}
+
+.camTitle {
+  @include text(base);
+  font-weight: 600;
+}
+
+.camPill {
+  gap: sp(1.5);
+  &::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}
+
+.camIntro {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+/* Fills the panel width; the height is capped so the whole stage fits a 1366x768 screen. */
+.camStage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-height: max(12rem, calc(100dvh - 28rem));
+  overflow: hidden;
+  border-radius: var(--ui-radius-card);
+  background: var(--ampera-navy-900);
+}
+
+.camMedia {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+/* Oval face guide; the huge spread shadow dims everything outside it (clipped by .camStage). */
+.camOval {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 80%;
+  max-width: 70%;
+  aspect-ratio: 3 / 4;
+  transform: translate(-50%, -50%);
+  border: 2px dashed alpha(var(--ampera-cream), 90%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 100vmax alpha(var(--ampera-navy-900), 45%);
+  pointer-events: none;
+}
+
+/* Hint, status line and buttons under the preview, kept tight so the panel fits the screen */
+.camFooter {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+  margin-top: sp(-1);
+}
+
+.camHint {
+  @include text(xs);
+  text-align: center;
+  color: var(--ui-color-text-muted);
+}
+
+.camStatus {
+  @include text(sm);
+  text-align: center;
+  color: var(--ui-color-text-muted);
+}
+
+.camActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: sp(2);
+}
+
+/* Camera blocked / missing: shown in place of the preview */
+.camBlocked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: sp(2);
+  min-height: 12rem;
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface-muted);
+  padding: sp(6) sp(4);
+  text-align: center;
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  > svg {
+    color: var(--ui-color-danger);
+  }
+}
+
+.camBlockedTitle {
+  color: var(--ui-color-danger);
+  font-weight: 500;
+}
+
+/* After verify: the photo in a circle, camera off */
+.camVerified {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: sp(3);
+  padding: sp(6) sp(4);
+  text-align: center;
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.camVerifiedPhoto {
+  width: 9rem;
+  height: 9rem;
+  border: 3px solid var(--ui-color-success);
+  border-radius: 50%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.checkCard {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: sp(3);
+  @include card;
+  padding: sp(4);
+}
+
+.checkCardTitle {
+  @include text(lg);
+  font-weight: 600;
+}
+
+.checkSteps {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checkStep {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: sp(2) sp(3);
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-input);
+  padding: sp(3);
+  > svg {
+    flex: none;
+  }
+  &[data-state="current"] {
+    border-color: alpha(var(--ui-color-primary), 25%);
+    background: var(--ui-color-primary-subtle);
+  }
+  &[data-state="locked"] {
+    color: var(--ui-color-text-muted);
+  }
+}
+
+.checkStepBody {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.checkStepTitle {
+  @include text(base);
+  font-weight: 600;
+}
+
+.checkStepText {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  &[role="alert"] {
+    color: var(--ui-color-danger);
+  }
+}
+
+.checkStepAction {
+  margin-left: auto;
 }
 
 .chat {

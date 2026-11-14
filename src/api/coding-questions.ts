@@ -44,6 +44,8 @@ export interface QuestionSummary {
   marks: number;
   approved: boolean;
   createdAt: string;
+  /** GET /questions rows carry it; optional so summaries built elsewhere still fit. */
+  mode?: CodingMode;
 }
 
 export interface TestCase {
@@ -66,8 +68,8 @@ export interface CodingQuestion extends QuestionSummary {
   orderMatters: boolean | null;
 }
 
-/** True for a SQL question. GET /questions (the bank list) sends no `mode`, so rows from it alone are never labelled. */
-export const isSqlQuestion = (q: QuestionSummary & { mode?: CodingMode }) => q.mode === "sql";
+/** True for a SQL question. GET /questions (the bank list) rows now carry `mode`, so bank rows are labelled too. */
+export const isSqlQuestion = (q: QuestionSummary) => q.mode === "sql";
 
 export interface GenerateInput {
   difficulty: Difficulty;

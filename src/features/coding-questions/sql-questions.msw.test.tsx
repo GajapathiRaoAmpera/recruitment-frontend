@@ -13,6 +13,7 @@ vi.mock("@/features/test-runner/code-editor", () => ({
 }));
 
 import { getCodingQuestion } from "@/api/coding-questions";
+import { BankPicker } from "./bank-picker";
 import { GenerateDialog } from "./generate-dialog";
 import { QuestionForm, SQL_NOTE } from "./question-form";
 
@@ -126,6 +127,30 @@ describe("generate dialog", () => {
     generate();
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0]!.body).not.toHaveProperty("mode");
+  });
+});
+
+describe("bank picker", () => {
+  it("GET /questions rows carry mode: the SQL badge shows on the sql row only", async () => {
+    const row = (id: string, title: string, mode: string) => ({
+      id,
+      kind: "coding",
+      body: `${title}\nStatement.`,
+      difficulty: "easy",
+      tags: [],
+      marks: "10.00",
+      approved: true,
+      created_at: "2026-01-01T00:00:00Z",
+      mode,
+    });
+    server.use(http.get("*/api/v1/questions", () => HttpResponse.json([row("q1", "Headcount by department", "sql"), row("q2", "Sum of two numbers", "stdin")])));
+    render(<BankPicker inRound={new Set()} locked={false} onAdd={() => {}} onEdit={() => {}} onNew={() => {}} onGenerate={() => {}} onApproved={() => {}} reloadKey={0} />);
+    const table = await screen.findByRole("table", { name: "Question bank" });
+    const [sqlRow, stdinRow] = within(table).getAllByRole("row").slice(1);
+    expect(within(sqlRow!).getByText("Headcount by department")).toBeInTheDocument();
+    expect(within(sqlRow!).getByText("SQL")).toBeInTheDocument();
+    expect(within(stdinRow!).getByText("Sum of two numbers")).toBeInTheDocument();
+    expect(within(stdinRow!).queryByText("SQL")).not.toBeInTheDocument();
   });
 });
 

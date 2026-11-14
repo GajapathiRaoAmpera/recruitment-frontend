@@ -34,6 +34,16 @@ describe("FaceCheck", () => {
     expect(screen.getByText(/set Camera to Allow/)).toBeTruthy();
   });
 
+  it("shows the oval face guide over the live preview, hidden from screen readers, with the camera-on pill", async () => {
+    camera("ok");
+    render(<FaceCheck onVerified={vi.fn()} />);
+    await screen.findByRole("button", { name: /Capture photo/ });
+    expect(screen.getByLabelText("Live camera preview")).toBeTruthy();
+    expect(screen.getByTestId("face-oval").getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByText("Keep your face inside the oval")).toBeTruthy();
+    expect(screen.getByText("Camera on")).toBeTruthy();
+  });
+
   it("blocks Verify when no face is found, and when several people are in the photo", async () => {
     camera("ok");
     render(<FaceCheck onVerified={vi.fn()} />);

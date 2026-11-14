@@ -138,15 +138,15 @@ function StartCheck({ student, roundId, onPass }: { student: StudentSession; rou
     </li>
   );
   return (
-    <main className={s.examBody} style={{ maxWidth: "36rem", marginInline: "auto", width: "100%" }}>
-      <section className={h.card}>
+    <main className={`${s.examBody} ${s.examGate}`}>
+      <section className={`${h.card} ${s.examGateCard}`}>
         <h1 className={h.cardTitle}>Before you start</h1>
         <p className={h.muted}>Location and full screen must both be on. Your timer starts only after this check passes.</p>
         {busy ? (
           <RocketLoader size="inline" still label="Checking location and full screen" />
         ) : (
           <>
-            <ul className={h.list} style={{ marginBlock: 16 }}>
+            <ul className={h.list} style={{ alignSelf: "stretch" }}>
               {item(loc, "Location", "Click the lock or pin icon in the address bar, allow location, then check again.")}
               {item(fs, "Full screen", "The button below switches the test to full screen.")}
             </ul>

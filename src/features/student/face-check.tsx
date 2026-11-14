@@ -1,9 +1,9 @@
 "use client";
 
-import { Camera, RefreshCw, ShieldCheck } from "lucide-react";
+import { Camera, CameraOff, RefreshCw, ShieldCheck } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
 import { countFaces } from "@/lib/face-detect";
 
@@ -104,60 +104,80 @@ export function FaceCheck({ onVerified }: { onVerified: (photo: string) => void 
     onVerified(shot!);
   };
 
-  if (phase === "denied")
+  if (phase === "denied" || phase === "nocamera")
     return (
-      <div role="alert" className={`${h.xs} ${s.checkText}`} style={{ marginTop: 12 }}>
-        <p style={{ color: "var(--ui-color-danger)" }}>Camera access was blocked, so we can&apos;t take your photo.</p>
-        <p>Click the camera or lock icon in the address bar, set Camera to Allow, then try again.</p>
-        <Button size="sm" variant="secondary" style={{ marginTop: 8 }} onClick={() => void start()}>
-          Try again
-        </Button>
-      </div>
-    );
-  if (phase === "nocamera")
-    return (
-      <div role="alert" className={`${h.xs} ${s.checkText}`} style={{ marginTop: 12 }}>
-        <p style={{ color: "var(--ui-color-danger)" }}>No camera was found, or it is in use by another app.</p>
-        <Button size="sm" variant="secondary" style={{ marginTop: 8 }} onClick={() => void start()}>
-          Try again
-        </Button>
-      </div>
+      <>
+        <CameraHeader on={false} />
+        <div role="alert" className={s.camBlocked}>
+          <CameraOff aria-hidden size={28} />
+          {phase === "denied" ? (
+            <>
+              <p className={s.camBlockedTitle}>Camera access was blocked, so we can&apos;t take your photo.</p>
+              <p>Click the camera or lock icon in the address bar, set Camera to Allow, then try again.</p>
+            </>
+          ) : (
+            <p className={s.camBlockedTitle}>No camera was found, or it is in use by another app.</p>
+          )}
+          <Button size="sm" variant="secondary" onClick={() => void start()}>
+            Try again
+          </Button>
+        </div>
+      </>
     );
 
   const showShot = shot && (phase === "checking" || phase === "captured" || phase === "failed");
   return (
-    <div style={{ marginTop: 12, width: "100%" }}>
-      <p className={`${h.xs} ${s.checkText}`} style={{ marginBottom: 8 }}>
-        Used only to check that one person is taking the test. Allow the camera, face it clearly, and make sure nobody else is in view.
-      </p>
-      <div style={{ position: "relative", width: "100%", maxWidth: 480, aspectRatio: "4 / 3", background: "var(--ui-color-surface-muted)", borderRadius: "var(--ui-radius-card)", overflow: "hidden" }}>
+    <>
+      <CameraHeader on={phase !== "starting"} />
+      <p className={s.camIntro}>Used only to check that one person is taking the test. Allow the camera, face it clearly, and make sure nobody else is in view.</p>
+      <div className={s.camStage}>
         {showShot ? (
           // eslint-disable-next-line @next/next/no-img-element -- a local data: URL
-          <img src={shot} alt="Your captured photo" style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }} />
-        ) : (
-          <video ref={video} muted playsInline aria-label="Live camera preview" style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }} />
-        )}
-      </div>
-      <canvas ref={canvas} hidden />
-      <p className={`${h.xs} ${s.checkText}`} role={message ? "alert" : "status"} style={{ marginTop: 8, color: message ? "var(--ui-color-danger)" : okFace ? "var(--ui-color-success)" : undefined }}>
-        {phase === "starting" ? "Waiting for camera permission…" : phase === "checking" ? "Checking the photo…" : okFace ? "One face detected." : (message ?? "")}
-      </p>
-      <div className={h.row} style={{ marginTop: 8 }}>
-        {phase === "live" || phase === "starting" ? (
-          <Button size="sm" onClick={() => void capture()} disabled={phase !== "live"}>
-            <Camera aria-hidden size={14} style={{ marginRight: 4 }} /> Capture photo
-          </Button>
+          <img src={shot} alt="Your captured photo" className={s.camMedia} />
         ) : (
           <>
-            <Button size="sm" variant="secondary" onClick={retake} disabled={phase === "checking"}>
-              <RefreshCw aria-hidden size={14} style={{ marginRight: 4 }} /> Retake photo
-            </Button>
-            <Button size="sm" onClick={verify} disabled={!okFace}>
-              <ShieldCheck aria-hidden size={14} style={{ marginRight: 4 }} /> Verify &amp; continue
-            </Button>
+            <video ref={video} muted playsInline aria-label="Live camera preview" className={s.camMedia} />
+            <div className={s.camOval} aria-hidden="true" data-testid="face-oval" />
           </>
         )}
       </div>
+      <canvas ref={canvas} hidden />
+      <div className={s.camFooter}>
+        {!showShot && <p className={s.camHint}>Keep your face inside the oval</p>}
+        <p className={s.camStatus} role={message ? "alert" : "status"} style={{ color: message ? "var(--ui-color-danger)" : okFace ? "var(--ui-color-success)" : undefined }}>
+          {phase === "starting" ? "Waiting for camera permission…" : phase === "checking" ? "Checking the photo…" : okFace ? "One face detected." : (message ?? "")}
+        </p>
+        <div className={s.camActions}>
+          {phase === "live" || phase === "starting" ? (
+            <Button size="sm" onClick={() => void capture()} disabled={phase !== "live"}>
+              <Camera aria-hidden size={14} style={{ marginRight: 4 }} /> Capture photo
+            </Button>
+          ) : (
+            <>
+              <Button size="sm" variant="secondary" onClick={retake} disabled={phase === "checking"}>
+                <RefreshCw aria-hidden size={14} style={{ marginRight: 4 }} /> Retake photo
+              </Button>
+              <Button size="sm" onClick={verify} disabled={!okFace}>
+                <ShieldCheck aria-hidden size={14} style={{ marginRight: 4 }} /> Verify &amp; continue
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+/** Camera panel header: title + on/off pill. The parent <section> uses id "cam-h" as its label. */
+export function CameraHeader({ on }: { on: boolean }) {
+  return (
+    <div className={s.camHead}>
+      <h2 id="cam-h" className={s.camTitle}>
+        Identity photo
+      </h2>
+      <Badge tone={on ? "success" : "neutral"} className={s.camPill}>
+        {on ? "Camera on" : "Camera off"}
+      </Badge>
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { entryStep, type EntryStep, type StudentSession } from "@/api/entry";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { FaceCheck } from "@/features/student/face-check";
+import { CameraHeader, FaceCheck } from "@/features/student/face-check";
 import { NotFoundState } from "@/components/ui/states";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
@@ -104,6 +104,8 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
   const stage1Done = id === "ok" && loc === "ok" && fsOn; // Stage 1: photo, location, full screen. Stage 2: terms and start.
   const stage = stage1Done ? 1 : 0;
   const ready = stage1Done && terms;
+  const current = id !== "ok" ? 1 : loc !== "ok" ? 2 : 3; // the step to do next; later ones stay locked
+  const rowState = (n: number, done: boolean) => (done ? "done" : n === current ? "current" : "locked");
   const thumb = photo && (
     // eslint-disable-next-line @next/next/no-img-element -- a local data: URL
     <img src={photo} alt="Your verification photo" className={s.checkThumb} />
@@ -118,7 +120,7 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
         </div>
         {stage === 1 && thumb}
       </header>
-      <main className={`${s.examBody} ${s.checkPage}`}>
+      <main className={`${s.examBody} ${s.checkPage} ${stage === 0 ? s.checkPageCompact : ""}`}>
         <ol className={s.stepper} aria-label="System check progress" style={{ maxWidth: 480, marginInline: "auto", width: "100%" }}>
           {["Photo, location & full screen", "Terms & start"].map((name, i) => (
             <li key={name} className={s.stepperItem} data-state={i < stage ? "done" : i === stage ? "active" : "todo"} aria-current={i === stage ? "step" : undefined}>
@@ -127,100 +129,112 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
             </li>
           ))}
         </ol>
-        <div className={s.checkList}>
-          {stage === 0 && (
-            <>
-              <section className={s.checkItem} aria-labelledby="id-h">
-                <div style={{ flex: 1, minWidth: 220 }}>
-                  <h2 id="id-h" className={`${h.row} ${s.checkTitle}`}>
-                    <Icon st={id} /> 1. Verify your identity
-                  </h2>
-                  {id !== "ok" ? (
-                    <FaceCheck onVerified={markPhoto} />
-                  ) : (
-                    <div className={h.row} style={{ marginTop: 8 }}>
-                      {thumb}
-                      <p className={s.checkText}>Photo verified. The camera is off.</p>
-                    </div>
-                  )}
-                </div>
-              </section>
-
-              <section className={s.checkItem}>
-                <div style={{ flex: 1, minWidth: 220 }}>
-                  <h2 className={`${h.row} ${s.checkTitle}`}>
-                    <Icon st={loc} /> 2. Share your location
-                  </h2>
-                  <p className={s.checkText} role={loc === "error" ? "alert" : undefined}>
-                    {loc === "error" ? "Location was blocked or couldn't be saved. Allow it from the address bar, then try again." : loc === "ok" ? "Location shared" : id !== "ok" ? "Unlocks after your photo is verified." : "Recorded once at the start, for test integrity."}
-                  </p>
-                </div>
-                {loc !== "ok" && (
-                  <Button size="sm" onClick={askLocation} loading={locBusy} disabled={id !== "ok"}>
-                    {!locBusy && <MapPin aria-hidden size={14} style={{ marginRight: 4 }} />} {locBusy ? "Checking…" : "Allow location"}
-                  </Button>
-                )}
-              </section>
-
-              <section className={s.checkItem}>
-                <div style={{ flex: 1, minWidth: 220 }}>
-                  <h2 className={`${h.row} ${s.checkTitle}`}>
-                    {fsOn ? <Icon st="ok" /> : <Maximize aria-hidden size={18} />} 3. Enter full screen
-                  </h2>
-                  <p className={s.checkText} role={fsFailed ? "alert" : undefined}>
-                    {fsFailed ? "Full screen didn't start. Try again." : fsOn ? "Full screen on" : loc === "ok" ? "Required for the test. It must stay on until you finish." : "Unlocks after your location is shared."}
-                  </p>
-                </div>
-                {!fsOn && (
-                  <Button size="sm" disabled={loc !== "ok"} onClick={goFullscreen}>
-                    Enter full screen
-                  </Button>
-                )}
-              </section>
-            </>
-          )}
-
-          {stage === 1 && (
-            <>
-              <section className={s.checkItem}>
-                <div style={{ flex: 1, minWidth: 220 }}>
-                  <h2 className={`${h.row} ${s.checkTitle}`}>
-                    <Icon st={terms ? "ok" : "todo"} /> 4. Accept the test rules
-                  </h2>
-                  <ul className={s.checkText} style={{ marginTop: 6, listStyle: "disc", paddingLeft: 18 }}>
-                    <li>The test runs in full screen.</li>
-                    <li>Leaving the tab {MAX_TAB_SWITCHES} times closes the test; HR can let you resume.</li>
-                    <li>Your answers save automatically.</li>
-                    <li>Only you may take the test. No one else can be in the room helping, and you must not share questions or answers.</li>
-                    <li>Don&apos;t use phones, notes, other websites, AI tools or any other help during the test.</li>
-                    <li>Leaving full screen or switching tabs or windows is recorded and counts against you.</li>
-                    <li>Your camera photo is used only to check that one person is taking the test, and your location is recorded once at the start.</li>
-                    <li>The timer keeps running once you start, even if you lose connection, and the test submits by itself when time is up.</li>
-                    <li>Once you submit, your answers are final and can&apos;t be changed.</li>
-                  </ul>
-                  <label className={h.row} style={{ marginTop: 10 }}>
-                    <input type="checkbox" className={h.check} checked={terms} onChange={(e) => acceptTerms(e.target.checked)} /> I accept the terms and conditions
-                  </label>
-                </div>
-              </section>
-
-              {error && (
-                <p role="alert" className={s.checkText} style={{ color: "var(--ui-color-danger)" }}>
-                  {error}
-                </p>
+        {stage === 0 && (
+          <div className={s.checkGrid}>
+            <section className={s.camPanel} aria-labelledby="cam-h">
+              {id !== "ok" ? (
+                <FaceCheck onVerified={markPhoto} />
+              ) : (
+                <>
+                  <CameraHeader on={false} />
+                  <div className={s.camVerified}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- a local data: URL */}
+                    <img src={photo} alt="Your verification photo" className={s.camVerifiedPhoto} />
+                    <p>Photo verified · camera off</p>
+                  </div>
+                </>
               )}
-              <section className={s.checkItem}>
-                <div>
-                  <p className={s.checkTitle}>{ready ? "Ready to start" : "Start test"}</p>
-                  <p className={s.checkText}>{ready ? "If the exam hasn't opened yet, you'll wait on the next screen and move in automatically when it starts." : "Accept the rules to enable this."}</p>
-                </div>
-                <Button disabled={!ready} onClick={() => router.push(`/exam/${roundId}/test`)}>
-                  Start test
-                </Button>
-              </section>
-            </>
-          )}
-        </div>
+            </section>
+
+            <section className={s.checkCard} aria-labelledby="sys-h">
+              <h2 id="sys-h" className={s.checkCardTitle}>
+                System check
+              </h2>
+              <ol className={s.checkSteps}>
+                <li className={s.checkStep} data-state={rowState(1, id === "ok")}>
+                  <Icon st={id} />
+                  <div className={s.checkStepBody}>
+                    <h3 id="id-h" className={s.checkStepTitle}>
+                      1. Verify your identity
+                    </h3>
+                    <p className={s.checkStepText}>{id === "ok" ? "Photo verified. The camera is off." : "Take a clear photo with only you in view."}</p>
+                  </div>
+                </li>
+
+                <li className={s.checkStep} data-state={rowState(2, loc === "ok")}>
+                  <Icon st={loc} />
+                  <div className={s.checkStepBody}>
+                    <h3 className={s.checkStepTitle}>2. Share your location</h3>
+                    <p className={s.checkStepText} role={loc === "error" ? "alert" : undefined}>
+                      {loc === "error" ? "Location was blocked or couldn't be saved. Allow it from the address bar, then try again." : loc === "ok" ? "Location shared" : id !== "ok" ? "Unlocks after your photo is verified." : "Recorded once at the start, for test integrity."}
+                    </p>
+                  </div>
+                  {loc !== "ok" && (
+                    <Button size="sm" className={s.checkStepAction} onClick={askLocation} loading={locBusy} disabled={id !== "ok"}>
+                      {!locBusy && <MapPin aria-hidden size={14} style={{ marginRight: 4 }} />} {locBusy ? "Checking…" : "Allow location"}
+                    </Button>
+                  )}
+                </li>
+
+                <li className={s.checkStep} data-state={rowState(3, fsOn)}>
+                  {fsOn ? <Icon st="ok" /> : <Maximize aria-hidden size={20} />}
+                  <div className={s.checkStepBody}>
+                    <h3 className={s.checkStepTitle}>3. Enter full screen</h3>
+                    <p className={s.checkStepText} role={fsFailed ? "alert" : undefined}>
+                      {fsFailed ? "Full screen didn't start. Try again." : fsOn ? "Full screen on" : loc === "ok" ? "Required for the test. It must stay on until you finish." : "Unlocks after your location is shared."}
+                    </p>
+                  </div>
+                  {!fsOn && (
+                    <Button size="sm" className={s.checkStepAction} disabled={loc !== "ok"} onClick={goFullscreen}>
+                      Enter full screen
+                    </Button>
+                  )}
+                </li>
+              </ol>
+            </section>
+          </div>
+        )}
+
+        {stage === 1 && (
+          <div className={s.checkList}>
+            <section className={s.checkItem}>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <h2 className={`${h.row} ${s.checkTitle}`}>
+                  <Icon st={terms ? "ok" : "todo"} /> 4. Accept the test rules
+                </h2>
+                <ul className={s.checkText} style={{ marginTop: 6, listStyle: "disc", paddingLeft: 18 }}>
+                  <li>The test runs in full screen.</li>
+                  <li>Leaving the tab {MAX_TAB_SWITCHES} times closes the test; HR can let you resume.</li>
+                  <li>Your answers save automatically.</li>
+                  <li>Only you may take the test. No one else can be in the room helping, and you must not share questions or answers.</li>
+                  <li>Don&apos;t use phones, notes, other websites, AI tools or any other help during the test.</li>
+                  <li>Leaving full screen or switching tabs or windows is recorded and counts against you.</li>
+                  <li>Your camera photo is used only to check that one person is taking the test, and your location is recorded once at the start.</li>
+                  <li>The timer keeps running once you start, even if you lose connection, and the test submits by itself when time is up.</li>
+                  <li>Once you submit, your answers are final and can&apos;t be changed.</li>
+                </ul>
+                <label className={h.row} style={{ marginTop: 10 }}>
+                  <input type="checkbox" className={h.check} checked={terms} onChange={(e) => acceptTerms(e.target.checked)} /> I accept the terms and conditions
+                </label>
+              </div>
+            </section>
+
+            {error && (
+              <p role="alert" className={s.checkText} style={{ color: "var(--ui-color-danger)" }}>
+                {error}
+              </p>
+            )}
+            <section className={s.checkItem}>
+              <div>
+                <p className={s.checkTitle}>{ready ? "Ready to start" : "Start test"}</p>
+                <p className={s.checkText}>{ready ? "If the exam hasn't opened yet, you'll wait on the next screen and move in automatically when it starts." : "Accept the rules to enable this."}</p>
+              </div>
+              <Button disabled={!ready} onClick={() => router.push(`/exam/${roundId}/test`)}>
+                Start test
+              </Button>
+            </section>
+          </div>
+        )}
       </main>
     </>
   );
