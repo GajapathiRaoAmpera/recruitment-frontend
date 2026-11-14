@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
-import { hire as h, Progress, StatCard } from "@/components/hire/ui";
-import { driveRounds, useStore } from "@/mock/store";
+import { hire as h, StatCard } from "@/components/hire/ui";
+import { useStore } from "@/mock/store";
+import { MockDrivesCards } from "@/features/hiring/drives-table";
 import { RealAdminOverview } from "@/features/hiring/real-admin-overview";
 import { supabase } from "@/lib/supabase";
 
@@ -35,36 +36,16 @@ function MockAdminDashboard() {
       </div>
 
       <div className={h.grid2}>
-        <section className={h.card} aria-labelledby="funnel-h">
-          <h2 id="funnel-h" className={h.cardTitle} style={{ marginBottom: 16 }}>
-            Round-wise funnel
-          </h2>
-          <ul className={h.stack}>
-            {state.drives.map((d) => {
-              const enrolled = state.candidates.filter((c) => c.driveId === d.id).length || 1;
-              return (
-                <li key={d.id}>
-                  <p style={{ fontWeight: 500, marginBottom: 8 }}>{d.roleTitle}</p>
-                  <ul className={h.stackSm}>
-                    {driveRounds(state, d.id)
-                      .filter((r) => r.status !== "skipped")
-                      .map((r) => {
-                        const n = r.type === "shortlist" ? enrolled : state.results.filter((x) => x.roundId === r.id).length;
-                        return (
-                          <li key={r.id}>
-                            <div className={h.between} style={{ marginBottom: 4 }}>
-                              <span className={h.xs}>{r.title}</span>
-                              <span className={h.xs}>{n}</span>
-                            </div>
-                            <Progress value={(n / enrolled) * 100} label={r.title} />
-                          </li>
-                        );
-                      })}
-                  </ul>
-                </li>
-              );
-            })}
-          </ul>
+        <section className={h.stackSm} aria-labelledby="drives-h">
+          <div className={h.between}>
+            <h2 id="drives-h" className={h.cardTitle}>
+              Campus drives
+            </h2>
+            <Link href="/hr/drives" className={h.link}>
+              View all drives
+            </Link>
+          </div>
+          <MockDrivesCards />
         </section>
 
         <section className={h.card} aria-labelledby="audit-h">

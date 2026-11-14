@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const push = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
-const api = vi.hoisted(() => ({ entryStart: vi.fn(), getAttempt: vi.fn(), reportViolation: vi.fn(), saveAnswer: vi.fn(), submitAttempt: vi.fn(), entryStep: vi.fn(), getCodeDrafts: vi.fn(), runCode: vi.fn(), submitCode: vi.fn(), saveCodeDraft: vi.fn() }));
+const api = vi.hoisted(() => ({ entryStart: vi.fn(), getAttempt: vi.fn(), reportViolation: vi.fn(), saveAnswer: vi.fn(), submitAttempt: vi.fn(), entryStep: vi.fn() }));
 vi.mock("@/api/attempt", async (orig) => ({ ...(await orig<typeof import("@/api/attempt")>()), ...api }));
 vi.mock("@/api/entry", async (orig) => ({ ...(await orig<typeof import("@/api/entry")>()), entryStep: api.entryStep }));
 
@@ -207,7 +207,7 @@ describe("Submit and Leave", () => {
   });
 });
 
-describe("navigation, saving and round types", () => {
+describe("navigation and saving", () => {
   it("jumps straight to a question from the navigator and shows its state", async () => {
     render(<RealExamShell student={student} roundId="r1" />);
     await screen.findByText("What is 2+2?");
@@ -248,31 +248,6 @@ describe("navigation, saving and round types", () => {
     expect(await screen.findByRole("alertdialog", { name: "Return to full screen" })).toBeInTheDocument();
     expect(screen.queryByRole("alertdialog", { name: "Submit your test?" })).not.toBeInTheDocument();
     expect(document.querySelector("main")).toHaveAttribute("inert");
-  });
-
-  it("shows a coding round with its editor, runs samples and counts a submission", async () => {
-    const coding: StudentSession = { ...student, rounds: [{ roundId: "r2", type: "coding", testId: null, durationMin: 60 }] };
-    api.getAttempt.mockResolvedValue(
-      state({ questions: [{ kind: "coding", id: "c1", title: "Sum", statement: "Add two numbers", marks: 10, languages: [{ key: "python", name: "Python 3" }], samples: [{ input: "1 2", expected: "3" }] }] }),
-    );
-    api.getCodeDrafts.mockResolvedValue({ c1: { code: "print(3)", language: "python", saved_at: "2026-01-01T10:01:00Z" } });
-    api.runCode.mockResolvedValue([{ case: 1, passed: true, status: "passed", stdout: "3", stderr: "", time: 0.01 }]);
-    api.submitCode.mockResolvedValue({ passed: 7, total: 10 });
-    render(<RealExamShell student={coding} roundId="r2" />);
-    expect(await screen.findByRole("textbox", { name: "Code for Sum" })).toHaveValue("print(3)");
-    fireEvent.click(screen.getByRole("button", { name: /Run samples/ }));
-    expect(await screen.findByText(/Passed · 10 ms/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Submit code/ }));
-    expect(await screen.findByText(/test cases passed/)).toHaveTextContent("7 / 10 test cases passed");
-    expect(api.submitCode).toHaveBeenCalledWith("ATT", "c1", "print(3)", "python");
-    expect(screen.getByText("1 of 1 submitted")).toBeInTheDocument();
-  });
-
-  it("says the AI interview isn't open instead of starting a test", async () => {
-    const iv: StudentSession = { ...student, rounds: [{ roundId: "r3", type: "ai_interview", testId: null, durationMin: 20 }] };
-    render(<RealExamShell student={iv} roundId="r3" />);
-    expect(screen.getByRole("heading", { name: /AI interview isn.t open here yet/ })).toBeInTheDocument();
-    expect(api.entryStart).not.toHaveBeenCalled();
   });
 });
 

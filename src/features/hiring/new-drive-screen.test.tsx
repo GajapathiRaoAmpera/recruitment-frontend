@@ -6,7 +6,7 @@ vi.mock("@/lib/supabase", () => ({ supabase: null }));
 const dispatch = vi.hoisted(() => vi.fn());
 vi.mock("@/mock/store", () => ({ useStore: () => ({ dispatch }) }));
 
-import NewDrivePage from "./page";
+import { NewDriveScreen as NewDrivePage } from "./new-drive-screen";
 
 beforeEach(() => {
   localStorage.clear();

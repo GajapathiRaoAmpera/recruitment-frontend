@@ -2,7 +2,7 @@
 
 import { CheckCircle2, Clock, Play, Send, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,19 +10,14 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { NotFoundState } from "@/components/ui/states";
 import { DemoNote, hire as h } from "@/components/hire/ui";
 import { ExamGuard } from "@/components/student/exam-guard";
-import { exitFullscreen, minutesSince, useCountdown, useExamDraft, useExamRound } from "@/components/student/hooks";
+import { exitFullscreen, minutesSince, useCountdown, useExamDraft, useExamRound, useStudent } from "@/components/student/hooks";
 import s from "@/components/student/student.module.scss";
+import { CodeEditor } from "@/features/test-runner/code-editor";
+import { failText, LANGS, type Lang } from "@/features/test-runner/coding-shared";
 import { useStore } from "@/mock/store";
 
-const LANGS = {
-  python: { label: "Python 3", starter: "import sys\n\ndef solve():\n    data = sys.stdin.read().split()\n    # write your solution here\n\nsolve()\n" },
-  c: { label: "C", starter: "#include <stdio.h>\n\nint main(void) {\n    // write your solution here\n    return 0;\n}\n" },
-  cpp: { label: "C++17", starter: "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n    // write your solution here\n    return 0;\n}\n" },
-  java: { label: "Java 17", starter: "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        // write your solution here\n    }\n}\n" },
-  go: { label: "Go", starter: "package main\n\nimport \"fmt\"\n\nfunc main() {\n\t// write your solution here\n\tfmt.Println()\n}\n" },
-  sql: { label: "SQL (SQLite)", starter: "-- write your query here\nSELECT\n" },
-} as const;
-type Lang = keyof typeof LANGS;
+// Prototype only: a student signed in through the API sits the coding round in RealExamShell
+// (/exam/<id>/test) with the real Judge0 runner (features/test-runner/coding-workspace.tsx).
 const TOTAL_CASES = 18;
 
 interface CodeDraft {
@@ -42,7 +37,13 @@ function judge(code: string, starter: string) {
 
 export default function CodingTestPage() {
   const { roundId } = useParams<{ roundId: string }>();
+  const router = useRouter();
+  const { real } = useStudent();
   const { candidate, round } = useExamRound(roundId);
+  useEffect(() => {
+    if (real) router.replace(`/exam/${roundId}/test`); // real students: the server-driven test screen
+  }, [real, roundId, router]);
+  if (real) return null;
   if (!round || !candidate || round.type !== "coding") return <NotFoundState title="Coding test not found" />;
   return <Runner roundId={roundId} />;
 }
@@ -189,22 +190,7 @@ function Runner({ roundId }: { roundId: string }) {
               </label>
               <span style={{ opacity: 0.7 }}>Drafts save per language</span>
             </div>
-            <textarea
-              className={s.editor}
-              aria-label={`Code for ${p.title}`}
-              spellCheck={false}
-              value={code}
-              onChange={(e) => update((d) => ({ ...d, code: { ...d.code, [key]: e.target.value } }))}
-              onKeyDown={(e) => {
-                if (e.key !== "Tab") return;
-                e.preventDefault();
-                const t = e.currentTarget;
-                const { selectionStart: a, selectionEnd: b } = t;
-                const next = `${code.slice(0, a)}    ${code.slice(b)}`;
-                update((d) => ({ ...d, code: { ...d.code, [key]: next } }));
-                requestAnimationFrame(() => t.setSelectionRange(a + 4, a + 4));
-              }}
-            />
+            <CodeEditor path={key} value={code} language={lang} label={`Code for ${p.title}`} onChange={(v) => update((d) => ({ ...d, code: { ...d.code, [key]: v } }))} />
           </div>
 
           <div className={h.between}>
@@ -228,7 +214,7 @@ function Runner({ roundId }: { roundId: string }) {
                     <span className={h.row}>
                       {r.ok ? <CheckCircle2 aria-hidden size={16} color="var(--ui-color-success)" /> : <XCircle aria-hidden size={16} color="var(--ui-color-danger)" />} Sample {r.case}
                     </span>
-                    <span className={h.xs}>{r.ok ? `Passed · ${r.ms} ms` : `Wrong answer — expected ${r.expected.split("\n")[0]}`}</span>
+                    <span className={h.xs}>{r.ok ? `Passed · ${r.ms} ms` : failText(r)}</span>
                   </li>
                 ))}
               </ul>

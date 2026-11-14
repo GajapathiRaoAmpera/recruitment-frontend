@@ -1,10 +1,10 @@
 "use client";
 
-import { CheckCircle2, Circle, Clock, Lock, MapPin, Maximize, Mic, TimerOff, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, Clock, Lock, MapPin, Maximize, TimerOff, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { entryStart, getAttempt, msLeft, reportViolation, saveAnswer, submitAttempt, type AttemptState, type CodingQuestion, type McqQuestion } from "@/api/attempt";
+import { entryStart, getAttempt, msLeft, reportViolation, saveAnswer, submitAttempt, type AttemptQuestion, type AttemptState } from "@/api/attempt";
 import { entryStep, type StudentSession } from "@/api/entry";
 import { ApiError } from "@/api/client";
 import { Logo } from "@/components/brand/logo";
@@ -22,7 +22,7 @@ import s from "@/components/student/student.module.scss";
 import { TabSwitchBadge } from "@/components/student/tab-switch-badge";
 import { roundTitle } from "@/mock/data";
 import type { Round } from "@/mock/types";
-import { CodingBody } from "./coding-body";
+import { CodingWorkspace } from "@/features/test-runner/coding-workspace";
 
 const RETRY_MS = 5000;
 
@@ -33,10 +33,9 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   const [error, setError] = useState<ApiError | Error>();
   const [tries, setTries] = useState(0);
   const [checked, setChecked] = useState(false); // location + full screen re-checked; the timer starts only after this
-  const interview = round?.type === "ai_interview";
 
   useEffect(() => {
-    if (!round || !checked || interview) return;
+    if (!round || !checked) return;
     let stale = false;
     (async () => {
       try {
@@ -50,10 +49,9 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
     return () => {
       stale = true;
     };
-  }, [round, checked, interview, student.entryToken, roundId, tries]);
+  }, [round, checked, student.entryToken, roundId, tries]);
 
   if (!round) return <NotFoundState title="Round not found" description="This round isn't open for you. Go back to your dashboard." />;
-  if (interview) return <InterviewNotReady />;
   if (error) {
     const stepsMissing = error instanceof ApiError && error.code === "STEPS_MISSING";
     return (
@@ -69,23 +67,8 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   }
   if (!checked) return <StartCheck student={student} roundId={roundId} onPass={() => setChecked(true)} />;
   if (!attempt) return <RobotLoader label="Starting your test" />;
-  return <Shell student={student} roundId={roundId} type={round.type} token={attempt.token} initial={attempt.state} />;
-}
-
-/** The voice interview client (Gemini Live) is not in this build; say so instead of showing a broken test. */
-function InterviewNotReady() {
-  return (
-    <main className={s.examBody} style={{ maxWidth: "36rem", marginInline: "auto", width: "100%" }}>
-      <section className={h.card} style={{ textAlign: "center", display: "grid", justifyItems: "center", gap: 12 }}>
-        <Mic aria-hidden size={32} />
-        <h1 className={h.cardTitle}>The AI interview isn&apos;t open here yet</h1>
-        <p className={h.muted}>Nothing has started and your timer isn&apos;t running. HR will email you when the interview opens.</p>
-        <Button asChild variant="secondary">
-          <Link href="/student">Back to dashboard</Link>
-        </Button>
-      </section>
-    </main>
-  );
+  // Keyed by attempt: a new round is a new attempt, so no timer, count or draft state carries over (AC-6).
+  return <Shell key={attempt.token} student={student} roundId={roundId} type={round.type} token={attempt.token} initial={attempt.state} />;
 }
 
 /** Runs right when the test opens, before the timer starts: location and full screen must both be on. */
@@ -173,9 +156,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const [confirm, setConfirm] = useState<"submit" | "leave">();
-  // Question ids that have an answer (MCQ choice or a code submission).
-  const [answers, setAnswers] = useState(initial.savedAnswers);
-  const [answered, setAnswered] = useState(() => new Set(Object.keys(initial.savedAnswers)));
+  const [answers, setAnswers] = useState(initial.savedAnswers); // multiple choice only; coding saves itself
   const [current, setCurrent] = useState(0);
   // shortcut: "marked for review" is this browser's note to itself (the API has no field for it); it is not sent to HR.
   const markKey = `exam-marked:${roundId}`;
@@ -282,15 +263,11 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
     return () => document.removeEventListener("fullscreenchange", exitFullscreen);
   }, [live]);
 
-  const questions = initial.questions;
-  const mcqs = questions.filter((x): x is McqQuestion => x.kind !== "coding"); // no kind = an MCQ from an older server
-  const coding = questions.filter((x): x is CodingQuestion => x.kind === "coding");
-  const isCoding = coding.length > 0 && mcqs.length === 0;
-  const list = isCoding ? coding : mcqs;
+  const mcqs = initial.questions;
+  const isCoding = type === "coding";
 
   const choose = (qid: string, i: number) => {
     setAnswers((a) => ({ ...a, [qid]: i }));
-    setAnswered((a) => new Set(a).add(qid));
     queue.current.set(qid, i);
     setUnsaved(queue.current.size);
     void flushSaves();
@@ -329,8 +306,8 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expired, locked, submitted]);
 
-  const answeredCount = list.filter((x) => answered.has(x.id)).length;
-  const unanswered = list.length - answeredCount;
+  const answeredCount = mcqs.filter((x) => answers[x.id] !== undefined).length;
+  const unanswered = isCoding ? 0 : mcqs.length - answeredCount;
   const markedCount = mcqs.filter((x) => marked.includes(x.id)).length;
   const closed = locked || expired || submitted;
   // Anything covering the test; dialogs underneath close and the page behind goes inert.
@@ -343,8 +320,8 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         ? `${unsaved} answer${unsaved === 1 ? "" : "s"} not saved yet, retrying…`
         : "Saving…"
       : isCoding
-        ? `${answeredCount} of ${list.length} submitted`
-        : `${answeredCount} of ${list.length} answered · ${markedCount} marked for review`;
+        ? `${initial.coding.length} coding problem${initial.coding.length === 1 ? "" : "s"}`
+        : `${answeredCount} of ${mcqs.length} answered · ${markedCount} marked for review`;
 
   return (
     <>
@@ -372,10 +349,13 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         </Button>
       </header>
 
-      <main inert={blocked} style={{ width: "100%" }}>
-        {isCoding ? (
-          <CodingBody token={token} questions={coding} saved={answers} live={live} onSubmitted={(qid) => setAnswered((a) => new Set(a).add(qid))} />
-        ) : (
+      {isCoding ? (
+        // The workspace renders its own <main>; the wrapper makes it inert under an overlay.
+        <div inert={blocked} style={{ width: "100%" }}>
+          <CodingWorkspace token={token} attempt={initial} live={live} submitted={submitted} onClosed={(k) => (k === "expired" ? setExpired(true) : setLocked(true))} />
+        </div>
+      ) : (
+        <main inert={blocked} style={{ width: "100%" }}>
           <McqBody
             questions={mcqs}
             answers={answers}
@@ -387,15 +367,15 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
             onToggleMark={toggleMark}
             counts={{ answered: answeredCount, marked: markedCount, unanswered }}
           />
-        )}
-      </main>
+        </main>
+      )}
 
       <ConfirmDialog
         open={confirm === "submit" && !blocked}
         onOpenChange={(o) => !o && setConfirm(undefined)}
         destructive={false}
         title="Submit your test?"
-        description={`${unanswered ? `${unanswered} ${isCoding ? "problem(s) have no submission" : "question(s) are unanswered"}. ` : ""}${markedCount ? `${markedCount} marked for review. ` : ""}${isCoding ? "Only code you submitted counts, not code you only ran. " : ""}Your answers become final and you can't change them after submitting.`}
+        description={`${unanswered ? `${unanswered} question(s) are unanswered. ` : ""}${markedCount ? `${markedCount} marked for review. ` : ""}${isCoding ? "Only code you submitted counts, not code you only ran. " : ""}Your answers become final and you can't change them after submitting.`}
         confirmLabel="Submit test"
         loading={submitting}
         error={submitError}
@@ -471,7 +451,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
 }
 
 interface McqBodyProps {
-  questions: McqQuestion[];
+  questions: AttemptQuestion[];
   answers: AttemptState["savedAnswers"];
   marked: string[];
   current: number;

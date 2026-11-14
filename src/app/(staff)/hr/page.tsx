@@ -1,12 +1,13 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, CalendarClock, ClipboardCheck, FolderKanban, Plus, Trophy } from "lucide-react";
+import { AlertTriangle, CalendarClock, ClipboardCheck, FolderKanban, Plus, Trophy } from "lucide-react";
 import Link from "next/link";
+import { DrivesCards } from "@/features/hiring/drives-table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/states";
-import { hire as h, PipelineSteps, Person, StatCard, roundLabel } from "@/components/hire/ui";
-import { activeRound, candidateById, driveRounds, useStore } from "@/mock/store";
+import { hire as h, Person, StatCard } from "@/components/hire/ui";
+import { candidateById, useStore } from "@/mock/store";
 
 export default function HrDashboard() {
   const { state } = useStore();
@@ -48,41 +49,13 @@ export default function HrDashboard() {
         <section className={h.stackSm} aria-labelledby="drives-h">
           <div className={h.between}>
             <h2 id="drives-h" className={h.cardTitle}>
-              Active campus drives
+              Campus drives
             </h2>
             <Link href="/hr/drives" className={h.link}>
               View all drives
             </Link>
           </div>
-          {drives.map((d) => {
-            const rounds = driveRounds(state, d.id);
-            const current = activeRound(state, d.id);
-            const enrolled = state.candidates.filter((c) => c.driveId === d.id).length;
-            return (
-              <article key={d.id} className={h.card}>
-                <div className={h.cardHead}>
-                  <div>
-                    <h3 style={{ fontWeight: 500 }}>{d.roleTitle}</h3>
-                    <p className={h.xs}>
-                      {d.campus} · {d.window}
-                    </p>
-                  </div>
-                  {current ? <Badge tone="primary">{roundLabel(current)} active</Badge> : <Badge>Not started</Badge>}
-                </div>
-                <PipelineSteps rounds={rounds} />
-                <div className={h.between} style={{ marginTop: "1rem" }}>
-                  <p className={h.small}>
-                    <strong>{enrolled}</strong> candidates enrolled
-                  </p>
-                  <Button asChild size="sm">
-                    <Link href={`/hr/drives/${d.id}`}>
-                      Manage pipeline <ArrowRight aria-hidden size={14} style={{ marginLeft: 4 }} />
-                    </Link>
-                  </Button>
-                </div>
-              </article>
-            );
-          })}
+          <DrivesCards />
         </section>
 
         <aside className={h.stack}>

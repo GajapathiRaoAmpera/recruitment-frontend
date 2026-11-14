@@ -1,0 +1,28 @@
+.stage { display: grid; gap: 8px; justify-items: center; }
+.canvasBox { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 46vh; min-height: 200px; border-radius: var(--ui-radius-card); background: var(--ui-color-primary-subtle); overflow: hidden; }
+.stateText { margin: 0; font-size: 0.875rem; color: var(--ui-color-text-muted); }
+.flat { width: 100%; height: 100%; }
+.flatRing { fill: var(--ui-color-surface); stroke: var(--ui-color-primary); stroke-width: 4; }
+.flatBody { fill: var(--ui-color-primary); }
+.flatHead { fill: var(--ui-color-doll-skin); }
+.flatInk { fill: var(--ui-color-doll-ink); }
+
+.room { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; padding: 16px; max-width: 72rem; margin-inline: auto; width: 100%; }
+@media (max-width: 860px) { .room { grid-template-columns: minmax(0, 1fr); } }
+.main { display: grid; gap: 12px; align-content: start; }
+.side { display: grid; gap: 12px; align-content: start; }
+.captions { max-height: 30vh; overflow-y: auto; display: grid; gap: 8px; }
+.line { margin: 0; font-size: 0.9375rem; }
+.who { font-weight: 600; margin-right: 6px; }
+.cam { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--ui-radius-input); background: var(--ui-color-surface-muted); transform: scaleX(-1); }
+.bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; margin-right: 6px; vertical-align: middle; }
+.bars i { width: 4px; background: var(--ui-color-border-strong); border-radius: 1px; }
+.bars i[data-on="true"] { background: var(--ui-color-success); }
+.bars[data-v="weak"] i[data-on="true"] { background: var(--ui-color-warning); }
+.bars[data-v="offline"] i[data-on="true"] { background: var(--ui-color-danger); }
+.meter { height: 6px; border-radius: 3px; background: var(--ui-color-surface-muted); overflow: hidden; }
+.meter > div { height: 100%; background: var(--ui-color-primary); transition: width 80ms linear; }
+.answer { display: grid; gap: 8px; }
+.answer textarea { font-family: var(--ui-font-mono); min-height: 9rem; width: 100%; }
+.center { max-width: 30rem; margin: 10vh auto; padding: 16px; display: grid; gap: 12px; }
+@media (prefers-reduced-motion: reduce) { .meter > div { transition: none; } }

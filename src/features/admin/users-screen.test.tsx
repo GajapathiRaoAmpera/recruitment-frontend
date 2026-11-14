@@ -9,7 +9,7 @@ const users = [
 vi.mock("@/features/admin/use-staff-users", () => ({ useStaffUsers: () => ({ real: true, users, loadError: undefined, ...hook }) }));
 vi.mock("@/mock/store", () => ({ useStore: () => ({ state: { session: { userId: "me" } } }) }));
 
-import UsersPage from "./page";
+import { UsersScreen as UsersPage } from "./users-screen";
 
 beforeEach(() => Object.values(hook).forEach((f) => f.mockReset()));
 
