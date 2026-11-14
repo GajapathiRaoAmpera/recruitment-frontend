@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/input";
 import { CheckCircle2, Clock, Play, Send, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -181,13 +182,13 @@ function Runner({ roundId }: { roundId: string }) {
             <div className={s.editorBar}>
               <label>
                 <span className="sr-only">Language</span>
-                <select value={lang} onChange={(e) => update((d) => ({ ...d, lang: { ...d.lang, [p.id]: e.target.value as Lang } }))}>
+                <Select className={s.editorSelect} value={lang} onChange={(e) => update((d) => ({ ...d, lang: { ...d.lang, [p.id]: e.target.value as Lang } }))}>
                   {(Object.keys(LANGS) as Lang[]).map((l) => (
                     <option key={l} value={l}>
                       {LANGS[l].label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <span style={{ opacity: 0.7 }}>Drafts save per language</span>
             </div>

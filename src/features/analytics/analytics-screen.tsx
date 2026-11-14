@@ -48,6 +48,9 @@ export function AnalyticsScreen() {
     );
   }
 
+  // Whole page waits for the drive list; no half-built form with a "Loading drives…" placeholder.
+  if (drives.loading && !drives.data && !drives.error) return <RocketLoader label="Loading analytics" />;
+
   const pick = (id: string) => {
     setDriveId(id);
     setStudentId("");

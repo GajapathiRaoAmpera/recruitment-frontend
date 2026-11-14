@@ -89,12 +89,13 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
     }
   };
 
+  // The form appears only once the provider check is done: no half-ready form with a spinner on top.
+  if (providers.loading && !providers.data) return <RocketLoader label="Checking the AI providers" />;
+
   return (
     <form onSubmit={submit} noValidate>
       <div className={h.stack}>
-        {providers.loading && !providers.data ? (
-          <RocketLoader size="inline" label="Checking the AI providers" />
-        ) : providers.error ? (
+        {providers.error ? (
           <p role="alert" className={s.banner} data-tone="danger">
             <AlertTriangle aria-hidden size={16} />
             <span>

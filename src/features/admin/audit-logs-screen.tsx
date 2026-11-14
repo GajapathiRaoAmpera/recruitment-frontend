@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState, ForbiddenState } from "@/components/ui/states";
 import { Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -271,12 +271,7 @@ function RealAuditLogs() {
           </div>
 
           {!first.data || (first.loading && rows.length === 0) ? (
-            <div className={h.stackSm} style={{ padding: 20 }}>
-              <LoadingLabel label="Loading audit logs" />
-              {[0, 1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} style={{ height: 48 }} />
-              ))}
-            </div>
+            <RocketLoader label="Loading audit logs" />
           ) : rows.length === 0 ? (
             <EmptyState
               icon={<ScrollText aria-hidden size={32} />}

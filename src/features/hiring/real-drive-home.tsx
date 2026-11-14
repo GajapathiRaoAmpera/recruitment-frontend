@@ -71,7 +71,8 @@ export function RealDriveHome() {
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
   if (error || drive.error) return <ErrorState message={(error ?? drive.error)!.message} onRetry={() => (reload(), drive.reload())} />;
-  if (!data || !drive.data) return <RocketLoader label="Opening drive" />;
+  // One loader for the whole page: wait for the rounds, the drive and the per-round numbers (no "—" placeholders).
+  if (!data || !drive.data || (analysis.loading && !analysis.data)) return <RocketLoader label="Opening drive" />;
   const d = drive.data;
   const stats = analysis.data;
   // The resume shortlist is a step, not a round: it isn't counted in "rounds completed".

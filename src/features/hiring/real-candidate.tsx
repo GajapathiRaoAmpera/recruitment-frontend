@@ -47,7 +47,7 @@ const scoreText = (type: string, score: number) => (type === "ai_interview" ? `$
 
 export function RealCandidate({ candidateId }: { candidateId: string }) {
   const toast = useToast();
-  const { data: c, error, loading, reload } = useAsync(() => getCandidate(candidateId), [candidateId]);
+  const { data: c, error, reload } = useAsync(() => getCandidate(candidateId), [candidateId]);
   const driveId = c?.driveId;
   // The drive's whole pipeline, so rounds the student hasn't reached yet still show up as "Not reached".
   const driveRounds = useAsync(() => (driveId ? listRounds(driveId) : Promise.resolve([])), [driveId]);
@@ -56,7 +56,7 @@ export function RealCandidate({ candidateId }: { candidateId: string }) {
 
   if (error?.status === 404) return <NotFoundState title="Candidate not found" />;
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (loading || !c) return <RocketLoader label="Loading candidate" />;
+  if (!c) return <RocketLoader label="Loading candidate" />;
 
   const open = async () => {
     setOpening(true);

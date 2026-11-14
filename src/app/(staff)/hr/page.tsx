@@ -3,9 +3,10 @@
 import { AlertTriangle, CalendarClock, ClipboardCheck, FolderKanban, Plus, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
-import { listDrives, listRounds, getRoundProgress, type ProgressRow } from "@/api/hiring";
+import { listDrives, listRounds, getRoundProgress, type Drive, type ProgressRow } from "@/api/hiring";
 import { listInterviews, type InterviewRow } from "@/api/interviews";
-import { RealDrivesCards } from "@/features/hiring/drives-table";
+import { RocketLoader } from "@/components/ui/rocket-loader";
+import { DriveCardList } from "@/features/hiring/drives-table";
 import { useAsync } from "@/features/papers/use-async";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +25,7 @@ interface Alert {
 }
 
 interface DashboardData {
+  drives: Drive[];
   ongoing: number;
   inDraft: number;
   awaiting: number;
@@ -56,6 +58,7 @@ async function loadDashboard(): Promise<DashboardData> {
   }
 
   return {
+    drives,
     ongoing: drives.filter((d) => d.status !== "closed").length,
     inDraft: drives.filter((d) => d.status === "draft").length,
     awaiting,
@@ -71,7 +74,7 @@ const interviewState: Record<InterviewRow["status"], string> = { scheduled: "Sch
 export default function HrDashboard() {
   const { state } = useStore(); // only for the signed-in user's name
   const me = state.staff.find((u) => u.id === state.session?.userId);
-  const { data, error, loading, reload } = useAsync(loadDashboard, []);
+  const { data, error, reload } = useAsync(loadDashboard, []);
 
   // Quiet refresh while the tab is visible; the page keeps showing the last data meanwhile.
   useEffect(() => {
@@ -79,8 +82,11 @@ export default function HrDashboard() {
     return () => clearInterval(id);
   }, [reload]);
 
-  const ready = Boolean(data);
-  const num = (n: number | undefined) => (ready ? n : "—");
+  // Nothing renders until everything is in: one rocket, no "—" or "Loading…" placeholders.
+  if (!data && !error) return <RocketLoader label="Loading your dashboard" />;
+  if (!data) return <ErrorState message={error!.message} onRetry={reload} />;
+
+  const num = (n: number) => n;
 
   return (
     <div className={h.stack}>
@@ -91,11 +97,7 @@ export default function HrDashboard() {
             <p className={h.heroEyebrow}>Campus recruiting · {new Date().toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long" })}</p>
             <h1 className={h.heroTitle}>Good to see you, {me?.name.split(" ")[0]}</h1>
             <p className={h.heroText}>
-              {data
-                ? `${data.alerts.length} locked test${data.alerts.length === 1 ? "" : "s"} need your review and ${data.awaiting} submission${data.awaiting === 1 ? " is" : "s are"} waiting for a cut-off.`
-                : loading
-                  ? "Loading your latest numbers…"
-                  : "We couldn't load your latest numbers."}
+              {`${data.alerts.length} locked test${data.alerts.length === 1 ? "" : "s"} need your review and ${data.awaiting} submission${data.awaiting === 1 ? " is" : "s are"} waiting for a cut-off.`}
             </p>
           </div>
           <Button asChild>
@@ -106,13 +108,11 @@ export default function HrDashboard() {
         </div>
       </section>
 
-      {error && !data ? <ErrorState message={error.message} onRetry={reload} /> : null}
-
       <div className={h.grid4}>
-        <StatCard label="Ongoing drives" value={num(data?.ongoing)} hint={ready ? `${data!.inDraft} in draft` : undefined} icon={FolderKanban} />
-        <StatCard label="Awaiting cut-off" value={num(data?.awaiting)} hint="Submitted, not yet advanced" icon={ClipboardCheck} />
-        <StatCard label="Integrity alerts" value={num(data?.alerts.length)} hint="Locked after 3 tab switches" icon={AlertTriangle} />
-        <StatCard label="Selected" value={num(data?.selected)} hint="Final decisions made" icon={Trophy} />
+        <StatCard label="Ongoing drives" value={num(data.ongoing)} hint={`${data.inDraft} in draft`} icon={FolderKanban} />
+        <StatCard label="Awaiting cut-off" value={num(data.awaiting)} hint="Submitted, not yet advanced" icon={ClipboardCheck} />
+        <StatCard label="Integrity alerts" value={num(data.alerts.length)} hint="Locked after 3 tab switches" icon={AlertTriangle} />
+        <StatCard label="Selected" value={num(data.selected)} hint="Final decisions made" icon={Trophy} />
       </div>
 
       <div className={h.split}>
@@ -125,7 +125,7 @@ export default function HrDashboard() {
               View all drives
             </Link>
           </div>
-          <RealDrivesCards />
+          <DriveCardList drives={data.drives} />
         </section>
 
         <aside className={h.stack}>
@@ -134,11 +134,9 @@ export default function HrDashboard() {
               <h2 id="alerts-h" className={h.cardTitle}>
                 Integrity alerts
               </h2>
-              {data ? <Badge tone={data.alerts.length ? "danger" : "success"}>{data.alerts.length}</Badge> : null}
+              <Badge tone={data.alerts.length ? "danger" : "success"}>{data.alerts.length}</Badge>
             </div>
-            {!data ? (
-              <p className={h.muted}>{loading ? "Loading…" : "Unavailable."}</p>
-            ) : data.alerts.length === 0 ? (
+            {data.alerts.length === 0 ? (
               <p className={h.muted}>No locked tests. Nice and quiet.</p>
             ) : (
               <ul className={h.list}>
@@ -161,9 +159,7 @@ export default function HrDashboard() {
               </h2>
               <CalendarClock aria-hidden size={18} />
             </div>
-            {!data ? (
-              <p className={h.muted}>{loading ? "Loading…" : "Unavailable."}</p>
-            ) : data.interviews.length === 0 ? (
+            {data.interviews.length === 0 ? (
               <EmptyState title="No interviews yet" />
             ) : (
               <ul className={h.list}>
