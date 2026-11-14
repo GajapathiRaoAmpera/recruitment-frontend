@@ -1,15 +1,7 @@
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: {
-    auth: {
-      getSession: async () => ({ data: { session: { access_token: "t" } } }),
-      signOut: async () => ({ error: null }),
-    },
-  },
-  linkHash: null,
-}));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), liveApi: true }));
 
 import { ToastProvider } from "@/components/ui/toast";
 import { AuditLogsScreen } from "./audit-logs-screen";

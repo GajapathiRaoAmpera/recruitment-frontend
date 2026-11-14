@@ -17,7 +17,7 @@ import { Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { hire as h, Person, Segment, StatCard } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { AuditDetails } from "./audit-details";
 import { actionLabel, actionTone, entityLabel, groupActions, roleLabel } from "./audit-labels";
 import s from "./audit-logs.module.scss";
@@ -57,12 +57,12 @@ function useDebounced<T>(value: T, ms = 300) {
 
 export function AuditLogsScreen() {
   useBreadcrumbs([{ label: "Audit logs" }]);
-  // Audit logs only exist in the backend; prototype mode (no Supabase) has no API session to read them with.
-  if (!supabase) {
+  // Audit logs only exist in the backend; prototype mode (no live API) has no API session to read them with.
+  if (!liveApi) {
     return (
       <div className={h.stack}>
         <PageHeader title="Audit logs" description="Every HR and Super Admin action, recorded by the server." />
-        <EmptyState icon={<ScrollText aria-hidden size={32} />} title="Audit logs need the backend" description="Sign in with a Super Admin account (Supabase configured) to see the real log." />
+        <EmptyState icon={<ScrollText aria-hidden size={32} />} title="Audit logs need the backend" description="Sign in with a Super Admin account with the live API enabled to see the real log." />
       </div>
     );
   }

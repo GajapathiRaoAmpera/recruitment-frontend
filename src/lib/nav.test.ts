@@ -14,3 +14,11 @@ it("nav no longer offers PDF question banks: papers get Technical questions from
     expect(navItems(role).some((i) => i.href === "/hr/question-banks")).toBe(false);
   }
 });
+
+it("nav puts Analytics right under Interviews for HR and Super Admin", () => {
+  for (const role of ["HR", "SUPER_ADMIN"] as const) {
+    const items = navItems(role);
+    const i = items.findIndex((x) => x.label === "Interviews");
+    expect(items[i + 1]).toMatchObject({ label: "Analytics", href: "/hr/analytics" });
+  }
+});

@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock, RefreshCw, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Hourglass, RefreshCw, ThumbsDown, ThumbsUp, Users } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getRoundProgress, type ProgressRow, type StepName } from "@/api/hiring";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
@@ -13,6 +14,7 @@ import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h, StatCard } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
 import { roundTitle } from "@/mock/data";
+import { countOutcomes, statusLabel, statusTone } from "./round-outcome";
 import type { Round } from "@/mock/types";
 
 const AUTO_MS = 10_000;
@@ -49,6 +51,9 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
 
   const rows = data.candidates;
   const count = (f: (r: ProgressRow) => boolean) => rows.filter(f).length;
+  const result = countOutcomes(rows.map((r) => r.status));
+  const isFinal = data.type === "final";
+  const pct = (n: number) => (result.total ? `${Math.round((n / result.total) * 100)}% of the round` : undefined);
   return (
     <div className={h.stack}>
       <PageHeader
@@ -71,6 +76,15 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
         <StatCard label="Submitted" value={count((r) => r.attemptStatus === "submitted")} icon={CheckCircle2} />
         <StatCard label="Locked" value={count((r) => r.attemptStatus === "locked")} icon={AlertTriangle} />
       </div>
+      <section aria-label="Round result" className={h.stackSm}>
+        <h2 className={h.cardTitle}>Round result</h2>
+        <div className={h.grid4}>
+          <StatCard label="Selected for this round" value={result.total} icon={Users} hint="Invited from the previous round" />
+          <StatCard label={isFinal ? "Selected" : "Passed"} value={result.cleared} icon={ThumbsUp} hint={pct(result.cleared)} />
+          <StatCard label={isFinal ? "Rejected" : "Not passed"} value={result.notCleared} icon={ThumbsDown} hint={result.notCleared ? "Failed, rejected or absent" : pct(result.notCleared)} />
+          <StatCard label="Awaiting result" value={result.open} icon={Hourglass} hint={result.open ? "Not decided yet" : "Everyone is decided"} />
+        </div>
+      </section>
       <section className={h.card}>
         <h2 className={h.cardTitle} style={{ marginBottom: 16 }}>
           Candidates
@@ -88,6 +102,7 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
                 <Th>Status</Th>
                 <Th>Tab switches</Th>
                 <Th>Marks</Th>
+                <Th>Result</Th>
               </tr>
             </thead>
             <tbody>
@@ -96,7 +111,10 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
                 return (
                   <tr key={r.candidateId}>
                     <Td>
-                      {r.fullName} <span className={h.xs}>{r.studentId}</span>
+                      <Link href={`/hr/candidates/${r.candidateId}`} className={h.link}>
+                        {r.fullName}
+                      </Link>{" "}
+                      <span className={h.xs}>{r.studentId}</span>
                     </Td>
                     {STEPS.map((s) => (
                       <Td key={s.id} aria-label={`${s.label}: ${r.steps[s.id] === null ? "not tried" : r.steps[s.id] ? "done" : "failed"}`}>
@@ -106,6 +124,9 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
                     <Td>{st ? <Badge tone={st.tone}>{st.label}</Badge> : <span className={h.xs}>Not started</span>}</Td>
                     <Td>{r.tabSwitches}</Td>
                     <Td>{r.marks ?? "—"}</Td>
+                    <Td>
+                      <Badge tone={statusTone(r.status)}>{statusLabel(r.status)}</Badge>
+                    </Td>
                   </tr>
                 );
               })}

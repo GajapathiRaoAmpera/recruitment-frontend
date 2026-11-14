@@ -1,10 +1,10 @@
 "use client";
 
-import { UserRoundCog } from "lucide-react";
+import { ListChecks, Trophy, UserCheck, UserRoundCog, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { getDrive, listRounds, reassignDrive } from "@/api/hiring";
+import { getDrive, getRoundProgress, listCandidates, listRounds, reassignDrive } from "@/api/hiring";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +14,10 @@ import { InfoTip } from "@/components/ui/info-tip";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ErrorState, NotFoundState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
-import { hire as h, PipelineSteps } from "@/components/hire/ui";
+import { hire as h, PipelineSteps, StatCard } from "@/components/hire/ui";
 import type { BadgeTone } from "@/components/ui/badge";
 import { OwnerSelect } from "@/features/hiring/owner-select";
+import { countOutcomes, type OutcomeCounts } from "@/features/hiring/round-outcome";
 import { useAsync } from "@/features/papers/use-async";
 import { useStore } from "@/mock/store";
 import type { Round } from "@/mock/types";
@@ -38,6 +39,23 @@ const roundStatus: Record<string, { text: string; tone: BadgeTone }> = {
   skipped: { text: "Skipped", tone: "warning" },
 };
 
+interface DriveAnalysis {
+  shortlisted: number;
+  /** Per round id: who is in it and how many cleared / didn't / are still open. A round that can't be read is left out. */
+  byRound: Record<string, OutcomeCounts>;
+}
+
+/** Drive-wide numbers for the Rounds section: the shortlist size and, per round, how many students passed. */
+async function analyseDrive(driveId: string, rounds: { id: string; type: string }[]): Promise<DriveAnalysis> {
+  const [shortlisted, progress] = await Promise.all([
+    listCandidates(driveId, { shortlisted: true }).then((rows) => rows.length, () => 0),
+    Promise.all(rounds.filter((r) => r.type !== "shortlist").map((r) => getRoundProgress(driveId, r.id).catch(() => null))),
+  ]);
+  const byRound: Record<string, OutcomeCounts> = {};
+  for (const p of progress) if (p) byRound[p.roundId] = countOutcomes(p.candidates.map((c) => c.status));
+  return { shortlisted, byRound };
+}
+
 /** A real drive: who runs it, its shortlist, plus each round with a link to its live progress. */
 export function RealDriveHome() {
   const { driveId } = useParams<{ driveId: string }>();
@@ -45,6 +63,7 @@ export function RealDriveHome() {
   const isAdmin = state.session?.role === "SUPER_ADMIN";
   const drive = useAsync(() => getDrive(driveId), [driveId]);
   const { data, error, reload } = useAsync(() => listRounds(driveId), [driveId]);
+  const analysis = useAsync(() => (data ? analyseDrive(driveId, data) : Promise.resolve(undefined)), [driveId, data]);
   const [reassigning, setReassigning] = useState(false);
   useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive" }]);
 
@@ -52,6 +71,12 @@ export function RealDriveHome() {
   if (error || drive.error) return <ErrorState message={(error ?? drive.error)!.message} onRetry={() => (reload(), drive.reload())} />;
   if (!data || !drive.data) return <RocketLoader label="Opening drive" />;
   const d = drive.data;
+  const stats = analysis.data;
+  // The resume shortlist is a step, not a round: it isn't counted in "rounds completed".
+  const active = data.filter((r) => r.status !== "skipped" && r.type !== "shortlist");
+  const finalRound = data.find((r) => r.type === "final");
+  const selectedTotal = finalRound ? stats?.byRound[finalRound.id]?.cleared : undefined;
+  const dash = (n: number | undefined) => (stats ? n : "—");
 
   return (
     <div className={h.stack}>
@@ -72,9 +97,17 @@ export function RealDriveHome() {
             <h2 id="rounds-h" className={h.cardTitle}>
               Rounds
             </h2>
-            <p className={h.xs}>{data.length ? `${data.filter((r) => r.status === "completed").length} of ${data.length} completed` : "No rounds set up yet"}</p>
+            <p className={h.xs}>{active.length ? `${active.filter((r) => r.status === "completed").length} of ${active.length} completed` : "No rounds set up yet"}</p>
           </div>
         </div>
+        {active.length > 0 && (
+          <div className={h.grid4} style={{ marginBottom: 20 }}>
+            <StatCard label="Rounds completed" value={`${active.filter((r) => r.status === "completed").length} / ${active.length}`} icon={ListChecks} hint={`${active.filter((r) => r.status === "active").length} running now`} />
+            <StatCard label="Candidates" value={d.candidates} icon={Users} hint="Imported from the form" />
+            <StatCard label="Shortlisted" value={dash(stats?.shortlisted)} icon={UserCheck} hint="Invited to round 1" />
+            <StatCard label="Selected" value={dash(selectedTotal)} icon={Trophy} hint={finalRound ? "Cleared the final round" : "No final round"} />
+          </div>
+        )}
         {data.length > 0 && (
           <div style={{ marginBottom: 20 }}>
             <PipelineSteps rounds={data as Round[]} />
@@ -85,6 +118,8 @@ export function RealDriveHome() {
             const info = roundInfo(r.type);
             const status = roundStatus[r.status] ?? { text: r.status, tone: "neutral" as const };
             const isShortlist = r.type === "shortlist";
+            const counts = stats?.byRound[r.id];
+            const isFinal = r.type === "final";
             return (
               <li key={r.id} className={h.listItem}>
                 <div className={h.row} style={{ flex: "1 1 320px", alignItems: "flex-start", flexWrap: "nowrap" }}>
@@ -100,7 +135,19 @@ export function RealDriveHome() {
                       {info.hint && <InfoTip label={`About ${info.title}`}>{info.hint}</InfoTip>}
                       <Badge tone={status.tone}>{status.text}</Badge>
                     </p>
-                    {isShortlist && <p className={h.xs}>{`${d.candidates} candidate${d.candidates === 1 ? "" : "s"} imported`}</p>}
+                    {isShortlist && (
+                      <p className={h.xs}>
+                        {`${d.candidates} candidate${d.candidates === 1 ? "" : "s"} imported`}
+                        {stats ? ` · ${stats.shortlisted} shortlisted` : ""}
+                      </p>
+                    )}
+                    {!isShortlist && counts && (
+                      <p className={h.xs}>
+                        {`${counts.total} in round · ${counts.cleared} ${isFinal ? "selected" : "passed"} · ${counts.notCleared} ${isFinal ? "rejected" : "not passed"}`}
+                        {counts.open ? ` · ${counts.open} awaiting` : ""}
+                        {counts.total ? ` · ${Math.round((counts.cleared / counts.total) * 100)}% ${isFinal ? "selected" : "pass rate"}` : ""}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <Button asChild variant={r.status === "active" ? "primary" : "secondary"} size="sm">
