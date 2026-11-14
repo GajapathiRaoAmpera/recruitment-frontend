@@ -225,6 +225,19 @@
   display: flex;
   gap: sp(1);
   overflow-x: auto;
+  /* Scoped here: .segmentBtn only styles aria-pressed and is shared, so tabs get their own selected look.
+     Unselected: ink on the page (AA), outlined with border-input (3.2:1 non-text). Selected: white on magenta-600 (6:1).
+     Focus ring comes from .segmentBtn; no transition (student test screens). */
+  [role="tab"] {
+    border: 1px solid var(--ui-color-border-input);
+    color: var(--ui-color-text);
+  }
+  [role="tab"][aria-selected="true"] {
+    border-color: var(--ui-color-primary);
+    background: var(--ui-color-primary);
+    font-weight: 600;
+    color: var(--ui-color-primary-fg);
+  }
 }
 
 .editorWrap {

@@ -180,3 +180,15 @@ it("no coding problems: an empty state, no editor", async () => {
   expect(screen.getByRole("heading", { name: "No problems yet" })).toBeInTheDocument();
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
 });
+
+it("marks exactly the current problem tab as selected, and moves it on switch (AC-5)", async () => {
+  view();
+  await settle();
+  const selected = () => screen.getAllByRole("tab").map((t) => t.getAttribute("aria-selected"));
+  expect(selected()).toEqual(["true", "false"]);
+  expect(screen.getByRole("tab", { selected: true })).toHaveTextContent("P1: Sum");
+  fireEvent.click(screen.getByRole("tab", { name: /Max/ }));
+  expect(selected()).toEqual(["false", "true"]);
+  expect(screen.getByRole("tab", { selected: true })).toHaveTextContent("P2: Max");
+  expect(screen.getByRole("tablist", { name: "Problems" }).querySelectorAll("[role=tab]")).toHaveLength(2);
+});

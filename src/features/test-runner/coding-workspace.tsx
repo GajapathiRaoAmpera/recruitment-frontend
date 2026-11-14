@@ -269,7 +269,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         </p>
       </section>
 
-      <section className={h.stackSm} aria-label="Editor" data-allow-clipboard>
+      <section className={h.stackSm} aria-label="Editor" data-allow-select>
         <div className={s.editorWrap}>
           <div className={s.editorBar}>
             <label>
@@ -291,6 +291,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
             value={code}
             language={doc.language}
             readOnly={!live}
+            blockClipboard
             label={`Code for ${p.title}`}
             onChange={(v) => change({ ...doc, code: { ...doc.code, [doc.language]: v } })}
           />

@@ -1,6 +1,8 @@
+// AC-7 Integrity: exam lockdown. Copy/cut/paste/drag-drop are blocked everywhere, the code editor included;
+// the editor only keeps text selection and normal editing keys.
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
-import { ALLOW_CLIPBOARD, useLockdown } from "./lockdown";
+import { describe, expect, it, vi } from "vitest";
+import { ALLOW_SELECT, useLockdown } from "./lockdown";
 import { TabSwitchBadge } from "./tab-switch-badge";
 
 function Page({ on = true }: { on?: boolean }) {
@@ -8,7 +10,7 @@ function Page({ on = true }: { on?: boolean }) {
   return (
     <div>
       <p data-testid="text">question</p>
-      <div {...{ [ALLOW_CLIPBOARD]: "" }}>
+      <div {...{ [ALLOW_SELECT]: "" }}>
         <textarea aria-label="code" />
       </div>
     </div>
@@ -26,12 +28,68 @@ describe("useLockdown", () => {
     }
   });
 
-  it("lets the code editor use the clipboard, but still blocks dev-tool shortcuts there", () => {
+  it("blocks copy, cut, paste and drag-drop inside the code editor too", () => {
     render(<Page />);
     const editor = screen.getByLabelText("code");
-    expect(fireEvent(editor, new Event("paste", { bubbles: true, cancelable: true }))).toBe(true);
-    expect(fireEvent.keyDown(editor, { key: "v", ctrlKey: true })).toBe(true);
-    expect(fireEvent.keyDown(editor, { key: "F12" })).toBe(false);
+    // Stands in for Monaco's own textarea handler, which reads clipboardData itself and ignores defaultPrevented.
+    const widgetPaste = vi.fn();
+    editor.addEventListener("paste", widgetPaste);
+    for (const type of ["copy", "cut", "paste", "dragstart", "dragover", "drop"]) {
+      expect(fireEvent(editor, new Event(type, { bubbles: true, cancelable: true })), type).toBe(false);
+    }
+    expect(widgetPaste).not.toHaveBeenCalled();
+  });
+
+  it("blocks clipboard shortcuts in the editor: Ctrl/Cmd+C/X/V, Ctrl+Shift+V, Ctrl+Insert, Shift+Insert, Shift+Delete", () => {
+    render(<Page />);
+    const editor = screen.getByLabelText("code");
+    const keys = [
+      { key: "c", ctrlKey: true },
+      { key: "x", ctrlKey: true },
+      { key: "v", ctrlKey: true },
+      { key: "C", metaKey: true },
+      { key: "X", metaKey: true },
+      { key: "V", metaKey: true },
+      { key: "V", ctrlKey: true, shiftKey: true },
+      { key: "Insert", ctrlKey: true },
+      { key: "Insert", shiftKey: true },
+      { key: "Delete", shiftKey: true },
+    ];
+    for (const init of keys) expect(fireEvent.keyDown(editor, init), JSON.stringify(init)).toBe(false);
+    expect(fireEvent.keyDown(editor, { key: "F12" })).toBe(false); // dev tools still blocked there
+  });
+
+  it("still lets the editor type, select, select-all, undo/redo, indent and delete", () => {
+    render(<Page />);
+    const editor = screen.getByLabelText("code");
+    const keys = [
+      { key: "a" },
+      { key: "A", shiftKey: true },
+      { key: "a", ctrlKey: true },
+      { key: "a", metaKey: true },
+      { key: "z", ctrlKey: true },
+      { key: "z", ctrlKey: true, shiftKey: true },
+      { key: "y", ctrlKey: true },
+      { key: "Tab" },
+      { key: "Tab", shiftKey: true },
+      { key: "Backspace" },
+      { key: "Delete" },
+      { key: "ArrowLeft", shiftKey: true },
+      { key: "Insert" },
+    ];
+    for (const init of keys) expect(fireEvent.keyDown(editor, init), JSON.stringify(init)).toBe(true);
+    expect(fireEvent(editor, new Event("selectstart", { bubbles: true, cancelable: true }))).toBe(true);
+    // Outside the editor, select-all and selection stay blocked.
+    const text = screen.getByTestId("text");
+    expect(fireEvent.keyDown(text, { key: "a", ctrlKey: true })).toBe(false);
+    expect(fireEvent(text, new Event("selectstart", { bubbles: true, cancelable: true }))).toBe(false);
+  });
+
+  it("lets only text selection through in the editor area (CSS)", () => {
+    render(<Page />);
+    const css = [...document.head.querySelectorAll("style")].map((el) => el.textContent).join("");
+    expect(css).toContain(`[${ALLOW_SELECT}] *{-webkit-user-select:text;user-select:text}`);
+    expect(ALLOW_SELECT).toBe("data-allow-select");
   });
 
   it("asks before leaving the page, and stops when disabled", () => {
