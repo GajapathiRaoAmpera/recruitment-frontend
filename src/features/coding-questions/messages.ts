@@ -4,7 +4,7 @@ import type { ApiError } from "@/api/client";
 export function codingErrorMessage(e: ApiError): string {
   switch (e.code) {
     case "QUESTION_IN_USE":
-      return "Students have already answered this question, so its test cases can't change. You can still edit the statement, difficulty, tags and marks.";
+      return "Students have already answered this question, so its test cases can't change, and neither can its mode or function signature. You can still edit the statement, difficulty, tags and marks.";
     case "QUESTION_NOT_FOUND":
       return "This question wasn't found. It may have been removed, or it isn't yours.";
     case "QUESTIONS_NOT_FOUND":
@@ -62,6 +62,8 @@ export interface FieldErrors {
   difficulty?: string;
   marks?: string;
   tags?: string;
+  mode?: string;
+  signature?: string;
   cases?: string; // the set as a whole (e.g. not 3 + 15)
   caseAt?: Record<number, string>; // index into the test_cases array sent (samples first, then hidden)
   other?: string;
@@ -79,7 +81,7 @@ export function fieldErrors(e: ApiError): FieldErrors {
     const text = clean(msg);
     if (field === "test_cases" && typeof index === "number") out.caseAt = { ...out.caseAt, [index]: text };
     else if (field === "test_cases") out.cases ??= text;
-    else if (field === "body" || field === "difficulty" || field === "marks" || field === "tags") out[field] ??= text;
+    else if (field === "body" || field === "difficulty" || field === "marks" || field === "tags" || field === "mode" || field === "signature") out[field] ??= text;
     else out.other ??= text;
   }
   return out;

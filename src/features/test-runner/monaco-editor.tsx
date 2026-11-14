@@ -3,7 +3,7 @@
 // Browser only (loaded through code-editor.tsx with ssr: false). Monaco comes from our own bundle, never a CDN,
 // so the editor works on a locked-down exam network. Only the core editor and syntax colouring for the
 // languages the API accepts are loaded; no language services (no TypeScript/JSON workers).
-import Editor, { loader } from "@monaco-editor/react";
+import Editor, { loader, type OnMount } from "@monaco-editor/react";
 import "monaco-editor/esm/vs/editor/editor.all.js";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api.js";
 import "monaco-editor/esm/vs/basic-languages/python/python.contribution.js";
@@ -12,7 +12,7 @@ import "monaco-editor/esm/vs/basic-languages/cpp/cpp.contribution.js"; // regist
 import "monaco-editor/esm/vs/basic-languages/java/java.contribution.js";
 import "monaco-editor/esm/vs/basic-languages/go/go.contribution.js";
 import "monaco-editor/esm/vs/basic-languages/sql/sql.contribution.js";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { monacoLanguage } from "./coding-shared";
 
 declare global {
@@ -50,10 +50,40 @@ export interface CodeEditorProps {
   readOnly?: boolean;
   /** Changes when the editor should show a different document (question or language), so undo history doesn't mix them. */
   path: string;
+  /** Exam screens: no copy, cut, paste or drag-drop in or out of the editor (typing, selecting, undo still work). */
+  blockClipboard?: boolean;
 }
 
-export default function MonacoCodeEditor({ value, language, onChange, label, readOnly, path }: CodeEditorProps) {
+const CLIPBOARD_EVENTS = ["copy", "cut", "paste", "dragstart", "dragover", "drop"] as const;
+const stopClipboard = (e: Event) => {
+  e.preventDefault();
+  e.stopPropagation(); // capture phase on the editor root, so Monaco's own textarea handlers never see the event
+};
+
+export default function MonacoCodeEditor({ value, language, onChange, label, readOnly, path, blockClipboard }: CodeEditorProps) {
   const [reduced] = useState(() => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+  const removeGuard = useRef<(() => void) | null>(null);
+  useEffect(() => () => removeGuard.current?.(), []);
+
+  /** Monaco reads paste data from its own hidden textarea, so page-level blocking alone is not enough. */
+  const onMount: OnMount = (editor, m) => {
+    if (!blockClipboard) return;
+    const node = editor.getDomNode();
+    CLIPBOARD_EVENTS.forEach((n) => node?.addEventListener(n, stopClipboard, true));
+    const { KeyMod: Mod, KeyCode: Key } = m;
+    const keys = [
+      Mod.CtrlCmd | Key.KeyC,
+      Mod.CtrlCmd | Key.KeyX,
+      Mod.CtrlCmd | Key.KeyV,
+      Mod.CtrlCmd | Mod.Shift | Key.KeyV,
+      Mod.CtrlCmd | Key.Insert, // copy
+      Mod.Shift | Key.Insert, // paste
+      Mod.Shift | Key.Delete, // cut
+    ];
+    keys.forEach((k) => editor.addCommand(k, () => {}));
+    removeGuard.current = () => CLIPBOARD_EVENTS.forEach((n) => node?.removeEventListener(n, stopClipboard, true));
+  };
+
   return (
     <Editor
       height="22rem"
@@ -62,6 +92,7 @@ export default function MonacoCodeEditor({ value, language, onChange, label, rea
       language={monacoLanguage(language)}
       theme={THEME}
       beforeMount={defineTheme}
+      onMount={onMount}
       onChange={(v) => onChange(v ?? "")}
       loading={<p style={{ padding: 16 }}>Loading editor…</p>}
       options={{
@@ -77,6 +108,7 @@ export default function MonacoCodeEditor({ value, language, onChange, label, rea
         cursorBlinking: reduced ? "solid" : "blink",
         accessibilitySupport: "auto",
         contextmenu: false,
+        dragAndDrop: !blockClipboard,
         quickSuggestions: false, // no language services: keep suggestions from guessing
       }}
     />

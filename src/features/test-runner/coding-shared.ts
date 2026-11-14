@@ -1,4 +1,5 @@
-import type { CaseStatus } from "@/api/attempt";
+import type { CaseStatus, CodingQuestion } from "@/api/attempt";
+import type { Signature } from "@/api/coding-questions";
 
 // Shared by the real coding workspace and the prototype (mock) coding page.
 
@@ -15,6 +16,25 @@ export const LANGS = {
 export type Lang = keyof typeof LANGS;
 
 export const starterFor = (language: string) => (language in LANGS ? LANGS[language as Lang].starter : "");
+
+/**
+ * What a new or empty draft opens with. Function mode: the API's `starter_code` for that language (empty if it sent none).
+ * SQL mode: empty (the API sends no starter). stdin mode: the LANGS template, as before.
+ */
+export const starterOf = (q: Pick<CodingQuestion, "mode" | "starterCode">, language: string) =>
+  q.mode === "function" ? (q.starterCode?.[language] ?? "") : q.mode === "sql" ? "" : starterFor(language);
+
+/**
+ * SQL run output as rows: one row per line, values split on "|" (the API's `.separator |`; NULL prints as "NULL").
+ * Trailing whitespace is ignored, as in judging, so a final newline is not an extra row.
+ */
+export const sqlRows = (stdout: string): string[][] => {
+  const text = stdout.replace(/\s+$/, "");
+  return text ? text.split("\n").map((line) => line.replace(/\s+$/, "").split("|")) : [];
+};
+
+/** Language-neutral one-liner, e.g. `twoSum(nums: int[], target: int): int[]`. */
+export const signatureText = (sig: Signature) => `${sig.functionName}(${sig.parameters.map((p) => `${p.name}: ${p.type}`).join(", ")}): ${sig.returnType}`;
 
 /** Monaco's language id for an API language key (syntax colouring only). */
 export const monacoLanguage = (language: string) => (language in LANGS ? language : "plaintext");

@@ -106,7 +106,7 @@ it("splits multiple choice from coding questions and saved answers from submitte
   );
   const a = await getAttempt("ATT");
   expect(a.questions).toEqual([{ id: "m1", body: "2+2?", options: ["3", "4"], marks: 1 }]);
-  expect(a.coding).toEqual([{ id: "c1", title: "Two sum", statement: "Add two numbers", marks: 10, languages: [{ key: "python", name: "Python 3.8" }], samples: [{ input: "1 2", expected: "3" }] }]);
+  expect(a.coding).toEqual([{ id: "c1", title: "Two sum", statement: "Add two numbers", marks: 10, languages: [{ key: "python", name: "Python 3.8" }], samples: [{ input: "1 2", expected: "3", inputDisplay: "1 2" }], mode: "stdin", signature: null, starterCode: null }]); // no mode sent = stdin
   expect(a.savedAnswers).toEqual({ m1: 1 });
   expect(a.savedCode).toEqual({ c1: { code: "print(3)", language: "python" } });
   expect(a.remainingSecOnLock).toBeNull();

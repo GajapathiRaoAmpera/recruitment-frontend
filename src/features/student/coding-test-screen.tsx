@@ -176,7 +176,7 @@ function Runner({ roundId }: { roundId: string }) {
           </p>
         </section>
 
-        <section className={h.stackSm} aria-label="Editor" data-allow-clipboard>
+        <section className={h.stackSm} aria-label="Editor" data-allow-select>
           <div className={s.editorWrap}>
             <div className={s.editorBar}>
               <label>

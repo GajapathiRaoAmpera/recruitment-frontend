@@ -28,8 +28,8 @@ const attempt = (over: Partial<AttemptState> = {}): AttemptState => ({
   questions: [],
   savedAnswers: {},
   coding: [
-    { id: "q1", title: "Sum", statement: "Add the numbers.", marks: 10, languages: [{ key: "python", name: "Python 3.8" }, { key: "cpp", name: "C++ (GCC 9)" }], samples: [{ input: "1 2", expected: "3" }, { input: "2 2", expected: "4" }] },
-    { id: "q2", title: "Max", statement: "Print the max.", marks: 20, languages: [{ key: "java", name: "Java 13" }], samples: [] },
+    { id: "q1", title: "Sum", statement: "Add the numbers.", marks: 10, languages: [{ key: "python", name: "Python 3.8" }, { key: "cpp", name: "C++ (GCC 9)" }], samples: [{ input: "1 2", expected: "3", inputDisplay: "1 2" }, { input: "2 2", expected: "4", inputDisplay: "2 2" }], mode: "stdin", signature: null, starterCode: null },
+    { id: "q2", title: "Max", statement: "Print the max.", marks: 20, languages: [{ key: "java", name: "Java 13" }], samples: [], mode: "stdin", signature: null, starterCode: null },
   ],
   savedCode: {},
   ...over,
@@ -179,4 +179,16 @@ it("no coding problems: an empty state, no editor", async () => {
   await settle();
   expect(screen.getByRole("heading", { name: "No problems yet" })).toBeInTheDocument();
   expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+});
+
+it("marks exactly the current problem tab as selected, and moves it on switch (AC-5)", async () => {
+  view();
+  await settle();
+  const selected = () => screen.getAllByRole("tab").map((t) => t.getAttribute("aria-selected"));
+  expect(selected()).toEqual(["true", "false"]);
+  expect(screen.getByRole("tab", { selected: true })).toHaveTextContent("P1: Sum");
+  fireEvent.click(screen.getByRole("tab", { name: /Max/ }));
+  expect(selected()).toEqual(["false", "true"]);
+  expect(screen.getByRole("tab", { selected: true })).toHaveTextContent("P2: Max");
+  expect(screen.getByRole("tablist", { name: "Problems" }).querySelectorAll("[role=tab]")).toHaveLength(2);
 });

@@ -17,12 +17,13 @@ import {
 } from "@/api/attempt";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
 import { CodeEditor } from "./code-editor";
-import { failText, starterFor } from "./coding-shared";
+import { failText, signatureText, sqlRows, starterOf } from "./coding-shared";
 import { clearAttemptDrafts, pickRestore, readLocal, writeLocal, type Restored } from "./drafts";
+import { SqlDataTable, SqlRowsTable } from "./sql-tables";
 
 export const LOCAL_SAVE_MS = 500;
 export const SERVER_SAVE_MS = 10_000;
@@ -39,7 +40,20 @@ interface Props {
   onClosed: (kind: "locked" | "expired") => void;
 }
 
-type RunRow = { case: number; ok: boolean; status: CaseStatus; expected: string; stdout: string; stderr: string; ms: number | null };
+type RunRow = {
+  case: number;
+  ok: boolean;
+  status: CaseStatus;
+  expected: string;
+  stdout: string;
+  stderr: string;
+  ms: number | null;
+  /** SQL only: the sample's expected rows as the API split them. */
+  expectedRows?: string[][];
+};
+
+/** The SQL editor's only language: the API lists just this key for a SQL question. */
+const SQL = "sql";
 
 /** Round 2 coding screen for a student signed in through the API. Hidden test cases never reach the browser (D7). */
 export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: Props) {
@@ -70,8 +84,10 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         if (stale) return;
         const out: Record<string, Restored> = {};
         for (const q of questions) {
-          const allowed = q.languages.map((l) => l.key);
-          out[q.id] = pickRestore(allowed, attemptId ? readLocal(attemptId, q.id) : null, server[q.id], attempt.savedCode[q.id]);
+          const allowed = q.mode === "sql" ? [SQL] : q.languages.map((l) => l.key);
+          const r = pickRestore(allowed, attemptId ? readLocal(attemptId, q.id) : null, server[q.id], attempt.savedCode[q.id]);
+          // Function mode: a blank saved draft counts as new, so it opens with the API's starter code.
+          out[q.id] = q.mode === "function" ? { ...r, code: Object.fromEntries(Object.entries(r.code).filter(([, c]) => c.trim())) } : r;
         }
         setDocs(out);
       });
@@ -92,7 +108,10 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
   const pendingServer = useRef(new Set<string>()); // questions changed since the last PUT /attempt/code-drafts
   const localTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const codeOf = (d: Restored) => d.code[d.language] ?? starterFor(d.language);
+  const codeOf = (questionId: string, d: Restored) => {
+    const q = questions.find((x) => x.id === questionId);
+    return d.code[d.language] ?? (q ? starterOf(q, d.language) : "");
+  };
 
   const flushServer = async (only?: string) => {
     const ids = only ? [only].filter((id) => pendingServer.current.has(id)) : [...pendingServer.current];
@@ -101,7 +120,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
       if (!d || !liveRef.current) return;
       pendingServer.current.delete(id);
       try {
-        await saveCodeDraft(token, id, { code: codeOf(d), language: d.language });
+        await saveCodeDraft(token, id, { code: codeOf(id, d), language: d.language });
         setServerSaveFailed(false);
       } catch (e) {
         pendingServer.current.add(id); // retried on the next tick
@@ -160,11 +179,15 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         </section>
       </main>
     );
-  if (!docs) return <LoadingLabel label="Loading your code" />;
+  // One loader for the whole body until the drafts are in; still, because student test screens never animate.
+  if (!docs) return <RocketLoader still label="Loading your code" />;
 
   const p = questions[Math.min(current, questions.length - 1)]!;
   const doc = docs[p.id]!;
-  const code = codeOf(doc);
+  const code = codeOf(p.id, doc);
+  const isFunction = p.mode === "function";
+  const isSql = p.mode === "sql";
+  const noStarter = isFunction && !p.starterCode?.[doc.language];
 
   const change = (next: Restored) => {
     setDocs((d) => (d ? { ...d, [p.id]: next } : d));
@@ -199,6 +222,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
           ok: r.passed,
           status: r.status,
           expected: p.samples[r.case - 1]?.expected ?? "",
+          ...(isSql ? { expectedRows: p.samples[r.case - 1]?.expectedRows ?? sqlRows(p.samples[r.case - 1]?.expected ?? "") } : {}),
           stdout: r.stdout,
           stderr: r.stderr,
           ms: r.timeS === null ? null : Math.round(r.timeS * 1000),
@@ -229,7 +253,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
 
   return (
     <main className={`${s.examBody} ${s.coding}`}>
-      <section className={h.card} aria-labelledby="p-h">
+      <section className={`${h.card} ${s.codingProblem}`} aria-labelledby="p-h" tabIndex={0}>
         <div role="tablist" aria-label="Problems" className={s.problemTabs} style={{ marginBottom: 16 }}>
           {questions.map((x, i) => (
             <button key={x.id} role="tab" type="button" aria-selected={x.id === p.id} className={h.segmentBtn} onClick={() => switchTo(i)}>
@@ -243,8 +267,68 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         <h1 id="p-h" className={h.cardTitle}>
           {p.title}
         </h1>
+        {isFunction && (
+          <div style={{ marginTop: 12 }}>
+            <h2 className={h.eyebrow} style={{ marginBottom: 8 }}>
+              Function to write
+            </h2>
+            {p.signature ? (
+              <pre className={h.code} aria-label="Function signature">
+                {signatureText(p.signature)}
+              </pre>
+            ) : (
+              <p className={h.muted}>The signature isn&apos;t available; follow the starter code in the editor.</p>
+            )}
+            <p className={h.xs} style={{ marginTop: 8 }}>
+              Write only this function and return the answer. It is called once per test case; don&apos;t read input or print the result.
+            </p>
+          </div>
+        )}
         <p style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>{p.statement}</p>
-        {p.samples.length > 0 && (
+        {isSql && (
+          <>
+            <p className={h.xs} style={{ marginTop: 8 }}>
+              Write a SQLite query.
+              {p.orderMatters === true ? " Row order matters." : p.orderMatters === false ? " Row order does not matter." : ""}
+            </p>
+            <h2 className={h.eyebrow} style={{ marginTop: 16, marginBottom: 8 }}>
+              Schema
+            </h2>
+            {p.schema ? (
+              <pre className={h.code} aria-label="Database schema">
+                {p.schema}
+              </pre>
+            ) : (
+              <p className={h.muted}>The schema isn&apos;t available. Tell the invigilator or HR.</p>
+            )}
+          </>
+        )}
+        {isSql && p.samples.length > 0 && (
+          <>
+            <h2 className={h.eyebrow} style={{ marginTop: 24, marginBottom: 8 }}>
+              Sample cases
+            </h2>
+            <div className={h.stack}>
+              {p.samples.map((c, i) => {
+                const tables = Object.entries(c.tables ?? {});
+                return (
+                  <section key={i} className={h.stackSm} aria-label={`Sample ${i + 1}`}>
+                    <p className={h.small} style={{ fontWeight: 500 }}>
+                      Sample {i + 1}
+                    </p>
+                    {tables.length === 0 ? (
+                      <p className={h.muted}>No table data came with this sample.</p>
+                    ) : (
+                      tables.map(([name, t]) => <SqlDataTable key={name} name={name} table={t} label={`Sample ${i + 1} table ${name}`} />)
+                    )}
+                    <SqlRowsTable title="Expected rows" label={`Sample ${i + 1} expected rows`} rows={c.expectedRows ?? sqlRows(c.expected)} />
+                  </section>
+                );
+              })}
+            </div>
+          </>
+        )}
+        {!isSql && p.samples.length > 0 && (
           <>
             <h2 className={h.eyebrow} style={{ marginTop: 24, marginBottom: 8 }}>
               Sample cases
@@ -254,7 +338,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
                 <div key={i} className={s.caseGrid}>
                   <div>
                     <p className={h.xs}>Input {i + 1}</p>
-                    <pre className={h.code}>{c.input}</pre>
+                    <pre className={h.code}>{isFunction ? c.inputDisplay : c.input}</pre>
                   </div>
                   <div>
                     <p className={h.xs}>Expected output</p>
@@ -270,13 +354,13 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         </p>
       </section>
 
-      <section className={h.stackSm} aria-label="Editor" data-allow-clipboard>
+      <section className={`${h.stackSm} ${s.codingPane}`} aria-label="Editor" data-allow-select>
         <div className={s.editorWrap}>
           <div className={s.editorBar}>
             <label>
               <span className="sr-only">Language</span>
-              <Select className={s.editorSelect} value={doc.language} disabled={!live} onChange={(e) => change({ ...doc, language: e.target.value })}>
-                {p.languages.map((l) => (
+              <Select className={s.editorSelect} value={doc.language} disabled={!live || isSql} onChange={(e) => change({ ...doc, language: e.target.value })}>
+                {(isSql ? [p.languages.find((l) => l.key === SQL) ?? { key: SQL, name: "SQL (SQLite 3)" }] : p.languages).map((l) => (
                   <option key={l.key} value={l.key}>
                     {l.name}
                   </option>
@@ -292,10 +376,14 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
             value={code}
             language={doc.language}
             readOnly={!live}
+            blockClipboard
             label={`Code for ${p.title}`}
             onChange={(v) => change({ ...doc, code: { ...doc.code, [doc.language]: v } })}
           />
         </div>
+        {noStarter && !doc.code[doc.language] && (
+          <p className={h.xs}>No starter code came for this language. Write the function{p.signature ? ` ${p.signature.functionName}` : ""} yourself.</p>
+        )}
         {loadNote && <p className={h.xs}>{loadNote}</p>}
 
         <div className={h.between}>
@@ -310,7 +398,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
           </div>
         </div>
 
-        <div className={h.card} aria-live="polite">
+        <div className={`${h.card} ${s.codingOutput}`} aria-live="polite" tabIndex={0}>
           {callError && (
             <p role="alert" style={{ color: "var(--ui-color-danger)" }}>
               {callError}
@@ -325,9 +413,36 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
                     <span className={h.row}>
                       {r.ok ? <CheckCircle2 aria-hidden size={16} color="var(--ui-color-success)" /> : <XCircle aria-hidden size={16} color="var(--ui-color-danger)" />} Sample {r.case}
                     </span>
-                    <span className={h.xs}>{r.ok ? `Passed${r.ms === null ? "" : ` · ${r.ms} ms`}` : failText({ expected: r.expected, status: r.status, detail: r.stderr })}</span>
+                    <span className={h.xs}>{r.ok
+                        ? `Passed${r.ms === null ? "" : ` · ${r.ms} ms`}`
+                        : r.expectedRows && r.status === "wrong_answer"
+                          ? "Wrong answer — compare the rows below"
+                          : failText({ expected: r.expected, status: r.status, detail: r.stderr })}</span>
                   </div>
-                  {!r.ok && (
+                  {!r.ok && r.expectedRows && (
+                    <div className={h.stackSm} style={{ marginTop: 8 }}>
+                      {r.status === "runtime_error" ? (
+                        r.stderr && (
+                          <div>
+                            <p className={h.xs}>Error output</p>
+                            <pre className={h.code}>{r.stderr}</pre>
+                          </div>
+                        )
+                      ) : (
+                        <div className={s.caseGrid}>
+                          <SqlRowsTable title="Your rows" label={`Run sample ${r.case}: your rows`} rows={sqlRows(r.stdout)} />
+                          <SqlRowsTable title="Expected rows" label={`Run sample ${r.case}: expected rows`} rows={r.expectedRows} />
+                          {r.stderr && (
+                            <div style={{ gridColumn: "1 / -1" }}>
+                              <p className={h.xs}>Error output</p>
+                              <pre className={h.code}>{r.stderr}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {!r.ok && !r.expectedRows && (
                     <div className={s.caseGrid} style={{ marginTop: 8 }}>
                       <div>
                         <p className={h.xs}>Your output</p>

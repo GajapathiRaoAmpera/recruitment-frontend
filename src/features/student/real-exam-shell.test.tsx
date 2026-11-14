@@ -224,6 +224,20 @@ describe("Submit and Leave", () => {
     expect(api.submitAttempt).not.toHaveBeenCalled();
   });
 
+  it("shows one loader for the whole start: its text goes from checking to starting, with no card in between", async () => {
+    let release!: (token: string) => void;
+    api.entryStart.mockImplementationOnce(() => new Promise((r) => (release = r)));
+    render(<RealExamShell student={student} roundId="r1" />);
+    const loader = screen.getByRole("status");
+    expect(loader).toHaveTextContent("Checking location and full screen…");
+    await waitFor(() => expect(api.entryStart).toHaveBeenCalled());
+    expect(screen.getByRole("status")).toBe(loader); // same element, only the text changed
+    expect(loader).toHaveTextContent("Starting your test…");
+    expect(screen.queryByText("Before you start")).toBeNull();
+    await act(async () => release("ATT"));
+    expect(await screen.findByText("What is 2+2?")).toBeInTheDocument();
+  });
+
   it("does not start the timer until location and full screen pass the start check", async () => {
     Object.defineProperty(document, "fullscreenElement", { value: null, configurable: true });
     render(<RealExamShell student={student} roundId="r1" />);

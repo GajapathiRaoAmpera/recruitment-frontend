@@ -177,7 +177,7 @@ function Runner({ roundId }: { roundId: string }) {
           </p>
         </section>
 
-        <section className={h.stackSm} aria-label="Editor" data-allow-clipboard>
+        <section className={h.stackSm} aria-label="Editor" data-allow-select>
           <div className={s.editorWrap}>
             <div className={s.editorBar}>
               <label>
@@ -192,7 +192,7 @@ function Runner({ roundId }: { roundId: string }) {
               </label>
               <span style={{ opacity: 0.7 }}>Drafts save per language</span>
             </div>
-            <CodeEditor path={key} value={code} language={lang} label={`Code for ${p.title}`} onChange={(v) => update((d) => ({ ...d, code: { ...d.code, [key]: v } }))} />
+            <CodeEditor path={key} value={code} language={lang} blockClipboard label={`Code for ${p.title}`} onChange={(v) => update((d) => ({ ...d, code: { ...d.code, [key]: v } }))} />
           </div>
 
           <div className={h.between}>

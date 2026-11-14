@@ -3,14 +3,14 @@
 import { CheckCircle2, Pencil, Plus, Sparkles } from "lucide-react";
 import { useState } from "react";
 import { ApiError } from "@/api/client";
-import { approveCodingQuestion, DIFFICULTIES, listCodingQuestions, titleOf, type Difficulty, type QuestionSummary } from "@/api/coding-questions";
+import { approveCodingQuestion, DIFFICULTIES, isSqlQuestion, listCodingQuestions, titleOf, type Difficulty, type QuestionSummary } from "@/api/coding-questions";
 import { hire as h } from "@/components/hire/ui";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useAsync } from "@/features/papers/use-async";
@@ -20,6 +20,8 @@ import { codingErrorMessage } from "./messages";
 export const LIST_LIMIT = 200; // the API's maximum page
 export const DIFFICULTY_TONE: Record<Difficulty, BadgeTone> = { easy: "success", medium: "warning", advanced: "danger" };
 export const label = (d: string) => d[0]!.toUpperCase() + d.slice(1);
+/** Marks a SQL question wherever HR sees its title. */
+export const SqlBadge = () => <Badge tone="primary">SQL</Badge>;
 
 interface Props {
   /** Questions already in this round's list (saved or not). */
@@ -100,10 +102,7 @@ export function BankPicker({ inRound, locked, onAdd, onEdit, onNew, onGenerate, 
       {error && !data ? (
         <ErrorState message={codingErrorMessage(error)} onRetry={reload} />
       ) : !data ? (
-        <>
-          <LoadingLabel label="Loading question bank" />
-          <Skeleton style={{ height: 120 }} />
-        </>
+        <RocketLoader label="Loading question bank" />
       ) : data.length === 0 ? (
         <EmptyState
           title={difficulty ? `No ${difficulty} coding questions yet` : "No coding questions yet"}
@@ -132,7 +131,9 @@ export function BankPicker({ inRound, locked, onAdd, onEdit, onNew, onGenerate, 
                 return (
                   <tr key={q.id}>
                     <Td>
-                      <p style={{ fontWeight: 500 }}>{title}</p>
+                      <p style={{ fontWeight: 500 }}>
+                        {title} {isSqlQuestion(q) && <SqlBadge />}
+                      </p>
                       {q.tags.length > 0 && <p className={h.xs}>{q.tags.join(", ")}</p>}
                       {!isApproved && (
                         <span className={h.row}>

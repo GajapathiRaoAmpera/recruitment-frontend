@@ -72,6 +72,14 @@ div.panel {
   }
 }
 
+.paramRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 9rem auto;
+  gap: sp(2);
+  align-items: center;
+  margin-bottom: sp(2);
+}
+
 .caseLabel {
   @include text(sm);
   font-weight: 500;

@@ -46,7 +46,8 @@ it("makes a Super Admin choose the HR who runs the drive, and sends it", async (
 it("lets a Super Admin keep the drive, sending no owner", async () => {
   render(<NewDriveScreen />);
   fill();
-  fireEvent.change(screen.getByLabelText(/^Who runs this drive\?/), { target: { value: "me" } });
+  // The picker shows a loader until the HR list is in; wait for the real field.
+  fireEvent.change(await screen.findByLabelText(/^Who runs this drive\?/), { target: { value: "me" } });
   fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
   fireEvent.click(screen.getByRole("button", { name: /Continue/ }));
   fireEvent.click(screen.getByRole("button", { name: /Create drive/ }));
