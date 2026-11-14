@@ -1,9 +1,10 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileDown } from "lucide-react";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { ApiError } from "@/api/client";
+import { downloadDriveReport } from "@/api/hiring";
 import { decideRound, getDecisions, type DecideResult, type Decision, type DecisionRow } from "@/api/rounds";
 import { hire as h, RoundStatusBadge } from "@/components/hire/ui";
 import { Badge } from "@/components/ui/badge";
@@ -51,13 +52,15 @@ export function decideErrorMessage(e: ApiError): string {
  * HR decision for an AI interview or final round (GET /rounds/{id}/decisions, POST /rounds/{id}/decide).
  * The AI score is shown as a recommendation; HR picks Pass/Fail (Select/Reject on the final round) for every student.
  */
-export function DecisionPanel({ roundId, onDecided }: { roundId: string; onDecided: () => void }) {
+export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string; driveId: string; onDecided: () => void }) {
   const { data, error, reload } = useAsync(() => getDecisions(roundId), [roundId]);
   const [picks, setPicks] = useState<Record<string, Decision>>({});
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<DecideResult | null>(null);
   const [decideError, setDecideError] = useState<string>();
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState<string>();
   const titleId = useId();
 
   if (!data) {
@@ -83,6 +86,17 @@ export function DecisionPanel({ roundId, onDecided }: { roundId: string; onDecid
       ? `Pick ${yes} or ${no} for every student (${undecided} left).`
       : null;
 
+  const getReport = async () => {
+    setReportBusy(true);
+    setReportError(undefined);
+    try {
+      await downloadDriveReport(driveId);
+    } catch (e) {
+      setReportError(e instanceof ApiError ? e.message : "Couldn't create the report. Try again.");
+    } finally {
+      setReportBusy(false);
+    }
+  };
   const pick = (id: string, d: Decision) => setPicks((p) => ({ ...p, [id]: d }));
   const confirm = async () => {
     setBusy(true);
@@ -121,16 +135,36 @@ export function DecisionPanel({ roundId, onDecided }: { roundId: string; onDecid
         </div>
 
         {result && (
-          <div role="status" className={h.cardTight}>
+          <div role="status" className={a.result}>
             <p className={h.cardTitle}>
-              <CheckCircle2 aria-hidden size={18} style={{ marginRight: 6, verticalAlign: "-3px" }} />
+              <CheckCircle2 aria-hidden size={18} className={a.resultIcon} />
               {result.driveClosed ? "Drive finished" : "Round decided"}
             </p>
             <p className={h.small}>
               {result.passed} {final ? "selected" : "passed"}, {result.failed} {final ? "rejected" : "failed"}.{" "}
-              {result.driveClosed ? "This was the last round, so the drive is now closed." : `${result.invited.length} invited to the next round.`}
+              {result.driveClosed
+                ? "The drive is closed and its report is ready to share."
+                : result.invited.length
+                  ? `${result.invited.length} invited to the next round and emailed a sign-in link.`
+                  : "Nobody moved on to the next round."}
             </p>
-            <p className={h.xs}>No emails were sent; let students know separately.</p>
+            {result.driveClosed && (
+              <>
+                <p className={a.resultNote}>
+                  <AlertTriangle aria-hidden size={16} />
+                  Selected students are not emailed automatically. Tell them the result yourself.
+                </p>
+                <div className={h.row}>
+                  <Button onClick={() => void getReport()} loading={reportBusy}>
+                    <FileDown aria-hidden size={16} style={{ marginRight: 6 }} /> Download report
+                  </Button>
+                  <Button asChild variant="secondary">
+                    <Link href={`/hr/drives/${driveId}`}>Back to drive</Link>
+                  </Button>
+                </div>
+                {reportError && <p role="alert" className={h.small}>{reportError}</p>}
+              </>
+            )}
           </div>
         )}
 
