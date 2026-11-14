@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/toast";
 import { DemoNote, hire as h } from "@/components/hire/ui";
 import { createDrive } from "@/api/hiring";
 import { ImportPanel } from "@/features/hiring/import-panel";
+import { KEEP_WITH_ME, OwnerSelect } from "@/features/hiring/owner-select";
 import { safeStorage } from "@/lib/storage";
 import { supabase } from "@/lib/supabase";
 import { roundTitle } from "@/mock/data";
@@ -21,7 +22,7 @@ import type { Round } from "@/mock/types";
 import w from "./new-drive-wizard.module.scss";
 
 type Draft = Pick<Round, "type" | "mode" | "durationMin" | "threshold">;
-type Details = { company: string; campus: string; roleTitle: string; jd: string; startDate: string; endDate: string };
+type Details = { company: string; campus: string; roleTitle: string; jd: string; startDate: string; endDate: string; ownerId: string; ownerLabel: string };
 type StepKey = "details" | "rounds" | "candidates" | "review";
 
 // Real mode imports candidates right after the drive exists, so that step only exists in the prototype.
@@ -45,7 +46,7 @@ const DEFAULT_ROUNDS: Draft[] = [
   { type: "ai_interview", mode: "ai", durationMin: 20 },
   { type: "final", mode: "manual" },
 ];
-const EMPTY: Details = { company: "Ampera Technologies", campus: "", roleTitle: "", jd: "", startDate: "", endDate: "" };
+const EMPTY: Details = { company: "Ampera Technologies", campus: "", roleTitle: "", jd: "", startDate: "", endDate: "", ownerId: "", ownerLabel: "" };
 const DRAFT_KEY = "ampera.drive-draft";
 const isAssessment = (t: Round["type"]) => t !== "shortlist" && t !== "final";
 
@@ -62,8 +63,10 @@ function loadDraft(): { step: number; details: Details; rounds: Draft[] } | null
   }
 }
 
-function validateDetails(d: Details) {
+/** `pickOwner`: a Super Admin must say which HR runs the drive (HR only see drives they own). */
+function validateDetails(d: Details, pickOwner = false) {
   const e: Record<string, string> = {};
+  if (pickOwner && !d.ownerId) e.ownerId = "Choose who runs this drive.";
   if (!d.company.trim()) e.company = "Enter the company name.";
   if (!d.campus.trim()) e.campus = "Enter the campus name.";
   if (!d.roleTitle.trim()) e.roleTitle = "Enter the role title.";
@@ -89,7 +92,8 @@ export function NewDriveScreen() {
   useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: "New drive" }]);
   const router = useRouter();
   const toast = useToast();
-  const { dispatch } = useStore();
+  const { state, dispatch } = useStore();
+  const pickOwner = Boolean(supabase) && state.session?.role === "SUPER_ADMIN";
   // The staff shell renders this page only on the client, so reading storage here can't mismatch the server.
   const [restored] = useState(loadDraft);
   const [step, setStep] = useState(restored?.step ?? 0);
@@ -136,7 +140,7 @@ export function NewDriveScreen() {
   const goTo = (target: number) => {
     for (let i = 0; i < target; i++) {
       const key = STEPS[i]!.key;
-      const e = key === "details" ? validateDetails(details) : key === "rounds" ? validateRounds(rounds) : {};
+      const e = key === "details" ? validateDetails(details, pickOwner) : key === "rounds" ? validateRounds(rounds) : {};
       if (Object.keys(e).length) {
         setErrors(e);
         setStep(i);
@@ -166,6 +170,7 @@ export function NewDriveScreen() {
           campus: details.campus.trim(),
           roleTitle: details.roleTitle.trim(),
           jdText: details.jd.trim(),
+          ownerId: pickOwner && details.ownerId !== KEEP_WITH_ME ? details.ownerId : undefined,
           rounds: rounds.map((r) => ({ type: r.type, mode: r.mode, threshold: r.threshold, durationMin: r.durationMin })),
         });
         safeStorage.set(DRAFT_KEY, "null");
@@ -189,7 +194,7 @@ export function NewDriveScreen() {
     if (step < STEPS.length - 1) goTo(step + 1);
     else {
       goTo(step); // re-validate everything before creating
-      const ok = !Object.keys(validateDetails(details)).length && !Object.keys(validateRounds(rounds)).length;
+      const ok = !Object.keys(validateDetails(details, pickOwner)).length && !Object.keys(validateRounds(rounds)).length;
       if (ok) void launch();
     }
   };
@@ -197,7 +202,10 @@ export function NewDriveScreen() {
   if (created)
     return (
       <>
-        <PageHeader title="Drive created" description={`${details.roleTitle} at ${details.campus}. Next, import the candidates.`} />
+        <PageHeader
+          title="Drive created"
+          description={`${details.roleTitle} at ${details.campus}.${pickOwner && details.ownerId !== KEEP_WITH_ME ? ` ${details.ownerLabel.replace(/ \(.*\)$/, "")} runs it and now sees it in their HR portal.` : ""} Next, import the candidates.`}
+        />
         <div className={h.stack}>
           <ImportPanel driveId={created} />
           <div>
@@ -271,6 +279,17 @@ export function NewDriveScreen() {
                 </div>
               )}
             </div>
+            {pickOwner && (
+              <OwnerSelect
+                value={details.ownerId}
+                allowSelf
+                error={errors.ownerId}
+                onChange={(id, label) => {
+                  setDetailsState((d) => ({ ...d, ownerId: id, ownerLabel: label }));
+                  clearError("ownerId");
+                }}
+              />
+            )}
             <Field label="Job description" required error={errors.jd} hint={`Used to score how well each resume matches (keyword overlap, no AI). ${details.jd.trim().length < 20 ? `${details.jd.trim().length}/20 characters minimum.` : ""}`}>
               <Textarea rows={8} value={details.jd} onChange={(e) => setDetail("jd", e.target.value)} />
             </Field>
@@ -392,6 +411,12 @@ export function NewDriveScreen() {
                 <dd>{details.company}</dd>
                 <dt>Campus</dt>
                 <dd>{details.campus}</dd>
+                {pickOwner && (
+                  <>
+                    <dt>Run by</dt>
+                    <dd>{details.ownerId === KEEP_WITH_ME ? "You (no HR will see it)" : details.ownerLabel}</dd>
+                  </>
+                )}
                 <dt>Role</dt>
                 <dd>{details.roleTitle}</dd>
                 {!supabase && (

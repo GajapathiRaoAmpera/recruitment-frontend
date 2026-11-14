@@ -87,7 +87,10 @@ export function RealDrivesTable() {
               <Link href={`/hr/drives/${d.id}`} className={h.link}>
                 {d.roleTitle}
               </Link>
-              <p className={h.xs}>{d.company}</p>
+              <p className={h.xs}>
+                {d.company}
+                {d.ownerName ? ` · Run by ${d.ownerName}` : ""}
+              </p>
             </Td>
             <Td>{d.campus}</Td>
             <Td>{d.candidates}</Td>
@@ -167,6 +170,7 @@ export function RealDrivesCards() {
               <h3 style={{ fontWeight: 500 }}>{d.roleTitle}</h3>
               <p className={h.xs}>
                 {d.company} · {d.campus}
+                {d.ownerName ? ` · Run by ${d.ownerName}` : ""}
               </p>
             </div>
             <Badge>{d.status}</Badge>

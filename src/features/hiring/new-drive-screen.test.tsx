@@ -4,7 +4,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
 vi.mock("@/lib/supabase", () => ({ supabase: null }));
 const dispatch = vi.hoisted(() => vi.fn());
-vi.mock("@/mock/store", () => ({ useStore: () => ({ dispatch }) }));
+vi.mock("@/mock/store", () => ({ useStore: () => ({ state: { session: { role: "HR" } }, dispatch }) }));
 
 import { NewDriveScreen as NewDrivePage } from "./new-drive-screen";
 

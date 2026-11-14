@@ -56,3 +56,20 @@ it("sends the chosen rounds when creating a drive", async () => {
   await createDrive({ company: "C", campus: "K", roleTitle: "R", jdText: "J", rounds: [{ type: "shortlist", mode: "auto" }, { type: "aptitude", mode: "auto", threshold: 60 }] });
   expect(JSON.parse(f.mock.calls[0]![1].body).rounds).toEqual([{ type: "shortlist", mode: "auto" }, { type: "aptitude", mode: "auto", threshold: 60 }]);
 });
+
+it("sends the chosen owner only when given, maps who runs a drive, and reassigns with PATCH", async () => {
+  const { createDrive, reassignDrive } = await import("./hiring");
+  const row = { id: "d1", company: "C", campus: "K", role_title: "R", jd_text: "J", status: "draft", candidates: 0, owner_id: "hr-1", owner_name: "Priya" };
+  let f = stub(reply(row));
+  const d = await createDrive({ company: "C", campus: "K", roleTitle: "R", jdText: "J", rounds: [], ownerId: "hr-1" });
+  expect(JSON.parse(f.mock.calls[0]![1].body).owner_id).toBe("hr-1");
+  expect(d).toMatchObject({ ownerId: "hr-1", ownerName: "Priya" });
+  f = stub(reply(row));
+  await createDrive({ company: "C", campus: "K", roleTitle: "R", jdText: "J", rounds: [] });
+  expect(JSON.parse(f.mock.calls[0]![1].body)).not.toHaveProperty("owner_id");
+  f = stub(reply({ ...row, owner_id: "hr-2", owner_name: "Sneha" }));
+  expect(await reassignDrive("d1", "hr-2")).toMatchObject({ ownerName: "Sneha" });
+  expect(f.mock.calls[0]![0]).toBe("/api/v1/drives/d1/owner");
+  expect(f.mock.calls[0]![1].method).toBe("PATCH");
+  expect(JSON.parse(f.mock.calls[0]![1].body)).toEqual({ owner_id: "hr-2" });
+});
