@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { useMemo, useState } from "react";
 import { sendPapers } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
@@ -68,17 +69,14 @@ export function SendStep({ draft, onSent }: { draft: DraftDetail; onSent: () => 
   return (
     <section className={h.card} aria-labelledby="send-title">
       <div className={h.cardHead}>
-        <h2 id="send-title" className={h.cardTitle}>
+        <h2 id="send-title" className={h.cardTitle} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           Send to candidates
+          <InfoTip label="About sending">Sending saves each candidate&apos;s paper. Candidates can open it once the exam module ships.</InfoTip>
         </h2>
         <span className={h.xs}>
           {sentTo.size} of {candidates.length} sent
         </span>
       </div>
-      <p className={s.banner} data-tone="info" style={{ marginBottom: "1rem" }}>
-        <Info aria-hidden size={16} />
-        <span>Sending saves each candidate&apos;s paper. Candidates can open it once the exam module ships.</span>
-      </p>
 
       {candidates.length === 0 ? (
         <EmptyState title="No candidates in this drive" description="Import candidates for the drive first, then come back to send the paper." />

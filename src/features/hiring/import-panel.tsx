@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { fetchResumes, importCandidates, type FetchItem, type FetchStatus, type ImportResult } from "@/api/hiring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h, Progress } from "@/components/hire/ui";
 
@@ -63,8 +64,11 @@ export function ImportPanel({ driveId, onChanged, missingResumes = 0, total = 0 
             <FileSpreadsheet size={16} />
           </span>
           <div>
-            <p style={{ fontWeight: 500 }}>Google Form sheet</p>
-            <p className={h.xs}>.xlsx or .csv with Email, Full name, Student ID and Date of birth. Resumes are fetched right after upload.</p>
+            <p className={h.row} style={{ fontWeight: 500, gap: 4 }}>
+              Google Form sheet
+              <InfoTip label="About the sheet">.xlsx or .csv with Email, Full name, Student ID and Date of birth columns. Uploading again updates existing candidates. Resumes are fetched right after upload.</InfoTip>
+            </p>
+            <p className={h.xs}>{total ? `${total} candidate${total === 1 ? "" : "s"} imported` : "No candidates yet"}</p>
           </div>
         </div>
         <Button variant={total ? "secondary" : "primary"} size="sm" loading={busy === "import"} disabled={busy === "fetch"} onClick={() => input.current?.click()}>

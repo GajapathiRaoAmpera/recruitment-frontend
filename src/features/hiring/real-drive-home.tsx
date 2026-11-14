@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { InfoTip } from "@/components/ui/info-tip";
 import { RobotLoader } from "@/components/ui/robot-loader";
 import { ErrorState, NotFoundState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
@@ -96,9 +97,10 @@ export function RealDriveHome() {
                         <span className="sr-only">Round {r.position}: </span>
                         {info.title}
                       </span>
+                      {info.hint && <InfoTip label={`About ${info.title}`}>{info.hint}</InfoTip>}
                       <Badge tone={status.tone}>{status.text}</Badge>
                     </p>
-                    <p className={h.xs}>{isShortlist ? `${d.candidates} candidate${d.candidates === 1 ? "" : "s"} imported · ${info.hint}` : info.hint}</p>
+                    {isShortlist && <p className={h.xs}>{`${d.candidates} candidate${d.candidates === 1 ? "" : "s"} imported`}</p>}
                   </div>
                 </div>
                 <Button asChild variant={r.status === "active" ? "primary" : "secondary"} size="sm">
