@@ -37,3 +37,9 @@
   color: var(--ui-color-danger);
   @include text(sm);
 }
+
+// Result of a decision: success tint, with the one thing HR must still do called out.
+.result { display: grid; gap: 10px; padding: 16px; border-radius: var(--ui-radius-card); background: var(--ui-color-success-subtle); }
+.resultIcon { margin-right: 6px; vertical-align: -3px; color: var(--ui-color-success); }
+.resultNote { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 8px 12px; border-radius: var(--ui-radius-input); background: var(--ui-color-warning-subtle); color: var(--ui-color-warning); font-size: 0.875rem; }
+.resultNote svg { flex: none; margin-top: 2px; }

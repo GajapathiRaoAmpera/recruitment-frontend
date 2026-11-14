@@ -41,3 +41,13 @@
 .answer textarea { font-family: var(--ui-font-mono); min-height: 9rem; width: 100%; }
 .center { max-width: 30rem; margin: 10vh auto; padding: 16px; display: grid; gap: 12px; }
 @media (prefers-reduced-motion: reduce) { .meter > div { transition: none; } }
+.checkTitle { margin: 0 0 4px; font-size: 1.375rem; }
+.facts { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 0.9375rem; }
+.checklist { list-style: none; margin: 0; display: grid; gap: 16px; }
+.checkRow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.checkBody { display: grid; gap: 4px; }
+.checkBody .cam { margin-top: 8px; }
+.checkIcon { margin-top: 1px; color: var(--ui-color-text-muted); }
+.checkIcon[data-s="ok"] { color: var(--ui-color-success); }
+.checkIcon[data-s="warn"] { color: var(--ui-color-warning); }
+.startHint { margin: -4px 0 0; text-align: center; font-size: 0.875rem; color: var(--ui-color-text-muted); }

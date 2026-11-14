@@ -32,7 +32,7 @@ export function RealRoundPage({ driveId, roundId }: { driveId: string; roundId: 
       {round?.type === "aptitude" && <RoundPaperPanel driveId={driveId} />}
       {round?.type === "coding" && <CodingSetup roundId={roundId} />}
       {round && open && TEST_ROUNDS.has(round.type) && <AdvancePanel roundId={roundId} driveId={driveId} onAdvanced={() => setVersion((v) => v + 1)} />}
-      {round && open && HR_DECIDED.has(round.type) && <DecisionPanel roundId={roundId} onDecided={() => setVersion((v) => v + 1)} />}
+      {round && open && HR_DECIDED.has(round.type) && <DecisionPanel roundId={roundId} driveId={driveId} onDecided={() => setVersion((v) => v + 1)} />}
       {round?.type === "coding" && open && <CodingResults roundId={roundId} />}
     </div>
   );

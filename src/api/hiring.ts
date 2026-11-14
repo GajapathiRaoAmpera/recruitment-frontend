@@ -1,4 +1,4 @@
-import { api, ApiError } from "@/api/client";
+import { api, apiBlob, ApiError } from "@/api/client";
 import { getToken } from "@/lib/auth";
 
 // Drives, candidate import, resumes and shortlisting (backend app/drives + app/candidates).
@@ -164,6 +164,13 @@ export async function openResume(candidateId: string): Promise<void> {
   }
   const url = URL.createObjectURL(await res.blob());
   window.open(url, "_blank", "noopener");
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/** GET /drives/{id}/report.pdf: the branded drive report; only for a closed drive (409 DRIVE_NOT_CLOSED before). */
+export async function downloadDriveReport(driveId: string, fileName = "drive-report.pdf"): Promise<void> {
+  const url = URL.createObjectURL(await apiBlob(`/drives/${driveId}/report.pdf`));
+  Object.assign(document.createElement("a"), { href: url, download: fileName.replace(/[^\w.-]+/g, "-") }).click();
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 

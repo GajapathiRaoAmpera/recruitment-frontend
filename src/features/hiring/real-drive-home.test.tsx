@@ -4,7 +4,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 vi.mock("next/navigation", () => ({ useParams: () => ({ driveId: "d1" }) }));
 const session = vi.hoisted(() => ({ role: "SUPER_ADMIN" as "SUPER_ADMIN" | "HR" }));
 vi.mock("@/mock/store", () => ({ useStore: () => ({ state: { session } }) }));
-const api = vi.hoisted(() => ({ getDrive: vi.fn(), listRounds: vi.fn(), reassignDrive: vi.fn(), listHrOwners: vi.fn() }));
+const api = vi.hoisted(() => ({ getDrive: vi.fn(), listRounds: vi.fn(), reassignDrive: vi.fn(), listHrOwners: vi.fn(), downloadDriveReport: vi.fn() }));
 vi.mock("@/api/hiring", async (orig) => ({ ...(await orig<typeof import("@/api/hiring")>()), ...api }));
 
 import { RealDriveHome } from "./real-drive-home";
@@ -57,4 +57,20 @@ it("gives HR no way to move a drive", async () => {
   render(<RealDriveHome />);
   await screen.findByText(/Run by Priya Sharma/);
   expect(screen.queryByRole("button", { name: /Change HR/ })).not.toBeInTheDocument();
+});
+
+it("offers the drive report only once the drive is closed", async () => {
+  session.role = "HR";
+  render(<RealDriveHome />);
+  await screen.findByText(/Run by Priya Sharma/);
+  expect(screen.queryByRole("button", { name: /Download report/ })).not.toBeInTheDocument();
+});
+
+it("downloads the report for a closed drive", async () => {
+  session.role = "HR";
+  api.getDrive.mockResolvedValue({ ...drive("hr-1", "Priya Sharma"), status: "closed" });
+  api.downloadDriveReport.mockResolvedValue(undefined);
+  render(<RealDriveHome />);
+  fireEvent.click(await screen.findByRole("button", { name: /Download report/ }));
+  await waitFor(() => expect(api.downloadDriveReport).toHaveBeenCalledWith("d1", "Ampera-SWE-report.pdf"));
 });
