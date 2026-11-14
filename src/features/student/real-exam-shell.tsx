@@ -90,7 +90,7 @@ function WaitingRoom({ onRetry }: { onRetry: () => void }) {
       <section className={h.card} role="status" aria-live="polite">
         <h1 className={h.cardTitle}>The exam hasn&apos;t started yet</h1>
         <p className={h.muted}>Your system check is done. Please wait and follow your invigilator&apos;s instructions. Keep this page open and in full screen. You&apos;ll be taken to the exam automatically when it starts.</p>
-        <RobotLoader size="inline" label="Waiting for the exam to start" />
+        <RocketLoader size="inline" still label="Waiting for the exam to start" />
         <Button asChild variant="secondary" style={{ marginTop: 12 }}>
           <Link href="/student">Back to dashboard</Link>
         </Button>

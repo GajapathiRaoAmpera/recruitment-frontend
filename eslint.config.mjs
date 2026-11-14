@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     ".claude/**",
     // Vendored minified files copied from node_modules (avatar lip-sync worklet).
     "public/interview/**",
+    // Vendored MediaPipe Emscripten runtime (face detection), not app code.
+    "public/mediapipe/**",
   ]),
 ]);
 
