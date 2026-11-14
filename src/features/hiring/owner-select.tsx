@@ -3,6 +3,7 @@
 import { listHrOwners } from "@/api/hiring";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/input";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { useAsync } from "@/features/papers/use-async";
 
 export const KEEP_WITH_ME = "me";
@@ -24,6 +25,7 @@ interface OwnerSelectProps {
  */
 export function OwnerSelect({ value, onChange, error, allowSelf = false, exclude }: OwnerSelectProps) {
   const owners = useAsync(listHrOwners, []);
+  if (owners.loading && !owners.data) return <RocketLoader size="inline" label="Loading HR users" />;
   const list = (owners.data ?? []).filter((o) => o.id !== exclude);
   const hint = owners.error
     ? `Couldn't load HR users: ${owners.error.message}`
@@ -32,9 +34,9 @@ export function OwnerSelect({ value, onChange, error, allowSelf = false, exclude
       : "The drive shows up in this person's HR portal. Only they (and Super Admins) can see it.";
   return (
     <Field label="Who runs this drive?" required error={error} hint={hint}>
-      <Select value={value} disabled={owners.loading && !owners.data} onChange={(e) => onChange(e.target.value, e.target.selectedOptions[0]?.text ?? "")}>
+      <Select value={value} onChange={(e) => onChange(e.target.value, e.target.selectedOptions[0]?.text ?? "")}>
         <option value="" disabled>
-          {owners.loading && !owners.data ? "Loading HR users…" : "Choose an HR"}
+          Choose an HR
         </option>
         {list.map((o) => (
           <option key={o.id} value={o.id}>

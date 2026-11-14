@@ -1,0 +1,228 @@
+// Audit logs screen, on top of hire.module.scss. Tokens only — no hex values.
+@use "@/styles/mixins" as *;
+
+/* Filter card */
+.filters {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+  padding: sp(4) sp(5);
+}
+
+.filterTop {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+}
+
+.filterGrid {
+  display: grid;
+  gap: sp(3);
+  @include up(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @include up(lg) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.3fr);
+  }
+}
+
+.dates {
+  display: grid;
+  gap: sp(3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @include up(md) {
+    max-width: 28rem;
+  }
+}
+
+.search {
+  position: relative;
+  & input {
+    padding-left: sp(9);
+  }
+}
+
+.searchIcon {
+  position: absolute;
+  left: sp(3);
+  bottom: sp(3);
+  color: var(--ui-color-text-muted);
+  pointer-events: none;
+}
+
+/* Event stream */
+.stream {
+  @include card;
+  overflow: hidden;
+}
+
+.streamHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(2);
+  padding: sp(4) sp(5);
+  border-bottom: 1px solid var(--ui-color-border);
+}
+
+.streamTitle {
+  display: flex;
+  align-items: center;
+  gap: sp(2);
+  @include text(lg);
+  font-weight: 500;
+}
+
+.live {
+  width: sp(2);
+  height: sp(2);
+  border-radius: 999px;
+  background: var(--ui-color-success);
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  @include text(sm);
+}
+
+.row:hover td {
+  background: var(--ui-color-console-hover);
+}
+
+.when {
+  white-space: nowrap;
+}
+
+.whenDate {
+  display: block;
+  font-weight: 500;
+}
+
+.whenTime {
+  display: block;
+  font-family: var(--ui-font-mono);
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.event {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: sp(1);
+}
+
+.code {
+  font-family: var(--ui-font-mono);
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.target {
+  display: block;
+  font-weight: 500;
+}
+
+.targetId {
+  display: block;
+  max-width: 14rem;
+  @include truncate;
+  font-family: var(--ui-font-mono);
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.actions {
+  text-align: right;
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+  padding: sp(3) sp(5);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+/* Details panel */
+.meta {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: sp(2) sp(4);
+  @include text(sm);
+  & dt {
+    color: var(--ui-color-text-muted);
+  }
+  & dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+  margin-top: sp(6);
+}
+
+.sectionTitle {
+  @include eyebrow;
+}
+
+.changes {
+  width: 100%;
+  border-collapse: collapse;
+  @include text(sm);
+  & th {
+    padding: sp(2) sp(3);
+    border-bottom: 1px solid var(--ui-color-border);
+    background: var(--ui-color-surface-muted);
+    font-weight: 500;
+    text-align: left;
+    color: var(--ui-color-text-muted);
+  }
+  & td {
+    padding: sp(2) sp(3);
+    border-bottom: 1px solid var(--ui-color-border);
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+}
+
+.before {
+  color: var(--ui-color-danger);
+  text-decoration: line-through;
+}
+
+.after {
+  color: var(--ui-color-success);
+  font-weight: 500;
+}
+
+.json {
+  margin: 0;
+  max-height: 16rem;
+  overflow: auto;
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-surface-muted);
+  padding: sp(3);
+  font-family: var(--ui-font-mono);
+  @include text(xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

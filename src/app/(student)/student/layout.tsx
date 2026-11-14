@@ -23,7 +23,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
   const { candidate, drive, real } = useStudent();
   if (!candidate && !real) return <RocketLoader size="screen" label="Opening your dashboard" />;
   return (
-    <>
+    <div className={s.portal}>
       <header className={s.top}>
         <Link href="/student" aria-label="Student portal home">
           <Logo height={24} />
@@ -57,6 +57,6 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
       <main id="main" className={s.main}>
         {children}
       </main>
-    </>
+    </div>
   );
 }

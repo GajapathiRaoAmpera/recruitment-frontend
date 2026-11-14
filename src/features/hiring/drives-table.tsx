@@ -2,10 +2,10 @@
 
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { listDrives } from "@/api/hiring";
+import { listDrives, type Drive } from "@/api/hiring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h, PipelineSteps, roundLabel } from "@/components/hire/ui";
@@ -56,18 +56,10 @@ export function MockDrivesTable() {
 }
 
 export function RealDrivesTable() {
-  const { data, error, loading, reload } = useAsync(listDrives, []);
+  const { data, error, reload } = useAsync(listDrives, []);
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (loading && !data) {
-    return (
-      <div className={h.stackSm}>
-        <LoadingLabel label="Loading drives" />
-        <Skeleton style={{ height: 48 }} />
-        <Skeleton style={{ height: 48 }} />
-      </div>
-    );
-  }
-  if (!data?.length) {
+  if (!data) return <RocketLoader label="Loading drives" />;
+  if (!data.length) {
     return <EmptyState title="No drives yet" description="Create your first campus drive." action={<Button asChild><Link href="/hr/drives/new">New drive</Link></Button>} />;
   }
   return (
@@ -146,23 +138,21 @@ export function MockDrivesCards() {
   );
 }
 
+/** Fetches the drives itself; pages that already hold the list should render `DriveCardList` so nothing loads twice. */
 export function RealDrivesCards() {
-  const { data, error, loading, reload } = useAsync(listDrives, []);
+  const { data, error, reload } = useAsync(listDrives, []);
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (loading && !data) {
-    return (
-      <div className={h.stackSm}>
-        <LoadingLabel label="Loading drives" />
-        <Skeleton style={{ height: 120 }} />
-        <Skeleton style={{ height: 120 }} />
-      </div>
-    );
-  }
-  if (!data?.length) {
+  if (!data) return <RocketLoader label="Loading drives" />;
+  return <DriveCardList drives={data} />;
+}
+
+/** The cards only: a long list scrolls inside its own box instead of stretching the page. */
+export function DriveCardList({ drives: data }: { drives: Drive[] }) {
+  if (!data.length) {
     return <EmptyState title="No drives yet" description="Create your first campus drive." action={<Button asChild><Link href="/hr/drives/new">New drive</Link></Button>} />;
   }
   return (
-    <>
+    <div className={`${h.stackSm} ${h.scrollBox}`}>
       {data.map((d) => (
         <article key={d.id} className={h.card}>
           <div className={h.cardHead}>
@@ -187,7 +177,7 @@ export function RealDrivesCards() {
           </div>
         </article>
       ))}
-    </>
+    </div>
   );
 }
 

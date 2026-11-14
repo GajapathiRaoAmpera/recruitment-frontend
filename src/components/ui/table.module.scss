@@ -1,7 +1,10 @@
 @use "@/styles/mixins" as *;
 
 .wrap {
-  overflow-x: auto;
+  // Long tables scroll inside the card (both ways), header row stays visible.
+  max-height: min(36rem, 70dvh);
+  overflow: auto;
+  overscroll-behavior: contain;
   @include card;
 }
 
@@ -13,6 +16,9 @@
 }
 
 .th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   border-bottom: 1px solid var(--ui-color-border);
   background: var(--ui-color-surface-muted);
   padding: sp(2.5) sp(4);

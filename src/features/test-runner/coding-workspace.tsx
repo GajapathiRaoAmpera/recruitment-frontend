@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/input";
 import { CheckCircle2, Play, Send, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -357,13 +358,13 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
           <div className={s.editorBar}>
             <label>
               <span className="sr-only">Language</span>
-              <select value={doc.language} disabled={!live || isSql} onChange={(e) => change({ ...doc, language: e.target.value })}>
+              <Select className={s.editorSelect} value={doc.language} disabled={!live || isSql} onChange={(e) => change({ ...doc, language: e.target.value })}>
                 {(isSql ? [p.languages.find((l) => l.key === SQL) ?? { key: SQL, name: "SQL (SQLite 3)" }] : p.languages).map((l) => (
                   <option key={l.key} value={l.key}>
                     {l.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <span style={{ opacity: 0.7 }} aria-live="polite">
               {serverSaveFailed ? "Saved in this browser only" : savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Drafts save per language"}

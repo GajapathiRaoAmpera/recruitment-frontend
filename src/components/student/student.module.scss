@@ -1,6 +1,12 @@
 @use "@/styles/mixins" as *;
 
-/* Student portal frame: top bar instead of the staff sidebar. */
+/* Student portal frame: top bar instead of the staff sidebar. One viewport tall; the page scrolls inside it. */
+.portal {
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .top {
   position: sticky;
   top: 0;
@@ -63,8 +69,10 @@
 /* Exam frame */
 .exam {
   display: flex;
-  min-height: 100dvh;
+  height: 100dvh;
   flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .examBar {
@@ -429,14 +437,19 @@
   border-bottom: 1px solid rgb(255 254 250 / 0.12);
   padding: sp(2) sp(3);
   @include text(sm);
-  select {
-    border-radius: var(--ui-radius-input);
-    background: rgb(255 254 250 / 0.1);
-    padding: sp(1) sp(2);
+  label {
+    display: block;
+    width: 11rem;
+  }
+  // Compact, on the dark editor bar; the opened list is the normal themed one.
+  .editorSelect {
+    height: sp(8);
+    border-color: rgb(255 254 250 / 0.2);
+    background-color: rgb(255 254 250 / 0.1);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23fffefa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    padding-inline: sp(2.5) sp(8);
     color: var(--ampera-cream);
-    option {
-      color: var(--ui-color-text);
-    }
+    @include text(sm);
   }
 }
 
