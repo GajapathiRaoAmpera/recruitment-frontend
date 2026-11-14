@@ -1,9 +1,9 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 
-// Real mode (Supabase configured): a Super Admin picks which HR runs the new drive.
+// Real mode (live API): a Super Admin picks which HR runs the new drive.
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
-vi.mock("@/lib/supabase", () => ({ supabase: {} }));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), liveApi: true }));
 const session = vi.hoisted(() => ({ role: "SUPER_ADMIN" as "SUPER_ADMIN" | "HR" }));
 vi.mock("@/mock/store", () => ({ useStore: () => ({ state: { session }, dispatch: vi.fn() }) }));
 const api = vi.hoisted(() => ({ createDrive: vi.fn(), listHrOwners: vi.fn() }));

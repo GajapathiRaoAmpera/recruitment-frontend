@@ -5,9 +5,10 @@ import { ApiError } from "@/api/client";
 const api = vi.hoisted(() => ({ aiStatus: vi.fn(), createDraft: vi.fn() }));
 const auth = vi.hoisted(() => ({ configured: true }));
 vi.mock("@/api/papers", () => api);
-vi.mock("@/lib/supabase", () => ({
-  get supabase() {
-    return auth.configured ? {} : null;
+vi.mock("@/lib/auth", async (orig) => ({
+  ...(await orig<typeof import("@/lib/auth")>()),
+  get liveApi() {
+    return auth.configured;
   },
 }));
 

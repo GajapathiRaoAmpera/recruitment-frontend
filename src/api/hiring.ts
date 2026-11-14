@@ -1,5 +1,5 @@
 import { api, ApiError } from "@/api/client";
-import { supabase } from "@/lib/supabase";
+import { getToken } from "@/lib/auth";
 
 // Drives, candidate import, resumes and shortlisting (backend app/drives + app/candidates).
 // Wire snake_case is mapped by hand here: candidate form_data keys are spreadsheet headers and must stay untouched.
@@ -156,7 +156,7 @@ export async function getCandidate(id: string): Promise<CandidateProfile> {
 
 /** The resume PDF sits behind the HR login, so a plain link would be rejected: fetch it with the token and open the blob. */
 export async function openResume(candidateId: string): Promise<void> {
-  const token = (await supabase?.auth.getSession())?.data.session?.access_token;
+  const token = getToken();
   const res = await fetch(`/api/v1/candidates/${candidateId}/resume`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
   if (!res.ok) {
     const body = await res.json().catch(() => null);

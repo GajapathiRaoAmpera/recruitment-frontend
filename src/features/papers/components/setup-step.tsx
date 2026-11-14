@@ -10,7 +10,7 @@ import { Input, Select } from "@/components/ui/input";
 import { RobotLoader } from "@/components/ui/robot-loader";
 import type { Draft, Level, PaperSettings } from "@/features/papers/types";
 import { useAsync } from "@/features/papers/use-async";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { CountSteppers, NumberStepper } from "./count-steppers";
 import { MixEditor, sum } from "./mix-editor";
 import s from "./papers.module.scss";
@@ -47,7 +47,7 @@ interface SetupStepProps {
 
 /** Step 1: paper settings → POST /papers/drafts. Needs the real API, so prototype mode shows a permission state. */
 export function SetupStep(props: SetupStepProps) {
-  return supabase ? <SetupForm {...props} /> : <PrototypeState />;
+  return liveApi ? <SetupForm {...props} /> : <PrototypeState />;
 }
 
 function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {

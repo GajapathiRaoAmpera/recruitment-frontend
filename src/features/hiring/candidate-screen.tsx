@@ -14,7 +14,7 @@ import { useToast } from "@/components/ui/toast";
 import { Chips, hire as h, ResultBadge, StatCard, Tabs } from "@/components/hire/ui";
 import { driveRounds, pct, useStore } from "@/mock/store";
 import { RealCandidate } from "@/features/hiring/real-candidate";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 type Tab = "rounds" | "integrity" | "interview";
 
@@ -186,5 +186,5 @@ function MockCandidate() {
 
 export function CandidateScreen() {
   const { candidateId } = useParams<{ candidateId: string }>();
-  return supabase ? <RealCandidate candidateId={candidateId} /> : <MockCandidate />;
+  return liveApi ? <RealCandidate candidateId={candidateId} /> : <MockCandidate />;
 }

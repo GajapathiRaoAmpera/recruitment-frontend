@@ -15,7 +15,7 @@ import { createDrive } from "@/api/hiring";
 import { ImportPanel } from "@/features/hiring/import-panel";
 import { KEEP_WITH_ME, OwnerSelect } from "@/features/hiring/owner-select";
 import { safeStorage } from "@/lib/storage";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { roundTitle } from "@/mock/data";
 import { useStore } from "@/mock/store";
 import type { Round } from "@/mock/types";
@@ -26,7 +26,7 @@ type Details = { company: string; campus: string; roleTitle: string; jd: string;
 type StepKey = "details" | "rounds" | "candidates" | "review";
 
 // Real mode imports candidates right after the drive exists, so that step only exists in the prototype.
-const STEPS: { key: StepKey; label: string }[] = supabase
+const STEPS: { key: StepKey; label: string }[] = liveApi
   ? [
       { key: "details", label: "Drive details" },
       { key: "rounds", label: "Rounds & rules" },
@@ -71,7 +71,7 @@ function validateDetails(d: Details, pickOwner = false) {
   if (!d.campus.trim()) e.campus = "Enter the campus name.";
   if (!d.roleTitle.trim()) e.roleTitle = "Enter the role title.";
   if (d.jd.trim().length < 20) e.jd = "Paste the job description (at least 20 characters).";
-  if (!supabase && d.startDate && d.endDate && d.endDate < d.startDate) e.endDate = "The last day can't be before the first day.";
+  if (!liveApi && d.startDate && d.endDate && d.endDate < d.startDate) e.endDate = "The last day can't be before the first day.";
   return e;
 }
 
@@ -93,7 +93,7 @@ export function NewDriveScreen() {
   const router = useRouter();
   const toast = useToast();
   const { state, dispatch } = useStore();
-  const pickOwner = Boolean(supabase) && state.session?.role === "SUPER_ADMIN";
+  const pickOwner = Boolean(liveApi) && state.session?.role === "SUPER_ADMIN";
   // The staff shell renders this page only on the client, so reading storage here can't mismatch the server.
   const [restored] = useState(loadDraft);
   const [step, setStep] = useState(restored?.step ?? 0);
@@ -162,7 +162,7 @@ export function NewDriveScreen() {
   };
 
   const launch = async () => {
-    if (supabase) {
+    if (liveApi) {
       setLaunching(true);
       try {
         const d = await createDrive({
@@ -268,7 +268,7 @@ export function NewDriveScreen() {
               <Field label="Role title" required error={errors.roleTitle}>
                 <Input value={details.roleTitle} placeholder="e.g. Software Engineer" onChange={(e) => setDetail("roleTitle", e.target.value)} />
               </Field>
-              {!supabase && (
+              {!liveApi && (
                 <div className={w.dates}>
                   <Field label="First day">
                     <Input type="date" value={details.startDate} onChange={(e) => setDetail("startDate", e.target.value)} />
@@ -419,7 +419,7 @@ export function NewDriveScreen() {
                 )}
                 <dt>Role</dt>
                 <dd>{details.roleTitle}</dd>
-                {!supabase && (
+                {!liveApi && (
                   <>
                     <dt>Dates</dt>
                     <dd>{windowLabel(details) || "Not set"}</dd>
@@ -453,7 +453,7 @@ export function NewDriveScreen() {
                 ))}
               </ol>
             </section>
-            {supabase && <p className={h.muted}>After the drive is created you&apos;ll import the Google Form export and fetch the resumes.</p>}
+            {liveApi && <p className={h.muted}>After the drive is created you&apos;ll import the Google Form export and fetch the resumes.</p>}
           </div>
         )}
 
@@ -467,7 +467,7 @@ export function NewDriveScreen() {
             </Button>
           ) : (
             <Button type="submit" loading={launching}>
-              <Check aria-hidden size={16} style={{ marginRight: 6 }} /> {supabase ? "Create drive" : "Launch drive"}
+              <Check aria-hidden size={16} style={{ marginRight: 6 }} /> {liveApi ? "Create drive" : "Launch drive"}
             </Button>
           )}
         </div>

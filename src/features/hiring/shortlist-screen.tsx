@@ -16,7 +16,7 @@ import { Chips, DemoNote, hire as h, Person } from "@/components/hire/ui";
 import { RoundActions } from "@/components/hire/round-actions";
 import { driveRounds, useStore } from "@/mock/store";
 import { RealShortlist } from "@/features/hiring/real-shortlist";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 function MockShortlist() {
   const { driveId } = useParams<{ driveId: string }>();
@@ -150,5 +150,5 @@ function MockShortlist() {
 
 export function ShortlistScreen() {
   const { driveId } = useParams<{ driveId: string }>();
-  return supabase ? <RealShortlist driveId={driveId} /> : <MockShortlist />;
+  return liveApi ? <RealShortlist driveId={driveId} /> : <MockShortlist />;
 }

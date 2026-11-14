@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { clearToken, getToken } from "@/lib/auth";
 
 /** The API's error shape: {"error": {"code", "message", "details"}}. */
 export class ApiError extends Error {
@@ -14,12 +14,12 @@ export class ApiError extends Error {
 
 /** fetch to the same-origin /api/v1 rewrite with the signed-in user's token; non-2xx → ApiError. */
 async function request(path: string, init: RequestInit = {}): Promise<Response> {
-  const token = (await supabase?.auth.getSession())?.data.session?.access_token;
+  const token = getToken();
   const headers = new Headers(init.headers); // FormData bodies: no Content-Type, the browser adds the boundary
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const res = await fetch(`/api/v1${path}`, { ...init, headers });
-  // Token rejected (expired, revoked): end this browser's Supabase session; the store sends the user to sign in.
-  if (res.status === 401) await supabase?.auth.signOut({ scope: "local" });
+  // A sent token was rejected (expired, revoked): sign this browser out; the store sends the user to sign in.
+  if (res.status === 401 && token) clearToken();
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new ApiError(

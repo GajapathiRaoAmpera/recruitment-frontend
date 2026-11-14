@@ -1,9 +1,7 @@
 // FR-11/FR-12, AC-4: cut-off preview and advance calls; GET /rounds/{id}/test for the coding results.
 import { afterEach, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: { auth: { getSession: async () => ({ data: { session: { access_token: "tok" } } }), signOut: async () => ({ error: null }) } },
-}));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), getToken: () => "tok" }));
 
 import { advanceRound, getRanking, getRoundTest } from "./rounds";
 

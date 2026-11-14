@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/api/client";
 import { toStaff, type ApiUser } from "@/features/auth/staff-sign-in";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { useStore } from "@/mock/store";
 import type { StaffRole, StaffUser } from "@/mock/types";
 
@@ -14,13 +14,13 @@ const apiRole = (r: StaffRole) => (r === "SUPER_ADMIN" ? "super_admin" : "hr");
 const json = (method: string, body: unknown): RequestInit => ({ method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 
 /**
- * Staff CRUD for the Users page: /admin/users when Supabase is configured, the mock store otherwise.
+ * Staff CRUD for the Users page: /admin/users when the live API is on, the mock store otherwise.
  * update/remove resolve to an error message, or undefined on success.
  * invite resolves to {error} or, when sendEmail is false, {link}: a one-time invite link to share.
  */
 export function useStaffUsers() {
   const { state, dispatch } = useStore();
-  const real = supabase !== null;
+  const real = liveApi;
   const [users, setUsers] = useState<StaffUser[]>();
   const [loadError, setLoadError] = useState<string>();
   const [tick, setTick] = useState(0);

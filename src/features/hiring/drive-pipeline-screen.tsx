@@ -18,7 +18,7 @@ import { RoundActions } from "@/components/hire/round-actions";
 import { driveRounds, pct, useStore } from "@/mock/store";
 import type { Candidate, Round, RoundResult } from "@/mock/types";
 import { RealDriveHome } from "@/features/hiring/real-drive-home";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 function MockPipeline() {
   const { driveId } = useParams<{ driveId: string }>();
@@ -245,5 +245,5 @@ function CandidateCard({ c, last }: { c: Candidate; last?: RoundResult }) {
 }
 
 export function DrivePipelineScreen() {
-  return supabase ? <RealDriveHome /> : <MockPipeline />;
+  return liveApi ? <RealDriveHome /> : <MockPipeline />;
 }

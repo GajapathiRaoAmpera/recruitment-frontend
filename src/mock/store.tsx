@@ -3,7 +3,7 @@
 // shortcut: in-memory mock store (resets on full reload). Replace reads/writes with API hooks per ../docs/04-api-contracts.md.
 import { createContext, useContext, useEffect, useReducer, useState, type ReactNode } from "react";
 import { loadStaffSession } from "@/features/auth/staff-sign-in";
-import { linkHash, supabase } from "@/lib/supabase";
+import { getToken, liveApi, onSignedOut } from "@/lib/auth";
 import * as seed from "./data";
 import type {
   AiPrompt, AuditLog, Candidate, College, Drive, EmailLog, Interview, Question, Round, RoundResult,
@@ -121,7 +121,7 @@ export function reducer(s: State, a: Action): State {
     }
     case "logout":
       return { ...s, session: null };
-    case "staffSignedOut": // Supabase ended the session; a student's session is not Supabase's
+    case "staffSignedOut": // staff token gone; a student's session doesn't use it
       return s.session && s.session.role !== "STUDENT" ? { ...s, session: null } : s;
 
     case "createDrive": {
@@ -327,25 +327,17 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
       const raw = window.sessionStorage.getItem(SESSION_KEY);
       if (raw) saved = JSON.parse(raw) as Session;
     } catch {
-      /* no storage: rebuilt from Supabase below, or the user signs in again */
+      /* no storage: rebuilt from the staff token below, or the user signs in again */
     }
-    if (supabase && linkHash) {
-      // Opened from an invite/reset link: no usable password yet, so never treat this as signed in.
-      // Any other landing page (e.g. the Site URL fallback) hands the link tokens to /set-password.
-      if (window.location.pathname !== "/set-password") window.location.replace(`/set-password${linkHash}`);
+    const staff = !saved || saved.role !== "STUDENT";
+    if (!liveApi || !staff) {
+      if (saved) dispatch({ type: "login", session: saved });
       setReady(true); // eslint-disable-line react-hooks/set-state-in-effect -- one-time mount flag
       return;
     }
-    const staff = !saved || saved.role !== "STUDENT";
-    if (!supabase || !staff) {
-      if (saved) dispatch({ type: "login", session: saved });
-      setReady(true);
-      return;
-    }
-    // Real staff sign-in: the Supabase session (localStorage) is the source of truth.
+    // Real staff sign-in: the staff token (localStorage) is the source of truth.
     void (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
+      if (getToken()) {
         // New tab or reopened browser: rebuild the tab's session from GET /me.
         const res = saved ? { session: saved } : await loadStaffSession();
         if ("session" in res) dispatch({ type: "login", session: res.session });
@@ -354,13 +346,10 @@ export function MockStoreProvider({ children }: { children: ReactNode }) {
     })();
   }, []);
 
-  // Supabase signed out (here, in another tab, or the refresh token died): drop the staff session.
+  // Staff token removed (sign-out here or in another tab, or the API rejected it): drop the staff session.
   useEffect(() => {
-    if (!supabase) return;
-    const { data } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "SIGNED_OUT") dispatch({ type: "staffSignedOut" });
-    });
-    return () => data.subscription.unsubscribe();
+    if (!liveApi) return;
+    return onSignedOut(() => dispatch({ type: "staffSignedOut" }));
   }, []);
   useEffect(() => {
     if (!ready) return;

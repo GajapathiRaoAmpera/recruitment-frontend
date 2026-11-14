@@ -2,8 +2,8 @@
 
 import { MockInterviews } from "@/features/interview/mock-interviews";
 import { RealInterviews } from "@/features/interview/real-interviews";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 
 export default function InterviewsPage() {
-  return supabase ? <RealInterviews /> : <MockInterviews />;
+  return liveApi ? <RealInterviews /> : <MockInterviews />;
 }
