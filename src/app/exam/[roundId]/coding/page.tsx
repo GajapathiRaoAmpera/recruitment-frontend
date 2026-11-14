@@ -7,7 +7,7 @@ import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { NotFoundState } from "@/components/ui/states";
+import { EmptyState, NotFoundState } from "@/components/ui/states";
 import { DemoNote, hire as h } from "@/components/hire/ui";
 import { ExamGuard } from "@/components/student/exam-guard";
 import { exitFullscreen, minutesSince, useCountdown, useExamDraft, useExamRound, useStudent } from "@/components/student/hooks";
@@ -39,12 +39,13 @@ export default function CodingTestPage() {
   const { roundId } = useParams<{ roundId: string }>();
   const router = useRouter();
   const { real } = useStudent();
-  const { candidate, round } = useExamRound(roundId);
+  const { state, candidate, round } = useExamRound(roundId);
   useEffect(() => {
     if (real) router.replace(`/exam/${roundId}/test`); // real students: the server-driven test screen
   }, [real, roundId, router]);
   if (real) return null;
   if (!round || !candidate || round.type !== "coding") return <NotFoundState title="Coding test not found" />;
+  if (!state.questions.some((q) => round.questionIds?.includes(q.id))) return <EmptyState title="No coding questions added for this round yet" />;
   return <Runner roundId={roundId} />;
 }
 
