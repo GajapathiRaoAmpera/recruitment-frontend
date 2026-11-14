@@ -19,6 +19,10 @@ export function advanceErrorMessage(e: ApiError): string {
       const who = Number.isFinite(n) && n > 0 ? `${plural(n, "student is", "students are")} still writing` : "Some students are still writing";
       return `${who}. Advance when every attempt is submitted or out of time. Nothing was saved.`;
     }
+    case "NEXT_ROUND_NOT_READY":
+      return "The next round is a coding test with no questions yet. Open that round, add its coding questions, then advance. Nothing was saved.";
+    case "NOT_STARTED":
+      return "Some students haven't started the test yet. Tick \"Mark absent\" to advance anyway, or wait until the test window has closed.";
     case "LOCKED_ATTEMPTS": {
       const list = Array.isArray(e.details.attempts) ? (e.details.attempts as { name?: string; student_id?: string }[]) : [];
       const names = list.map((a) => a.name ?? a.student_id).filter(Boolean).join(", ");

@@ -71,7 +71,7 @@ export function SendStep({ draft, onSent }: { draft: DraftDetail; onSent: () => 
       <div className={h.cardHead}>
         <h2 id="send-title" className={h.cardTitle} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
           Send to candidates
-          <InfoTip label="About sending">Sending saves each candidate&apos;s paper. Candidates can open it once the exam module ships.</InfoTip>
+          <InfoTip label="About sending">Sending opens the Aptitude test for each candidate and emails them a sign-in link. Until then, they canSending saves each candidate&apos;s paper. Candidates can open it once the exam module ships.apos;t start it.</InfoTip>
         </h2>
         <span className={h.xs}>
           {sentTo.size} of {candidates.length} sent
@@ -136,7 +136,7 @@ export function SendStep({ draft, onSent }: { draft: DraftDetail; onSent: () => 
           if (!o) setError(undefined);
         }}
         title={`Send the paper to ${selected.size} candidate${selected.size === 1 ? "" : "s"}?`}
-        description="Each candidate gets their own question set from the accepted pool. Candidates who already have it are skipped."
+        description="They can start the Aptitude test right away and get an email with a sign-in link. Each gets their own question set; candidates who already have it are skipped."
         confirmLabel="Send paper"
         destructive={false}
         loading={sending}
