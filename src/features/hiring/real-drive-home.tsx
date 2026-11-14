@@ -105,7 +105,7 @@ export function RealDriveHome() {
                 </div>
                 <Button asChild variant={r.status === "active" ? "primary" : "secondary"} size="sm">
                   <Link href={isShortlist ? `/hr/drives/${driveId}/candidates` : `/hr/drives/${driveId}/rounds/${r.id}`}>
-                    {isShortlist ? "Review resumes" : "View progress"}
+                    {isShortlist ? "Review resumes" : r.type === "coding" && r.status === "pending" ? "Set up test" : "View progress"}
                   </Link>
                 </Button>
               </li>

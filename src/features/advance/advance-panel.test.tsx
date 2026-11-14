@@ -242,3 +242,14 @@ it("shows the error with a retry when the ranking can't load", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("Ranking is down");
   expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
 });
+
+it("an empty next coding round links straight to its setup", async () => {
+  advanceReply = { status: 409, body: { error: { code: "NEXT_ROUND_NOT_READY", message: "raw", details: { next_round_id: "r2" } } } };
+  render(<AdvancePanel roundId="r1" driveId="d1" onAdvanced={onAdvanced} />);
+  await ready();
+  fireEvent.click(advanceBtn());
+  const dialog = within(await screen.findByRole("dialog"));
+  fireEvent.click(dialog.getByRole("checkbox", { name: "Mark 1 student absent" }));
+  fireEvent.click(dialog.getByRole("button", { name: "Advance round" }));
+  expect(await dialog.findByRole("link", { name: "Set up the coding round" })).toHaveAttribute("href", "/hr/drives/d1/rounds/r2");
+});

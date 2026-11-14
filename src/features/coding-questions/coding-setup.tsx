@@ -149,9 +149,13 @@ export function CodingSetup({ roundId }: { roundId: string }) {
         <h2 id="coding-setup-h" className={h.cardTitle}>
           Coding test setup
         </h2>
-        {locked && (
+        {locked ? (
           <Badge tone="warning">
             <Lock aria-hidden size={12} style={{ marginRight: 4 }} /> Locked
+          </Badge>
+        ) : (
+          <Badge tone={noTest ? "neutral" : serverIds.length ? "success" : "warning"}>
+            {noTest ? "Not set up" : serverIds.length ? `Ready · ${serverIds.length} question${serverIds.length === 1 ? "" : "s"}` : "Needs questions"}
           </Badge>
         )}
       </div>

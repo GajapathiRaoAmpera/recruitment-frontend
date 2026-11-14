@@ -1,9 +1,24 @@
 .stage { display: grid; gap: 8px; justify-items: center; }
-.canvasBox { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 46vh; min-height: 200px; border-radius: var(--ui-radius-card); background: var(--ui-color-primary-subtle); overflow: hidden; }
+.canvasBox { position: relative; isolation: isolate; width: 100%; aspect-ratio: 4 / 3; max-height: 46vh; min-height: 200px; border-radius: var(--ui-radius-card); background: var(--ui-color-office-wall); overflow: hidden; }
+// Office behind the interviewer, blurred like a camera's background (the avatar canvas is transparent).
+.canvasBox::before {
+  content: ""; position: absolute; inset: -12px; z-index: -1; filter: blur(3px);
+  background:
+    radial-gradient(ellipse 7% 13% at 12% 66%, var(--ui-color-office-plant) 60%, transparent 62%),
+    radial-gradient(ellipse 5% 10% at 17% 61%, var(--ui-color-office-plant) 60%, transparent 62%),
+    linear-gradient(var(--ui-color-office-wood-top), var(--ui-color-office-wood-top)) 0 76% / 100% 2% no-repeat,
+    linear-gradient(var(--ui-color-office-wood), var(--ui-color-office-wood)) 0 100% / 100% 23% no-repeat,
+    linear-gradient(90deg, transparent 48%, var(--ui-color-office-frame) 48% 52%, transparent 52%) 92% 18% / 30% 52% no-repeat,
+    linear-gradient(transparent 48%, var(--ui-color-office-frame) 48% 52%, transparent 52%) 92% 18% / 30% 52% no-repeat,
+    linear-gradient(160deg, var(--ui-color-surface), var(--ui-color-office-glass)) 92% 18% / 30% 52% no-repeat,
+    linear-gradient(var(--ui-color-office-frame), var(--ui-color-office-frame)) 92.6% 16.4% / 32% 56% no-repeat,
+    radial-gradient(ellipse 60% 70% at 85% 30%, var(--ui-color-office-light), transparent 70%),
+    linear-gradient(var(--ui-color-office-wall), var(--ui-color-office-wall-shade));
+}
 .stateText { margin: 0; font-size: 0.875rem; color: var(--ui-color-text-muted); }
 .flat { width: 100%; height: 100%; }
 .flatRing { fill: var(--ui-color-surface); stroke: var(--ui-color-primary); stroke-width: 4; }
-.flatBody { fill: var(--ui-color-primary); }
+.flatBody { fill: var(--ui-color-interviewer-suit); }
 .flatHead { fill: var(--ui-color-doll-skin); }
 .flatInk { fill: var(--ui-color-doll-ink); }
 

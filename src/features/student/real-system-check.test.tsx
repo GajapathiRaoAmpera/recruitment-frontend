@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
@@ -20,30 +20,25 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("RealSystemCheck", () => {
-  it("restores location and terms from the server after a refresh", async () => {
+  it("starts at Identity every time, even if the server already has location and terms", async () => {
     render(<RealSystemCheck student={student} roundId="r1" />);
-    await screen.findByText("Location shared");
-    expect((screen.getByRole("checkbox") as HTMLInputElement).checked).toBe(true);
+    expect(screen.queryByText("Location shared")).toBeNull();
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Photo, location & full screen");
   });
 
-  it("asks for Student ID + DOB for this round, and remembers it in this tab", async () => {
-    api.entryConfirm.mockResolvedValue(undefined);
-    window.sessionStorage.setItem("confirmed:r1", "1");
+  it("starts with the camera step and keeps location locked until the photo passes", async () => {
+    api.entrySteps.mockResolvedValue({});
     render(<RealSystemCheck student={student} roundId="r1" />);
-    await screen.findByText("Verified as Asha Rao");
-    cleanup();
-    window.sessionStorage.clear();
-    render(<RealSystemCheck student={student} roundId="r1" />);
-    expect(screen.getByLabelText("Date of birth")).toBeTruthy();
-    expect(screen.queryByText("Verified as Asha Rao")).toBeNull();
+    expect(screen.queryByLabelText("Date of birth")).toBeNull();
+    expect(await screen.findByText(/Camera access was blocked|No camera was found/)).toBeTruthy(); // jsdom has no camera
+    expect((screen.getByRole("button", { name: /Allow location/ }) as HTMLButtonElement).disabled).toBe(true); // locked until the photo passes
+    expect(screen.queryByRole("checkbox")).toBeNull();
+    expect(screen.getByRole("listitem", { current: "step" })).toHaveTextContent("Photo, location & full screen");
   });
 
-  it("hides Start when full screen is off, and logs unticking the terms", async () => {
-    window.sessionStorage.setItem("confirmed:r1", "1");
+  it("never shows Start without walking the steps", async () => {
     render(<RealSystemCheck student={student} roundId="r1" />);
-    await screen.findByText("Location shared");
-    expect(screen.queryByText("Verification complete")).toBeNull(); // terms + location ok but not full screen
-    screen.getByRole("checkbox").click();
-    await waitFor(() => expect(api.entryStep).toHaveBeenCalledWith("t", "r1", "terms", false, {}));
+    expect(screen.queryByText("Verification complete")).toBeNull();
   });
 });
