@@ -10,7 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { RobotLoader } from "@/components/ui/robot-loader";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -35,6 +35,7 @@ export function UsersScreen() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState<FieldErrors>({});
   const [inviteError, setInviteError] = useState<string>();
+  const [emailFailed, setEmailFailed] = useState(false); // only then offer the copy-link fallback
   const [inviting, setInviting] = useState<"email" | "link">();
   const [link, setLink] = useState<{ email: string; url: string }>();
   const [copied, setCopied] = useState(false);
@@ -54,7 +55,7 @@ export function UsersScreen() {
   const [busyRow, setBusyRow] = useState<string>();
 
   if (loadError) return <ErrorState message={`Couldn't load users: ${loadError}`} onRetry={reload} />;
-  if (!users) return <RobotLoader label="Loading users" />;
+  if (!users) return <RocketLoader label="Loading users" />;
 
   const validate = (name: string, email?: string): FieldErrors => {
     const e: FieldErrors = {};
@@ -71,6 +72,7 @@ export function UsersScreen() {
     setForm(EMPTY_FORM);
     setFormErrors({});
     setInviteError(undefined);
+    setEmailFailed(false);
     setOpen(true);
   };
 
@@ -85,7 +87,10 @@ export function UsersScreen() {
     setInviteError(undefined);
     const res = await invite({ ...form, name: form.name.trim(), email: form.email.trim() }, sendEmail);
     setInviting(undefined);
-    if (res.error) return setInviteError(res.error);
+    if (res.error) {
+      setEmailFailed(sendEmail);
+      return setInviteError(res.error);
+    }
     if (res.link) {
       setCopied(false);
       setLink({ email: form.email.trim(), url: res.link });
@@ -233,9 +238,6 @@ export function UsersScreen() {
               <Button variant="secondary" disabled={inviting !== undefined} onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="secondary" loading={inviting === "link"} disabled={inviting !== undefined} onClick={() => add(false)}>
-                <Link2 aria-hidden size={16} style={{ marginRight: 4 }} /> Create &amp; copy link
-              </Button>
               <Button type="submit" form="invite-form" loading={inviting === "email"} disabled={inviting !== undefined}>
                 <Mail aria-hidden size={16} style={{ marginRight: 4 }} /> Send invite email
               </Button>
@@ -247,6 +249,18 @@ export function UsersScreen() {
               <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
                 Couldn&apos;t create the account: {inviteError}
               </p>
+            )}
+            {emailFailed && (
+              <Button
+                type="button"
+                variant="tertiary"
+                size="sm"
+                loading={inviting === "link"}
+                disabled={inviting !== undefined}
+                onClick={() => add(false)}
+              >
+                <Link2 aria-hidden size={16} style={{ marginRight: 4 }} /> Create a link to share instead
+              </Button>
             )}
             <Field label="Full name" required error={formErrors.name}>
               <Input

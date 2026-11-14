@@ -40,7 +40,7 @@ it("advances with the threshold and finalize_locked", async () => {
   const r = await advanceRound("r1", 60, true);
   expect(f.mock.calls[0]![0]).toBe("/api/v1/rounds/r1/advance");
   expect(f.mock.calls[0]![1].method).toBe("POST");
-  expect(JSON.parse(f.mock.calls[0]![1].body)).toEqual({ threshold: 60, finalize_locked: true });
+  expect(JSON.parse(f.mock.calls[0]![1].body)).toEqual({ threshold: 60, finalize_locked: true, mark_absent: false });
   expect(r).toMatchObject({ passed: 2, nextRoundId: "r2", invited: [{ candidateId: "c1", studentId: "S1", name: "Asha" }] });
 });
 

@@ -74,8 +74,8 @@ export async function getRanking(roundId: string, threshold?: number): Promise<R
 }
 
 /** Closes the round at `threshold` percent and invites those who passed to the next round. Can't be undone. */
-export async function advanceRound(roundId: string, threshold: number, finalizeLocked = false): Promise<AdvanceResult> {
-  const r = fromWire<AdvanceResult>(await api<unknown>(`/rounds/${roundId}/advance`, json("POST", { threshold, finalizeLocked })));
+export async function advanceRound(roundId: string, threshold: number, finalizeLocked = false, markAbsent = false): Promise<AdvanceResult> {
+  const r = fromWire<AdvanceResult>(await api<unknown>(`/rounds/${roundId}/advance`, json("POST", { threshold, finalizeLocked, markAbsent })));
   return { ...r, threshold: num(r.threshold) ?? threshold };
 }
 

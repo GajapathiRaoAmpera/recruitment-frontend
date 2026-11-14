@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { exitFullscreen, useStudent } from "@/components/student/hooks";
 import s from "@/components/student/student.module.scss";
 import { useStore } from "@/mock/store";
-import { RobotLoader } from "@/components/ui/robot-loader";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 
 const NAV = [
   { href: "/student", label: "My dashboard" },
@@ -21,7 +21,7 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { dispatch } = useStore();
   const { candidate, drive, real } = useStudent();
-  if (!candidate && !real) return <RobotLoader size="screen" label="Opening your dashboard" />;
+  if (!candidate && !real) return <RocketLoader size="screen" label="Opening your dashboard" />;
   return (
     <>
       <header className={s.top}>
