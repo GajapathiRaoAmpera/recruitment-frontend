@@ -1,11 +1,11 @@
 import { expect, it } from "vitest";
 import { navItems } from "./nav";
 
-it("nav shows Paper builder for HR and Super Admin, and no Question bank", () => {
+it("nav has no Paper builder or Question bank: the Round 1 paper lives on the aptitude round page", () => {
   for (const role of ["HR", "SUPER_ADMIN"] as const) {
-    const items = navItems(role);
-    expect(items.map((i) => i.label)).not.toContain("Question bank");
-    expect(items.find((i) => i.label === "Paper builder")).toMatchObject({ href: "/hr/papers", section: "main" });
+    const labels = navItems(role).map((i) => i.label);
+    expect(labels).not.toContain("Question bank");
+    expect(labels).not.toContain("Paper builder");
   }
 });
 

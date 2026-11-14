@@ -4,7 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { homePath, loginPath, portalOf } from "@/mock/auth";
 import { useStore } from "@/mock/store";
-import { RobotLoader } from "@/components/ui/robot-loader";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { Breadcrumbs, BreadcrumbsProvider } from "./breadcrumbs";
 import { ProfileMenu } from "./profile-menu";
 import s from "./shell.module.scss";
@@ -26,8 +26,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const user = state.staff.find((u) => u.id === staffSession?.userId);
   const role = staffSession?.role ?? "HR";
-  // No frame until we know who is signed in: the robot covers the boot and any redirect.
-  if (!user) return <RobotLoader size="screen" label="Opening your workspace" />;
+  // No frame until we know who is signed in: the rocket covers the boot and any redirect.
+  if (!user) return <RocketLoader size="screen" label="Opening your workspace" />;
   return (
     <BreadcrumbsProvider>
       <a href="#main" className={s.skip}>

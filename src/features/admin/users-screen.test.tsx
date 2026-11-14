@@ -49,3 +49,16 @@ it("asks once more before making someone a Super Admin", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Make Super Admin" }));
   await waitFor(() => expect(hook.update).toHaveBeenCalledWith(users[1], { name: "Priya Sharma", role: "SUPER_ADMIN" }));
 });
+
+it("offers the copy-link fallback only after the invite email fails", async () => {
+  render(<UsersPage />);
+  fireEvent.click(screen.getByRole("button", { name: /Invite user/ }));
+  expect(screen.queryByRole("button", { name: /link to share/ })).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText(/^Full name/), { target: { value: "Maya" } });
+  fireEvent.change(screen.getByLabelText(/^Work email/), { target: { value: "maya@ampera.tech" } });
+  hook.invite.mockResolvedValueOnce({ error: "Couldn't send the email. Try again." });
+  fireEvent.click(screen.getByRole("button", { name: /Send invite email/ }));
+  hook.invite.mockResolvedValueOnce({ link: "https://x/set-password?token=t" });
+  fireEvent.click(await screen.findByRole("button", { name: /link to share/ }));
+  await waitFor(() => expect(hook.invite).toHaveBeenLastCalledWith(expect.objectContaining({ email: "maya@ampera.tech" }), false));
+});

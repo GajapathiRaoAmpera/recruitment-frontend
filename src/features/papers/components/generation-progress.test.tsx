@@ -22,6 +22,7 @@ it("progress bar reflects done/total and stops polling on unmount", async () => 
   const view = render(<GenerationProgress draft={draft()} onUpdate={onUpdate} />);
   expect(screen.getByRole("progressbar", { name: "Generation progress" })).toHaveAttribute("aria-valuenow", "25");
   expect(screen.getByText(/3 \/ 12/)).toBeInTheDocument();
+  expect(screen.getByText(/questions written/)).toBeInTheDocument();
 
   await act(async () => vi.advanceTimersByTime(POLL_MS));
   expect(api.getDraft).toHaveBeenCalledWith("p-1");

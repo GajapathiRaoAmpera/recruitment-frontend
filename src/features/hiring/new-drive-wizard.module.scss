@@ -1,23 +1,28 @@
 @use "@/styles/mixins" as *;
 
-/* Stepper: numbered dots joined by a line; finished steps show a check and can be revisited. */
+/* Stepper: dot + label, then a line that fills the gap to the next step (never under the text).
+   Finished steps show a check and can be revisited. */
 .stepper {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-  grid-auto-flow: column;
+  display: flex;
+  align-items: center;
+  gap: sp(3);
   margin-bottom: sp(6);
 }
 
 .stepItem {
-  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: sp(3);
   min-width: 0;
+  &:last-child {
+    flex: 0 0 auto;
+  }
   // connector to the next step
   &:not(:last-child)::after {
     content: "";
-    position: absolute;
-    top: sp(4);
-    left: calc(sp(4) + sp(9));
-    right: sp(2);
+    flex: 1;
+    min-width: sp(4);
     height: 2px;
     border-radius: 2px;
     background: var(--ui-color-border);
@@ -29,24 +34,25 @@
 
 .stepBtn {
   display: flex;
-  max-width: 100%;
-  align-items: flex-start;
-  gap: sp(2.5);
-  border-radius: var(--ui-radius-input);
-  padding: 0 sp(2) 0 0;
+  min-width: 0;
+  align-items: center;
+  gap: sp(2);
+  border-radius: var(--ui-radius-pill);
+  padding: sp(1) sp(3) sp(1) sp(1);
   text-align: left;
   @include focus-ring;
   &:disabled {
     cursor: default;
   }
-  &:not(:disabled):hover .stepLabel {
-    text-decoration: underline;
+  &:not(:disabled):hover {
+    background: var(--ui-color-primary-subtle);
+  }
+  .stepItem[data-status="active"] & {
+    background: var(--ui-color-primary-subtle);
   }
 }
 
 .dot {
-  position: relative;
-  z-index: 1;
   display: grid;
   width: sp(8);
   height: sp(8);
@@ -56,7 +62,8 @@
   border-radius: 999px;
   background: var(--ui-color-surface);
   @include text(sm);
-  font-weight: 500;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--ui-color-text-muted);
   .stepItem[data-status="active"] & {
     border-color: var(--ui-color-primary);
@@ -70,28 +77,24 @@
   }
 }
 
-.stepText {
-  display: none;
-  min-width: 0;
-  flex-direction: column;
-  padding-top: sp(0.5);
-  @include up(md) {
-    display: flex;
-  }
-}
-
+// Phones: only the current step keeps its label; the others are just numbered dots.
 .stepLabel {
+  display: none;
   @include truncate;
   @include text(sm);
   font-weight: 500;
+  color: var(--ui-color-text-muted);
+  @include up(md) {
+    display: block;
+  }
+  .stepItem[data-status="done"] & {
+    color: var(--ui-color-text);
+  }
   .stepItem[data-status="active"] & {
+    display: block;
+    font-weight: 600;
     color: var(--ui-color-primary);
   }
-}
-
-.stepState {
-  @include text(xs);
-  color: var(--ui-color-text-muted);
 }
 
 .restored {

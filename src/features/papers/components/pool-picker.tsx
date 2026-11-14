@@ -50,6 +50,10 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
   const dirty = picked.size !== saved.size || [...picked].some((id) => !saved.has(id));
   useEffect(() => onDirtyChange?.(dirty), [dirty, onDirtyChange]);
   const paperSize = LEVELS.reduce((a, l) => a + draft.settings.counts[l], 0);
+  // Only what this paper uses: a 100% Aptitude paper shows one column, not rows of "0 / 0".
+  const inPool = (l: Level | null, sec: Section | null) => draft.pool.some((p) => (!l || p.level === l) && (!sec || p.section === sec));
+  const sections = SECTION_KEYS.filter((sec) => LEVELS.some((l) => want[l][sec] > 0) || inPool(null, sec));
+  const levels = LEVELS.filter((l) => sections.some((sec) => want[l][sec] > 0) || inPool(l, null));
 
   const q = query.trim().toLowerCase();
   const rows = draft.pool.filter((p) => (!level || p.level === level) && (!section || p.section === section) && (!q || p.text.toLowerCase().includes(q) || p.topic.toLowerCase().includes(q)));
@@ -89,14 +93,14 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
         </span>
       </div>
       <p className={h.xs} style={{ marginBottom: "0.75rem" }}>
-        Only selected questions can reach candidates. Select exactly what a paper needs and every candidate gets the same questions; select more and each candidate gets their own mix.
+        Tick the questions students may get. Select exactly {paperSize} and every student gets the same paper; select more and each student gets their own mix.
       </p>
 
       <table className={s.counts} aria-label="Selected questions against what each paper needs">
         <thead>
           <tr>
             <th scope="col">Level</th>
-            {SECTION_KEYS.map((sec) => (
+            {sections.map((sec) => (
               <th key={sec} scope="col">
                 {sectionLabel(sec)}
               </th>
@@ -104,10 +108,10 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
           </tr>
         </thead>
         <tbody>
-          {LEVELS.map((l) => (
+          {levels.map((l) => (
             <tr key={l}>
               <th scope="row">{cap(l)}</th>
-              {SECTION_KEYS.map((sec) => {
+              {sections.map((sec) => {
                 const n = count(l, sec);
                 const need = want[l][sec];
                 return (
@@ -137,7 +141,7 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
         <Field label="Level">
           <Select value={level} onChange={(e) => setLevel(e.target.value as Level | "")}>
             <option value="">All levels</option>
-            {LEVELS.map((l) => (
+            {levels.map((l) => (
               <option key={l} value={l}>
                 {cap(l)}
               </option>
@@ -147,7 +151,7 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
         <Field label="Section">
           <Select value={section} onChange={(e) => setSection(e.target.value as Section | "")}>
             <option value="">All sections</option>
-            {SECTION_KEYS.map((sec) => (
+            {sections.map((sec) => (
               <option key={sec} value={sec}>
                 {sectionLabel(sec)}
               </option>

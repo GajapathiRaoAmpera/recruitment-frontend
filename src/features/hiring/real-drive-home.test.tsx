@@ -39,6 +39,19 @@ it("shows who runs the drive and lets a Super Admin hand it to another HR", asyn
   expect(await screen.findByText(/Run by Sneha Rao/)).toBeInTheDocument();
 });
 
+it("lists rounds with readable names and sends the shortlist round to the resume review", async () => {
+  api.listRounds.mockResolvedValue([
+    { id: "r0", position: 0, type: "shortlist", status: "active" },
+    { id: "r1", position: 1, type: "ai_interview", status: "pending" },
+  ]);
+  render(<RealDriveHome />);
+  expect(await screen.findByRole("link", { name: "Review resumes" })).toHaveAttribute("href", "/hr/drives/d1/candidates");
+  expect(screen.getByRole("link", { name: "View progress" })).toHaveAttribute("href", "/hr/drives/d1/rounds/r1");
+  expect(screen.getByText("Resume shortlist")).toBeInTheDocument();
+  expect(screen.getByText("Not started")).toBeInTheDocument();
+  expect(screen.queryByRole("link", { name: "Shortlist" })).not.toBeInTheDocument();
+});
+
 it("gives HR no way to move a drive", async () => {
   session.role = "HR";
   render(<RealDriveHome />);
