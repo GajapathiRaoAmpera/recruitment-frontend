@@ -107,7 +107,7 @@ export function BankPicker({ inRound, locked, onAdd, onEdit, onNew, onGenerate, 
       ) : data.length === 0 ? (
         <EmptyState
           title={difficulty ? `No ${difficulty} coding questions yet` : "No coding questions yet"}
-          description="Write one with New question; it needs 3 sample and 15 hidden test cases."
+          description="Use Generate with AI, or write one with New question (3 sample and 15 hidden test cases)."
         />
       ) : rows.length === 0 ? (
         <EmptyState title="No questions match" description="Try another search or difficulty." />
