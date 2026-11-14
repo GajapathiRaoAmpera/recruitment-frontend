@@ -13,6 +13,23 @@ export interface AttemptQuestion {
   marks: number;
 }
 
+/** One table of a SQL sample's data: column names, then rows of values (numbers, strings or null). */
+export interface SqlTable {
+  columns: string[];
+  rows: (number | string | null)[][];
+}
+
+/** A sample case. `tables` and `expectedRows` are present for mode "sql" only (stdin/function samples are unchanged). */
+export interface CodingSample {
+  input: string;
+  expected: string;
+  inputDisplay: string;
+  /** SQL only: that sample's data, keyed by table name (kept as sent: names are data, not mapped). */
+  tables?: Record<string, SqlTable>;
+  /** SQL only: `expected` split into rows and values; NULL prints as "NULL". */
+  expectedRows?: string[][];
+}
+
 /** A Round 2 question. Only sample cases are ever sent; hidden cases never reach the browser (D7). */
 export interface CodingQuestion {
   id: string;
@@ -21,12 +38,16 @@ export interface CodingQuestion {
   marks: number;
   languages: { key: string; name: string }[];
   /** At most 3. `inputDisplay` is the readable form (function mode: "nums = [1,2,3], target = 5"; stdin: same as `input`). */
-  samples: { input: string; expected: string; inputDisplay: string }[];
+  samples: CodingSample[];
   mode: CodingMode;
   /** Function mode only; null for stdin. */
   signature: Signature | null;
   /** Function mode only: the editor's initial code per language key. Null for stdin (the editor uses LANGS). */
   starterCode: Record<string, string> | null;
+  /** SQL only (absent for stdin/function): the CREATE TABLE statements. */
+  schema?: string | null;
+  /** SQL only (absent for stdin/function): true = the row order is compared. */
+  orderMatters?: boolean | null;
 }
 
 /** A coding question as GET /attempt sends it. */
@@ -37,23 +58,62 @@ interface RawCoding {
   statement: string;
   marks: number;
   languages: { key: string; name: string }[];
-  samples: { input: string; expected: string; input_display?: string }[];
+  samples: { input: string; expected: string; input_display?: string | null; tables?: unknown; expected_rows?: unknown }[];
   mode?: CodingMode;
   signature?: unknown;
   starter_code?: Record<string, string> | null;
+  schema?: string | null;
+  order_matters?: boolean | null;
 }
 
-const toCoding = (q: RawCoding): CodingQuestion => ({
-  id: q.id,
-  title: q.title,
-  statement: q.statement,
-  marks: q.marks,
-  languages: q.languages,
-  samples: q.samples.map((c) => ({ input: c.input, expected: c.expected, inputDisplay: c.input_display ?? c.input })),
-  mode: q.mode === "function" ? "function" : "stdin",
-  signature: q.mode === "function" && q.signature ? fromWire<Signature>(q.signature) : null,
-  starterCode: q.mode === "function" ? (q.starter_code ?? null) : null,
-});
+const isCell = (v: unknown): v is number | string | null => v === null || typeof v === "number" || typeof v === "string";
+const strRows = (v: unknown): string[][] => (Array.isArray(v) ? v.filter(Array.isArray).map((r: unknown[]) => r.map((x) => (x === null ? "NULL" : String(x)))) : []);
+
+/** SQL sample data, kept by table name (never camel-cased: names are data). A malformed table is dropped. */
+function sqlTables(t: unknown): Record<string, SqlTable> {
+  const out: Record<string, SqlTable> = {};
+  if (!t || typeof t !== "object") return out;
+  for (const [name, v] of Object.entries(t as Record<string, { columns?: unknown; rows?: unknown } | null>)) {
+    if (!v || !Array.isArray(v.columns) || !Array.isArray(v.rows)) continue;
+    out[name] = { columns: v.columns.map(String), rows: v.rows.filter(Array.isArray).map((r: unknown[]) => r.map((x) => (isCell(x) ? x : String(x)))) };
+  }
+  return out;
+}
+
+const toCoding = (q: RawCoding): CodingQuestion => {
+  if (q.mode === "sql")
+    return {
+      id: q.id,
+      title: q.title,
+      statement: q.statement,
+      marks: q.marks,
+      languages: q.languages,
+      samples: q.samples.map((c) => ({
+        input: c.input,
+        expected: c.expected,
+        inputDisplay: c.input_display ?? c.input,
+        tables: sqlTables(c.tables),
+        expectedRows: strRows(c.expected_rows),
+      })),
+      mode: "sql",
+      signature: null,
+      starterCode: null,
+      schema: q.schema ?? null,
+      orderMatters: typeof q.order_matters === "boolean" ? q.order_matters : null,
+    };
+  // stdin / function: exactly as before SQL existed.
+  return {
+    id: q.id,
+    title: q.title,
+    statement: q.statement,
+    marks: q.marks,
+    languages: q.languages,
+    samples: q.samples.map((c) => ({ input: c.input, expected: c.expected, inputDisplay: c.input_display ?? c.input })),
+    mode: q.mode === "function" ? "function" : "stdin",
+    signature: q.mode === "function" && q.signature ? fromWire<Signature>(q.signature) : null,
+    starterCode: q.mode === "function" ? (q.starter_code ?? null) : null,
+  };
+};
 
 /** The last SUBMITTED code for a coding question (drafts come from GET /attempt/code-drafts). */
 export interface SavedCode {

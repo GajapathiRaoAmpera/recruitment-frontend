@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, Lock, Pencil, X } from "lucide-react";
 import { useState } from "react";
 import { ApiError } from "@/api/client";
-import { getCodingQuestion, listCodingQuestions, saveTestQuestions, saveTestSettings, titleOf, type QuestionSummary } from "@/api/coding-questions";
+import { getCodingQuestion, isSqlQuestion, listCodingQuestions, saveTestQuestions, saveTestSettings, titleOf, type QuestionSummary } from "@/api/coding-questions";
 import { getRoundTest } from "@/api/rounds";
 import { hire as h } from "@/components/hire/ui";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +14,7 @@ import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { fmt } from "@/features/advance/messages";
 import { useAsync } from "@/features/papers/use-async";
-import { BankPicker, DIFFICULTY_TONE, label, LIST_LIMIT } from "./bank-picker";
+import { BankPicker, DIFFICULTY_TONE, label, LIST_LIMIT, SqlBadge } from "./bank-picker";
 import s from "./coding-questions.module.scss";
 import { GenerateDialog } from "./generate-dialog";
 import { codingErrorMessage, FLAG_LABEL } from "./messages";
@@ -194,6 +194,7 @@ export function CodingSetup({ roundId }: { roundId: string }) {
                   <li key={id} className={s.orderItem}>
                     <span className={s.pos}>{i + 1}.</span>
                     <span className={s.orderTitle}>{title}</span>
+                    {q && isSqlQuestion(q) && <SqlBadge />}
                     {q && <Badge tone={DIFFICULTY_TONE[q.difficulty]}>{label(q.difficulty)}</Badge>}
                     {q && <span className={h.small}>{fmt(q.marks)} marks</span>}
                     {flags[id] && <Badge tone="danger">{flags[id]}</Badge>}

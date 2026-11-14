@@ -3,18 +3,23 @@
 import { CheckCircle2, Sparkles, XCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/api/client";
-import { DIFFICULTIES, generateCodingQuestions, titleOf, type Difficulty, type GenerateResult } from "@/api/coding-questions";
+import { DIFFICULTIES, generateCodingQuestions, isSqlQuestion, MODE_LABEL, titleOf, type CodingMode, type Difficulty, type GenerateResult } from "@/api/coding-questions";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { label } from "./bank-picker";
+import { label, SqlBadge } from "./bank-picker";
 import s from "./coding-questions.module.scss";
 import { codingErrorMessage, failureReasons, fieldErrors } from "./messages";
 import { marksProblem, MAX_TOPIC_CHARS, parseTags, tagsProblem } from "./validate";
 
 export const LOADING_TEXT = "Writing and checking questions… this can take up to a minute or two.";
+const MODE_HINT: Record<CodingMode, string> = {
+  stdin: "Students write a whole program that reads stdin and prints to stdout.",
+  function: "Students write one function; a fixed driver calls it for each case.",
+  sql: "Students write a SQLite query. The AI writes the tables and data; expected rows come from running its reference query.",
+};
 const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
 
 interface Props {
@@ -32,6 +37,7 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
   const [tags, setTags] = useState("");
   const [marks, setMarks] = useState("10");
   const [count, setCount] = useState(1);
+  const [mode, setMode] = useState<CodingMode>("stdin");
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState<GenerateResult | null>(null);
@@ -55,7 +61,9 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
     setError(undefined);
     setResult(null);
     try {
-      setResult(await generateCodingQuestions({ difficulty, topic: topic.trim() || undefined, tags: parseTags(tags), marks: Number(marks), count }));
+      // "stdin" is the API default and is left out, so a Standard request is exactly as before.
+      const typed = mode === "stdin" ? {} : { mode };
+      setResult(await generateCodingQuestions({ difficulty, topic: topic.trim() || undefined, tags: parseTags(tags), marks: Number(marks), count, ...typed }));
       onGenerated();
     } catch (e) {
       if (e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError")) {
@@ -108,7 +116,7 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
                 {result.created.map((q) => (
                   <li key={q.id} className={h.listItem}>
                     <span className={h.row}>
-                      <CheckCircle2 aria-hidden size={16} /> {titleOf(q.body)}
+                      <CheckCircle2 aria-hidden size={16} /> {titleOf(q.body)} {isSqlQuestion(q) && <SqlBadge />}
                     </span>
                     <Button size="sm" variant="secondary" aria-label={`Review ${titleOf(q.body)}`} onClick={() => onReview(q.id)}>
                       Review
@@ -155,6 +163,15 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
                 <Input type="number" min={0.01} max={999} step={0.5} value={marks} disabled={busy} onChange={(e) => setMarks(e.target.value)} />
               </Field>
             </div>
+            <Field label="Question type" hint={MODE_HINT[mode]}>
+              <Select value={mode} disabled={busy} onChange={(e) => setMode(e.target.value as CodingMode)}>
+                {(["stdin", "function", "sql"] as const).map((m) => (
+                  <option key={m} value={m}>
+                    {MODE_LABEL[m]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
             <Field label="Topic (optional)" hint={`Up to ${MAX_TOPIC_CHARS} characters, e.g. "string manipulation".`}>
               <Input value={topic} disabled={busy} maxLength={MAX_TOPIC_CHARS + 50} onChange={(e) => setTopic(e.target.value)} />
             </Field>

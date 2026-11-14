@@ -11,8 +11,19 @@ export const DIFFICULTIES: Difficulty[] = ["easy", "medium", "advanced"];
 export const SAMPLE_CASES = 3;
 export const HIDDEN_CASES = 15;
 
-/** "stdin": a whole program (stdin/stdout). "function": students write one function; a hidden driver calls it. */
-export type CodingMode = "stdin" | "function";
+/**
+ * "stdin": a whole program (stdin/stdout). "function": students write one function; a hidden driver calls it.
+ * "sql": students write a SQLite query; only AI generation creates these (manual create with "sql" is 422).
+ */
+export type CodingMode = "stdin" | "function" | "sql";
+/** HR-facing names, shared by the question form and the generate dialog. */
+export const MODE_LABEL: Record<CodingMode, string> = {
+  stdin: "Full program (stdin / stdout)",
+  function: "Function (LeetCode style)",
+  sql: "SQL query (SQLite)",
+};
+/** Modes HR may pick when writing a question by hand ("sql" is 422 on POST /questions). */
+export const MANUAL_MODES: Exclude<CodingMode, "sql">[] = ["stdin", "function"];
 /** The fixed type set a function-mode signature may use (contract: Function-mode coding questions). */
 export const PARAM_TYPES = ["int", "long", "double", "bool", "string", "int[]", "string[]", "int[][]"] as const;
 export type ParamType = (typeof PARAM_TYPES)[number];
@@ -49,7 +60,14 @@ export interface CodingQuestion extends QuestionSummary {
   mode: CodingMode;
   /** Set for and only for mode "function". */
   signature: Signature | null;
+  /** Mode "sql" only (else null): the CREATE TABLE statements. Read-only. */
+  schema: string | null;
+  /** Mode "sql" only (else null): true = row order is compared. Read-only. */
+  orderMatters: boolean | null;
 }
+
+/** True for a SQL question. GET /questions (the bank list) sends no `mode`, so rows from it alone are never labelled. */
+export const isSqlQuestion = (q: QuestionSummary & { mode?: CodingMode }) => q.mode === "sql";
 
 export interface GenerateInput {
   difficulty: Difficulty;
@@ -57,6 +75,8 @@ export interface GenerateInput {
   tags: string[];
   marks: number;
   count: number; // 1-3
+  /** Omitted = "stdin" (the API default). */
+  mode?: CodingMode;
 }
 
 export interface GenerateResult {
@@ -73,11 +93,14 @@ export interface QuestionInput {
   tags: string[];
   marks: number;
   testCases: TestCase[];
-  /** Omitted = "stdin" (the API default). */
-  mode?: CodingMode;
+  /** Omitted = "stdin" (the API default). Never "sql" (422: SQL questions are only generated). */
+  mode?: Exclude<CodingMode, "sql">;
   /** Required for and only for mode "function". */
   signature?: Signature;
 }
+
+/** What PATCH /questions/{id} may change on a SQL question; mode, signature and test cases are 422 there. */
+export type SqlQuestionPatch = Partial<Pick<QuestionInput, "body" | "difficulty" | "tags" | "marks">> & { approved?: boolean };
 
 export interface TestQuestions {
   testId: string;
@@ -90,6 +113,18 @@ export interface TestQuestions {
 export const titleOf = (body: string) => body.trim().split("\n")[0]!.trim() || "Untitled question";
 
 const summary = <T extends QuestionSummary>(q: T): T => ({ ...q, marks: num(q.marks) ?? 0 });
+const MODES: readonly CodingMode[] = ["stdin", "function", "sql"];
+/** A full CodingQuestion from the wire: absent/unknown mode = "stdin" (sql stays "sql"); `schema`/`orderMatters` only for SQL. */
+const fullQuestion = (r: CodingQuestion): CodingQuestion => {
+  const mode = MODES.includes(r.mode) ? r.mode : "stdin";
+  return {
+    ...r,
+    mode,
+    signature: r.signature ?? null,
+    schema: mode === "sql" ? (r.schema ?? null) : null,
+    orderMatters: mode === "sql" ? (r.orderMatters ?? null) : null,
+  };
+};
 
 /** Newest first, no test cases. `limit` 1-200. */
 export async function listCodingQuestions(f: { difficulty?: Difficulty; tags?: string[]; limit?: number } = {}): Promise<QuestionSummary[]> {
@@ -101,16 +136,16 @@ export async function listCodingQuestions(f: { difficulty?: Difficulty; tags?: s
 
 export async function getCodingQuestion(id: string): Promise<CodingQuestion> {
   const r = summary(fromWire<CodingQuestion>(await api<unknown>(`/questions/${id}`)));
-  return { ...r, mode: r.mode === "function" ? "function" : "stdin", signature: r.signature ?? null, testCases: [...r.testCases].sort((a, b) => a.position - b.position) };
+  return { ...fullQuestion(r), testCases: [...r.testCases].sort((a, b) => a.position - b.position) };
 }
 
 /** Manual questions are approved at once. Needs exactly 3 sample + 15 hidden cases (else 422). */
 export const createCodingQuestion = async (q: QuestionInput) =>
-  summary(fromWire<CodingQuestion>(await api<unknown>("/questions", json("POST", { kind: "coding", ...q }))));
+  fullQuestion(summary(fromWire<CodingQuestion>(await api<unknown>("/questions", json("POST", { kind: "coding", ...q })))));
 
 /** Only the sent fields change; `testCases` replaces the whole set (409 QUESTION_IN_USE once students answered it). */
 export const updateCodingQuestion = async (id: string, patch: Partial<QuestionInput> & { approved?: boolean }) =>
-  summary(fromWire<CodingQuestion>(await api<unknown>(`/questions/${id}`, json("PATCH", patch))));
+  fullQuestion(summary(fromWire<CodingQuestion>(await api<unknown>(`/questions/${id}`, json("PATCH", patch)))));
 
 /** Approves an AI draft, optionally saving edits in the same PATCH. Only approved questions can go in a round. */
 export const approveCodingQuestion = (id: string, edits: Partial<QuestionInput> = {}) => updateCodingQuestion(id, { ...edits, approved: true });
@@ -122,7 +157,7 @@ export const approveCodingQuestion = (id: string, edits: Partial<QuestionInput> 
 export async function generateCodingQuestions(input: GenerateInput, timeoutMs = GENERATE_TIMEOUT_MS): Promise<GenerateResult> {
   const body = { ...input, topic: input.topic?.trim() || undefined };
   const r = fromWire<GenerateResult>(await api<unknown>("/questions/generate", { ...json("POST", body), signal: AbortSignal.timeout(timeoutMs) }));
-  return { created: r.created.map(summary), failed: r.failed };
+  return { created: r.created.map((q) => fullQuestion(summary(q))), failed: r.failed };
 }
 
 /** Creates the round's test if it has none. Duration 60-36000 seconds. */

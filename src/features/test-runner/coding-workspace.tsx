@@ -20,8 +20,9 @@ import { LoadingLabel } from "@/components/ui/skeleton";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
 import { CodeEditor } from "./code-editor";
-import { failText, signatureText, starterOf } from "./coding-shared";
+import { failText, signatureText, sqlRows, starterOf } from "./coding-shared";
 import { clearAttemptDrafts, pickRestore, readLocal, writeLocal, type Restored } from "./drafts";
+import { SqlDataTable, SqlRowsTable } from "./sql-tables";
 
 export const LOCAL_SAVE_MS = 500;
 export const SERVER_SAVE_MS = 10_000;
@@ -38,7 +39,20 @@ interface Props {
   onClosed: (kind: "locked" | "expired") => void;
 }
 
-type RunRow = { case: number; ok: boolean; status: CaseStatus; expected: string; stdout: string; stderr: string; ms: number | null };
+type RunRow = {
+  case: number;
+  ok: boolean;
+  status: CaseStatus;
+  expected: string;
+  stdout: string;
+  stderr: string;
+  ms: number | null;
+  /** SQL only: the sample's expected rows as the API split them. */
+  expectedRows?: string[][];
+};
+
+/** The SQL editor's only language: the API lists just this key for a SQL question. */
+const SQL = "sql";
 
 /** Round 2 coding screen for a student signed in through the API. Hidden test cases never reach the browser (D7). */
 export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: Props) {
@@ -69,7 +83,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         if (stale) return;
         const out: Record<string, Restored> = {};
         for (const q of questions) {
-          const allowed = q.languages.map((l) => l.key);
+          const allowed = q.mode === "sql" ? [SQL] : q.languages.map((l) => l.key);
           const r = pickRestore(allowed, attemptId ? readLocal(attemptId, q.id) : null, server[q.id], attempt.savedCode[q.id]);
           // Function mode: a blank saved draft counts as new, so it opens with the API's starter code.
           out[q.id] = q.mode === "function" ? { ...r, code: Object.fromEntries(Object.entries(r.code).filter(([, c]) => c.trim())) } : r;
@@ -170,6 +184,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
   const doc = docs[p.id]!;
   const code = codeOf(p.id, doc);
   const isFunction = p.mode === "function";
+  const isSql = p.mode === "sql";
   const noStarter = isFunction && !p.starterCode?.[doc.language];
 
   const change = (next: Restored) => {
@@ -205,6 +220,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
           ok: r.passed,
           status: r.status,
           expected: p.samples[r.case - 1]?.expected ?? "",
+          ...(isSql ? { expectedRows: p.samples[r.case - 1]?.expectedRows ?? sqlRows(p.samples[r.case - 1]?.expected ?? "") } : {}),
           stdout: r.stdout,
           stderr: r.stderr,
           ms: r.timeS === null ? null : Math.round(r.timeS * 1000),
@@ -267,7 +283,50 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
           </div>
         )}
         <p style={{ marginTop: 12, whiteSpace: "pre-wrap" }}>{p.statement}</p>
-        {p.samples.length > 0 && (
+        {isSql && (
+          <>
+            <p className={h.xs} style={{ marginTop: 8 }}>
+              Write a SQLite query.
+              {p.orderMatters === true ? " Row order matters." : p.orderMatters === false ? " Row order does not matter." : ""}
+            </p>
+            <h2 className={h.eyebrow} style={{ marginTop: 16, marginBottom: 8 }}>
+              Schema
+            </h2>
+            {p.schema ? (
+              <pre className={h.code} aria-label="Database schema">
+                {p.schema}
+              </pre>
+            ) : (
+              <p className={h.muted}>The schema isn&apos;t available. Tell the invigilator or HR.</p>
+            )}
+          </>
+        )}
+        {isSql && p.samples.length > 0 && (
+          <>
+            <h2 className={h.eyebrow} style={{ marginTop: 24, marginBottom: 8 }}>
+              Sample cases
+            </h2>
+            <div className={h.stack}>
+              {p.samples.map((c, i) => {
+                const tables = Object.entries(c.tables ?? {});
+                return (
+                  <section key={i} className={h.stackSm} aria-label={`Sample ${i + 1}`}>
+                    <p className={h.small} style={{ fontWeight: 500 }}>
+                      Sample {i + 1}
+                    </p>
+                    {tables.length === 0 ? (
+                      <p className={h.muted}>No table data came with this sample.</p>
+                    ) : (
+                      tables.map(([name, t]) => <SqlDataTable key={name} name={name} table={t} label={`Sample ${i + 1} table ${name}`} />)
+                    )}
+                    <SqlRowsTable title="Expected rows" label={`Sample ${i + 1} expected rows`} rows={c.expectedRows ?? sqlRows(c.expected)} />
+                  </section>
+                );
+              })}
+            </div>
+          </>
+        )}
+        {!isSql && p.samples.length > 0 && (
           <>
             <h2 className={h.eyebrow} style={{ marginTop: 24, marginBottom: 8 }}>
               Sample cases
@@ -298,8 +357,8 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
           <div className={s.editorBar}>
             <label>
               <span className="sr-only">Language</span>
-              <select value={doc.language} disabled={!live} onChange={(e) => change({ ...doc, language: e.target.value })}>
-                {p.languages.map((l) => (
+              <select value={doc.language} disabled={!live || isSql} onChange={(e) => change({ ...doc, language: e.target.value })}>
+                {(isSql ? [p.languages.find((l) => l.key === SQL) ?? { key: SQL, name: "SQL (SQLite 3)" }] : p.languages).map((l) => (
                   <option key={l.key} value={l.key}>
                     {l.name}
                   </option>
@@ -352,9 +411,36 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
                     <span className={h.row}>
                       {r.ok ? <CheckCircle2 aria-hidden size={16} color="var(--ui-color-success)" /> : <XCircle aria-hidden size={16} color="var(--ui-color-danger)" />} Sample {r.case}
                     </span>
-                    <span className={h.xs}>{r.ok ? `Passed${r.ms === null ? "" : ` · ${r.ms} ms`}` : failText({ expected: r.expected, status: r.status, detail: r.stderr })}</span>
+                    <span className={h.xs}>{r.ok
+                        ? `Passed${r.ms === null ? "" : ` · ${r.ms} ms`}`
+                        : r.expectedRows && r.status === "wrong_answer"
+                          ? "Wrong answer — compare the rows below"
+                          : failText({ expected: r.expected, status: r.status, detail: r.stderr })}</span>
                   </div>
-                  {!r.ok && (
+                  {!r.ok && r.expectedRows && (
+                    <div className={h.stackSm} style={{ marginTop: 8 }}>
+                      {r.status === "runtime_error" ? (
+                        r.stderr && (
+                          <div>
+                            <p className={h.xs}>Error output</p>
+                            <pre className={h.code}>{r.stderr}</pre>
+                          </div>
+                        )
+                      ) : (
+                        <div className={s.caseGrid}>
+                          <SqlRowsTable title="Your rows" label={`Run sample ${r.case}: your rows`} rows={sqlRows(r.stdout)} />
+                          <SqlRowsTable title="Expected rows" label={`Run sample ${r.case}: expected rows`} rows={r.expectedRows} />
+                          {r.stderr && (
+                            <div style={{ gridColumn: "1 / -1" }}>
+                              <p className={h.xs}>Error output</p>
+                              <pre className={h.code}>{r.stderr}</pre>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {!r.ok && !r.expectedRows && (
                     <div className={s.caseGrid} style={{ marginTop: 8 }}>
                       <div>
                         <p className={h.xs}>Your output</p>

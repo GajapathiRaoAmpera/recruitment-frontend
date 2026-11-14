@@ -9,7 +9,9 @@ import {
   DIFFICULTIES,
   getCodingQuestion,
   HIDDEN_CASES,
+  MANUAL_MODES,
   MAX_PARAMS,
+  MODE_LABEL,
   PARAM_TYPES,
   SAMPLE_CASES,
   updateCodingQuestion,
@@ -19,6 +21,7 @@ import {
   type ParamType,
   type QuestionInput,
   type QuestionSummary,
+  type SqlQuestionPatch,
 } from "@/api/coding-questions";
 import { hire as h } from "@/components/hire/ui";
 import student from "@/components/student/student.module.scss";
@@ -32,6 +35,7 @@ import { ErrorState, ForbiddenState } from "@/components/ui/states";
 import { useAsync } from "@/features/papers/use-async";
 // A next/dynamic wrapper: Monaco is fetched only when the reference solution is first shown.
 import { CodeEditor } from "@/features/test-runner/code-editor";
+import { SqlBadge } from "./bank-picker";
 import { caseCounts, emptyCaseSet, fromTestCases, parseCasesJson, PASTE_EXAMPLE, toTestCases, type CaseRow, type CaseSet } from "./cases";
 import s from "./coding-questions.module.scss";
 import { codingErrorMessage, fieldErrors, type FieldErrors } from "./messages";
@@ -54,6 +58,7 @@ const blankSignature = { functionName: "", params: [{ name: "", type: "int" as P
 const blankForm = (): FormState => ({ body: "", difficulty: "easy", marks: "10", tags: "", cases: emptyCaseSet(), mode: "stdin", ...blankSignature });
 const noop = () => {};
 export const DRAFT_NOTE = "Expected outputs came from running the reference solution. If you change an input, update its expected output yourself.";
+export const SQL_NOTE = "The schema and data come from generation and can't be edited.";
 const toForm = (q: CodingQuestion): FormState => ({
   body: q.body,
   difficulty: q.difficulty,
@@ -71,6 +76,8 @@ export function formProblems(f: FormState): string[] {
   if (marks) out.push(marks);
   const tags = tagsProblem(f.tags);
   if (tags) out.push(tags);
+  // SQL: schema, datasets and expected rows are read-only (an expected result may be empty), so only the checks above apply.
+  if (f.mode === "sql") return out;
   if (f.mode === "function") {
     const fn = functionNameProblem(f.functionName);
     if (fn) out.push(fn);
@@ -94,13 +101,20 @@ const toInput = (f: FormState): QuestionInput => ({
     : {}),
 });
 
-/** Only the fields that changed: a question students answered refuses new test cases, but not a statement fix. */
-function changes(now: QuestionInput, was: QuestionInput): Partial<QuestionInput> {
-  const patch: Partial<QuestionInput> = {};
+/** The fields every question may change. All a SQL question may: mode, signature and test cases are 422 for it. */
+function basicChanges(now: QuestionInput, was: QuestionInput): SqlQuestionPatch {
+  const patch: SqlQuestionPatch = {};
   if (now.body !== was.body) patch.body = now.body;
   if (now.difficulty !== was.difficulty) patch.difficulty = now.difficulty;
   if (now.marks !== was.marks) patch.marks = now.marks;
   if (JSON.stringify(now.tags) !== JSON.stringify(was.tags)) patch.tags = now.tags;
+  return patch;
+}
+
+/** Only the fields that changed: a question students answered refuses new test cases, but not a statement fix. */
+function changes(now: QuestionInput, was: QuestionInput, sql = false): Partial<QuestionInput> {
+  const patch: Partial<QuestionInput> = basicChanges(now, was);
+  if (sql) return patch;
   if (JSON.stringify(now.testCases) !== JSON.stringify(was.testCases)) patch.testCases = now.testCases;
   // "stdin" clears the stored signature; "function" needs one, so it is sent whenever the mode switches to it.
   const nowMode = now.mode ?? "stdin";
@@ -164,7 +178,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
     try {
       const body = toInput(form);
       if (questionId && original) {
-        const patch = changes(body, toInput(original));
+        const patch = changes(body, toInput(original), original.mode === "sql");
         if (Object.keys(patch).length === 0) return onClose();
         onSaved(await updateCodingQuestion(questionId, patch), false);
       } else {
@@ -185,7 +199,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
     setErrors({});
     setFormError(undefined);
     try {
-      onSaved(await approveCodingQuestion(questionId, changes(toInput(form), toInput(original))), false);
+      onSaved(await approveCodingQuestion(questionId, changes(toInput(form), toInput(original), original.mode === "sql")), false);
       onClose();
     } catch (e) {
       fail(e);
@@ -201,10 +215,11 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
   };
 
   const problems = form ? formProblems(form) : [];
-  const dirty = Boolean(form && original && Object.keys(changes(toInput(form), toInput(original))).length);
+  const dirty = Boolean(form && original && Object.keys(changes(toInput(form), toInput(original), original.mode === "sql")).length);
   const busy = saving || approving;
   const counts = form ? caseCounts(form.cases) : null;
   const isFunction = form?.mode === "function";
+  const isSql = form?.mode === "sql";
 
   const caseRows = (kind: keyof CaseSet) => {
     const label = kind === "sample" ? "Sample" : "Hidden";
@@ -287,20 +302,26 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
               <div className={h.row}>
                 <Badge tone="info">Draft (AI)</Badge>
                 <Badge tone="warning">Not approved</Badge>
+                {isSql && <SqlBadge />}
                 <span className={h.xs}>Check the statement and cases, then approve it to use it in a round.</span>
+              </div>
+            )}
+            {isSql && !isDraft && (
+              <div className={h.row}>
+                <SqlBadge />
               </div>
             )}
             {loaded?.referenceSolution && (
               <section aria-labelledby="ref-h">
                 <div className={h.between}>
                   <h3 id="ref-h" className={s.subTitle} style={{ marginBottom: 0 }}>
-                    Reference solution ({loaded.referenceLanguage ?? "python"})
+                    {isSql ? "Reference query" : "Reference solution"} ({loaded.referenceLanguage ?? "python"})
                   </h3>
                   <Button size="sm" variant="secondary" aria-expanded={showRef} onClick={() => setShowRef((v) => !v)}>
-                    <Code2 aria-hidden size={14} style={{ marginRight: 4 }} /> {showRef ? "Hide reference solution" : "Show reference solution"}
+                    <Code2 aria-hidden size={14} style={{ marginRight: 4 }} /> {showRef ? "Hide" : "Show"} reference {isSql ? "query" : "solution"}
                   </Button>
                 </div>
-                <p className={h.xs}>{DRAFT_NOTE} The solution itself can&apos;t be edited.</p>
+                <p className={h.xs}>{isSql ? "Expected rows came from running this query on each dataset. The query itself can't be edited." : `${DRAFT_NOTE} The solution itself can't be edited.`}</p>
                 {showRef && (
                   <div className={student.editorWrap} style={{ marginTop: 8 }}>
                     <CodeEditor
@@ -308,7 +329,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
                       language={loaded.referenceLanguage ?? "python"}
                       onChange={noop}
                       readOnly
-                      label="Reference solution"
+                      label={isSql ? "Reference query" : "Reference solution"}
                       path={`reference/${loaded.id}`}
                     />
                   </div>
@@ -317,7 +338,13 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
             )}
             <Field
               label="Statement"
-              hint={isFunction ? "First line = title. Describe what the function gets and must return." : "First line = title. Describe the input and output format."}
+              hint={
+                isSql
+                  ? "First line = title. Describe what the query must return."
+                  : isFunction
+                    ? "First line = title. Describe what the function gets and must return."
+                    : "First line = title. Describe the input and output format."
+              }
               error={errors.body}
             >
               <Textarea rows={8} value={form.body} onChange={(e) => set({ body: e.target.value })} />
@@ -340,16 +367,24 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
               </Field>
             </div>
 
-            <Field
-              label="Mode"
-              hint={isFunction ? "Students write one function; a fixed driver calls it for each case." : "Students write a whole program that reads stdin and prints to stdout."}
-              error={errors.mode}
-            >
-              <Select value={form.mode} onChange={(e) => set({ mode: e.target.value as CodingMode })}>
-                <option value="stdin">Full program (stdin / stdout)</option>
-                <option value="function">Function (LeetCode style)</option>
-              </Select>
-            </Field>
+            {isSql ? (
+              <SqlDetails schema={loaded?.schema ?? null} orderMatters={loaded?.orderMatters ?? null} cases={loaded?.testCases ?? []} />
+            ) : (
+              <Field
+                label="Mode"
+                hint={isFunction ? "Students write one function; a fixed driver calls it for each case." : "Students write a whole program that reads stdin and prints to stdout."}
+                error={errors.mode}
+              >
+                {/* SQL questions are only generated (POST /questions with "sql" is 422), so it is never offered here. */}
+                <Select value={form.mode} onChange={(e) => set({ mode: e.target.value as CodingMode })}>
+                  {MANUAL_MODES.map((m) => (
+                    <option key={m} value={m}>
+                      {MODE_LABEL[m]}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
 
             {isFunction && (
               <section aria-labelledby="sig-h" className={h.cardTight}>
@@ -409,54 +444,56 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
               </section>
             )}
 
-            <section aria-labelledby="cases-h">
-              <div className={h.between}>
-                <h3 id="cases-h" className={s.subTitle} style={{ marginBottom: 0 }}>
-                  Test cases
-                </h3>
-                <span className={h.row}>
-                  <Badge tone={counts!.complete ? "success" : "warning"}>
-                    <span aria-live="polite">
-                      {counts!.sample}/{SAMPLE_CASES} sample, {counts!.hidden}/{HIDDEN_CASES} hidden
-                    </span>
-                  </Badge>
-                  <Button size="sm" variant="secondary" aria-expanded={pasteOpen} onClick={() => setPasteOpen((o) => !o)}>
-                    <ClipboardPaste aria-hidden size={14} style={{ marginRight: 4 }} /> Paste cases as JSON
-                  </Button>
-                </span>
-              </div>
-              {overflow > 0 && <p className={h.xs}>This question had {overflow} more case(s) than 3 + 15; only the first ones are shown and saving keeps just these.</p>}
-              {errors.cases && (
-                <p role="alert" className={s.error}>
-                  {errors.cases}
-                </p>
-              )}
-              {pasteOpen && (
-                <div className={h.cardTight} style={{ marginTop: 12 }}>
-                  <Field label="Cases JSON" hint={`Exactly ${SAMPLE_CASES} with "sample": true and ${HIDDEN_CASES} with "sample": false. This replaces all 18 rows.`}>
-                    <Textarea rows={6} className={h.mono} placeholder={PASTE_EXAMPLE} value={pasteText} onChange={(e) => setPasteText(e.target.value)} />
-                  </Field>
-                  {pasteError && (
-                    <p role="alert" className={s.error}>
-                      {pasteError}
-                    </p>
-                  )}
-                  <div className={h.row} style={{ marginTop: 8 }}>
-                    <Button size="sm" disabled={!pasteText.trim()} onClick={applyPaste}>
-                      Fill the 18 rows
+            {!isSql && (
+              <section aria-labelledby="cases-h">
+                <div className={h.between}>
+                  <h3 id="cases-h" className={s.subTitle} style={{ marginBottom: 0 }}>
+                    Test cases
+                  </h3>
+                  <span className={h.row}>
+                    <Badge tone={counts!.complete ? "success" : "warning"}>
+                      <span aria-live="polite">
+                        {counts!.sample}/{SAMPLE_CASES} sample, {counts!.hidden}/{HIDDEN_CASES} hidden
+                      </span>
+                    </Badge>
+                    <Button size="sm" variant="secondary" aria-expanded={pasteOpen} onClick={() => setPasteOpen((o) => !o)}>
+                      <ClipboardPaste aria-hidden size={14} style={{ marginRight: 4 }} /> Paste cases as JSON
                     </Button>
-                  </div>
+                  </span>
                 </div>
-              )}
-              <h4 className={h.small} style={{ marginTop: 16, fontWeight: 500 }}>
-                Sample cases: students see these and Run uses them
-              </h4>
-              {caseRows("sample")}
-              <h4 className={h.small} style={{ marginTop: 16, fontWeight: 500 }}>
-                Hidden cases: used for scoring, never shown to students
-              </h4>
-              {caseRows("hidden")}
-            </section>
+                {overflow > 0 && <p className={h.xs}>This question had {overflow} more case(s) than 3 + 15; only the first ones are shown and saving keeps just these.</p>}
+                {errors.cases && (
+                  <p role="alert" className={s.error}>
+                    {errors.cases}
+                  </p>
+                )}
+                {pasteOpen && (
+                  <div className={h.cardTight} style={{ marginTop: 12 }}>
+                    <Field label="Cases JSON" hint={`Exactly ${SAMPLE_CASES} with "sample": true and ${HIDDEN_CASES} with "sample": false. This replaces all 18 rows.`}>
+                      <Textarea rows={6} className={h.mono} placeholder={PASTE_EXAMPLE} value={pasteText} onChange={(e) => setPasteText(e.target.value)} />
+                    </Field>
+                    {pasteError && (
+                      <p role="alert" className={s.error}>
+                        {pasteError}
+                      </p>
+                    )}
+                    <div className={h.row} style={{ marginTop: 8 }}>
+                      <Button size="sm" disabled={!pasteText.trim()} onClick={applyPaste}>
+                        Fill the 18 rows
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                <h4 className={h.small} style={{ marginTop: 16, fontWeight: 500 }}>
+                  Sample cases: students see these and Run uses them
+                </h4>
+                {caseRows("sample")}
+                <h4 className={h.small} style={{ marginTop: 16, fontWeight: 500 }}>
+                  Hidden cases: used for scoring, never shown to students
+                </h4>
+                {caseRows("hidden")}
+              </section>
+            )}
 
             {problems.length > 0 && <p className={h.xs}>To save: {problems.join(" · ")}.</p>}
             {formError && (
@@ -469,5 +506,64 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** A SQL question's generated parts, read-only: the schema, the row-order rule and the 3 + 15 datasets with their expected rows. */
+function SqlDetails({ schema, orderMatters, cases }: { schema: string | null; orderMatters: boolean | null; cases: CodingQuestion["testCases"] }) {
+  const list = (sample: boolean, label: string) => {
+    const rows = cases.filter((c) => c.isSample === sample);
+    if (rows.length === 0) return <p className={h.muted}>No {label.toLowerCase()} cases.</p>;
+    return rows.map((c, i) => (
+      <div key={c.id} className={student.caseGrid} style={{ marginTop: 8 }}>
+        <div>
+          <p className={h.xs}>
+            {label} {i + 1}: data
+          </p>
+          <pre className={h.code} aria-label={`${label} ${i + 1} data`}>
+            {c.input}
+          </pre>
+        </div>
+        <div>
+          <p className={h.xs}>Expected rows</p>
+          <pre className={h.code} aria-label={`${label} ${i + 1} expected rows`}>
+            {c.expected.trim() ? c.expected : "No rows"}
+          </pre>
+        </div>
+      </div>
+    ));
+  };
+  return (
+    <section aria-labelledby="sql-h" className={h.stackSm}>
+      <h3 id="sql-h" className={s.subTitle} style={{ marginBottom: 0 }}>
+        {MODE_LABEL.sql}
+      </h3>
+      <p className={h.xs}>{SQL_NOTE}</p>
+      <h4 className={h.small} style={{ fontWeight: 500 }}>
+        Schema
+      </h4>
+      {schema ? (
+        <pre className={h.code} aria-label="Schema">
+          {schema}
+        </pre>
+      ) : (
+        <p className={h.muted}>No schema came with this question.</p>
+      )}
+      <p className={h.small}>
+        {orderMatters === null
+          ? "Row order: not set."
+          : orderMatters
+            ? "Row order matters: rows must come back in the expected order."
+            : "Row order does not matter: rows are sorted before comparing."}
+      </p>
+      <h4 className={h.small} style={{ marginTop: 8, fontWeight: 500 }}>
+        Sample cases: students see these and Run uses them
+      </h4>
+      {list(true, "Sample")}
+      <h4 className={h.small} style={{ marginTop: 16, fontWeight: 500 }}>
+        Hidden cases: used for scoring, never shown to students
+      </h4>
+      {list(false, "Hidden")}
+    </section>
   );
 }
