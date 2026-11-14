@@ -41,7 +41,10 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
       try {
         const token = await entryStart(student.entryToken, roundId); // repeating it keeps the same deadline
         const state = await getAttempt(token);
-        if (!stale) setAttempt({ token, state });
+        if (!stale) {
+          setError(undefined); // clears a "not open yet" wait once the round opens
+          setAttempt({ token, state });
+        }
       } catch (e) {
         if (!stale) setError(e as Error);
       }
@@ -52,6 +55,9 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   }, [round, checked, student.entryToken, roundId, tries]);
 
   if (!round) return <NotFoundState title="Round not found" description="This round isn't open for you. Go back to your dashboard." />;
+  const notOpen = error instanceof ApiError && error.code === "ROUND_NOT_OPEN";
+  // Exam not opened yet (papers not ready / drive not started): wait here and retry quietly until the server opens it.
+  if (notOpen) return <WaitingRoom onRetry={() => setTries((n) => n + 1)} />;
   if (error) {
     const stepsMissing = error instanceof ApiError && error.code === "STEPS_MISSING";
     return (
@@ -69,6 +75,28 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   if (!attempt) return <RobotLoader label="Starting your test" />;
   // Keyed by attempt: a new round is a new attempt, so no timer, count or draft state carries over (AC-6).
   return <Shell key={attempt.token} student={student} roundId={roundId} type={round.type} token={attempt.token} initial={attempt.state} />;
+}
+
+const POLL_MS = 5000;
+
+/** Shown when the server says the round can't be sat yet. Checks again every few seconds and starts by itself. */
+function WaitingRoom({ onRetry }: { onRetry: () => void }) {
+  useEffect(() => {
+    const id = window.setInterval(onRetry, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [onRetry]);
+  return (
+    <main className={s.examBody} style={{ maxWidth: "36rem", marginInline: "auto", width: "100%" }}>
+      <section className={h.card} role="status" aria-live="polite">
+        <h1 className={h.cardTitle}>The exam hasn&apos;t started yet</h1>
+        <p className={h.muted}>Your system check is done. Please wait and follow your invigilator&apos;s instructions. Keep this page open and in full screen. You&apos;ll be taken to the exam automatically when it starts.</p>
+        <RobotLoader size="inline" label="Waiting for the exam to start" />
+        <Button asChild variant="secondary" style={{ marginTop: 12 }}>
+          <Link href="/student">Back to dashboard</Link>
+        </Button>
+      </section>
+    </main>
+  );
 }
 
 /** Runs right when the test opens, before the timer starts: location and full screen must both be on. */
@@ -325,10 +353,11 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
 
   return (
     <>
+      <div className={isCoding ? undefined : s.mcqRoot}>
       <header className={s.examBar} inert={blocked}>
         <Logo height={22} />
         <div className={s.examTitle}>
-          <p>{roundTitle[type as Round["type"]] ?? type}</p>
+          <p>{isCoding ? (roundTitle[type as Round["type"]] ?? type) : "Online Assessment – Round 1"}</p>
           <p className={h.xs} aria-live="polite" style={saveError || offline ? { color: "var(--ui-color-danger)" } : undefined}>
             {status}
           </p>
@@ -338,15 +367,19 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
           Location {locationOn ? "on" : "off"}
         </Badge>
         <TabSwitchBadge count={switches} max={max} />
-        <span className={s.timer} data-low={left < 5 * 60_000} role="timer" aria-label={`Time left ${label}`}>
-          <Clock aria-hidden size={16} /> {label}
-        </span>
+        {isCoding && (
+          <span className={s.timer} data-low={left < 5 * 60_000} role="timer" aria-label={`Time left ${label}`}>
+            <Clock aria-hidden size={16} /> {label}
+          </span>
+        )}
         <Button variant="secondary" disabled={submitting} onClick={() => (closed ? router.push("/student") : setConfirm("leave"))}>
           Leave
         </Button>
+        {isCoding && (
         <Button variant="danger" disabled={closed || offline} title={offline ? "Reconnecting: submit unlocks when you're back online" : undefined} loading={submitting} onClick={() => setConfirm("submit")}>
           Submit test
         </Button>
+        )}
       </header>
 
       {isCoding ? (
@@ -355,7 +388,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
           <CodingWorkspace token={token} attempt={initial} live={live} submitted={submitted} onClosed={(k) => (k === "expired" ? setExpired(true) : setLocked(true))} />
         </div>
       ) : (
-        <main inert={blocked} style={{ width: "100%" }}>
+        <main inert={blocked} className={s.mcqMain}>
           <McqBody
             questions={mcqs}
             answers={answers}
@@ -366,9 +399,14 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
             onChoose={choose}
             onToggleMark={toggleMark}
             counts={{ answered: answeredCount, marked: markedCount, unanswered }}
+            left={left}
+            canSubmit={!closed && !offline}
+            submitting={submitting}
+            onSubmit={() => setConfirm("submit")}
           />
         </main>
       )}
+      </div>
 
       <ConfirmDialog
         open={confirm === "submit" && !blocked}
@@ -460,11 +498,24 @@ interface McqBodyProps {
   onChoose: (qid: string, option: number) => void;
   onToggleMark: (qid: string) => void;
   counts: { answered: number; marked: number; unanswered: number };
+  left: number;
+  canSubmit: boolean;
+  submitting: boolean;
+  onSubmit: () => void;
+}
+
+const pad = (n: number) => String(n).padStart(2, "0");
+function hms(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return { h: pad(Math.floor(total / 3600)), m: pad(Math.floor((total % 3600) / 60)), s: pad(total % 60) };
 }
 
 /** Multiple choice: a question navigator beside the current question. */
-function McqBody({ questions, answers, marked, current, live, onGo, onChoose, onToggleMark, counts }: McqBodyProps) {
+function McqBody({ questions, answers, marked, current, live, onGo, onChoose, onToggleMark, counts, left, canSubmit, submitting, onSubmit }: McqBodyProps) {
   const q = questions[current];
+  const [rough, setRough] = useState(""); // one shared scratchpad for every question; stays in this tab and is never sent to the server
+  const [visited, setVisited] = useState<Set<string>>(() => new Set());
+  if (q && !visited.has(q.id)) setVisited(new Set(visited).add(q.id)); // mark visited while rendering
   if (!q)
     return (
       <div className={s.examBody} style={{ maxWidth: "48rem", marginInline: "auto" }}>
@@ -474,74 +525,97 @@ function McqBody({ questions, answers, marked, current, live, onGo, onChoose, on
         </section>
       </div>
     );
-  const stateOf = (id: string) => (marked.includes(id) ? "marked" : typeof answers[id] === "number" ? "answered" : "todo");
-  const stateLabel = { marked: "marked for review", answered: "answered", todo: "not answered" } as const;
+  const stateOf = (id: string) => (marked.includes(id) ? "marked" : typeof answers[id] === "number" ? "answered" : visited.has(id) || id === q.id ? "visited" : "todo");
+  const stateLabel = { marked: "marked for review", answered: "answered", visited: "visited, not answered", todo: "not visited" } as const;
   const isMarked = marked.includes(q.id);
 
-  return (
-    <div className={`${s.examBody} ${s.aptitude}`}>
-      <aside className={h.card} aria-label="Question navigator">
-        <p className={h.eyebrow} style={{ marginBottom: 12 }}>
-          Questions
-        </p>
-        <p className={h.xs} style={{ marginBottom: 12 }}>
-          Answered {counts.answered} · Marked {counts.marked} · Not answered {counts.unanswered}
-        </p>
-        <div className={s.palette}>
-          {questions.map((x, i) => (
-            <button
-              key={x.id}
-              type="button"
-              className={s.paletteBtn}
-              data-state={stateOf(x.id)}
-              aria-current={i === current ? "step" : undefined}
-              aria-label={`Question ${i + 1}, ${stateLabel[stateOf(x.id)]}`}
-              onClick={() => onGo(i)}
-            >
-              {i + 1}
-            </button>
-          ))}
-        </div>
-        <div className={s.legend} aria-hidden>
-          <span className={s.legendItem} data-state="answered">Answered</span>
-          <span className={s.legendItem} data-state="marked">Marked</span>
-          <span className={s.legendItem} data-state="todo">Not answered</span>
-        </div>
-      </aside>
+  const t = hms(left);
+  const isLast = current === questions.length - 1;
 
-      <section className={h.card} aria-labelledby="q-h">
-        <p className={h.eyebrow} style={{ marginBottom: 8 }}>
-          Question {current + 1} of {questions.length} · {q.marks} mark{q.marks === 1 ? "" : "s"}
-        </p>
-        <h1 id="q-h" style={{ fontSize: "1.25rem", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
-          {q.body}
-        </h1>
-        <fieldset className={h.stackSm} style={{ marginTop: 24 }} disabled={!live}>
-          <legend className="sr-only">Options</legend>
-          {q.options.map((o, i) => (
-            <label key={i} className={s.option}>
-              <input type="radio" name={q.id} checked={answers[q.id] === i} onChange={() => onChoose(q.id, i)} />
-              <span>
-                <span className={s.optionKey}>{String.fromCharCode(65 + i)}.</span> {o}
-              </span>
-            </label>
-          ))}
-        </fieldset>
-        <div className={h.between} style={{ marginTop: 24 }}>
+  return (
+    <div className={s.mcq}>
+      <section className={s.mcqLeft} aria-labelledby="q-h">
+        <div className={s.mcqScroll} tabIndex={0}>
+          <p className={h.eyebrow} style={{ marginBottom: 8 }}>
+            Question {current + 1} of {questions.length} · {q.marks} mark{q.marks === 1 ? "" : "s"}
+          </p>
+          <h1 id="q-h" style={{ fontSize: "1.125rem", lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {q.body}
+          </h1>
+          <fieldset className={h.stackSm} style={{ marginTop: 24 }} disabled={!live}>
+            <legend className="sr-only">Options</legend>
+            {q.options.map((o, i) => (
+              <label key={i} className={s.option}>
+                <input type="radio" name={q.id} checked={answers[q.id] === i} onChange={() => onChoose(q.id, i)} />
+                <span style={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>
+                  <span className={s.optionKey}>{String.fromCharCode(65 + i)}.</span> {o}
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        </div>
+        <div className={s.mcqActions}>
+          <Button variant="secondary" disabled={!live} aria-pressed={isMarked} onClick={() => onToggleMark(q.id)}>
+            {isMarked ? <CheckCircle2 aria-hidden size={16} style={{ marginRight: 4 }} /> : <Circle aria-hidden size={16} style={{ marginRight: 4 }} />}
+            {isMarked ? "Marked for review" : "Mark for review"}
+          </Button>
+          <span className={s.mcqSpacer} />
           <Button variant="secondary" disabled={current === 0} onClick={() => onGo(current - 1)}>
             Previous
           </Button>
-          <div className={h.row}>
-            <Button variant="secondary" disabled={!live} aria-pressed={isMarked} onClick={() => onToggleMark(q.id)}>
-              {isMarked ? <CheckCircle2 aria-hidden size={16} style={{ marginRight: 4 }} /> : <Circle aria-hidden size={16} style={{ marginRight: 4 }} />}
-              {isMarked ? "Marked for review" : "Mark for review"}
+          {isLast ? (
+            <Button variant="danger" disabled={!canSubmit} loading={submitting} onClick={onSubmit}>
+              Submit test
             </Button>
-            <Button disabled={current === questions.length - 1} onClick={() => onGo(current + 1)}>
-              Next
-            </Button>
-          </div>
+          ) : (
+            <Button onClick={() => onGo(current + 1)}>Next</Button>
+          )}
         </div>
       </section>
+
+      <aside className={s.mcqSide} aria-label="Question navigator">
+        <div className={s.mcqTimer}>
+          <p className={h.eyebrow}>Time left</p>
+          <div role="timer" aria-label={`Time left ${t.h}:${t.m}:${t.s}`} data-low={left < 5 * 60_000} className={s.mcqClock}>
+            <span><b>{t.h}</b><small>Hours</small></span>
+            <span><b>{t.m}</b><small>Minutes</small></span>
+            <span><b>{t.s}</b><small>Seconds</small></span>
+          </div>
+        </div>
+        <div className={s.mcqNav}>
+          <p className={h.eyebrow} style={{ marginBottom: 12 }}>
+            Questions
+          </p>
+          <div className={s.palette}>
+            {questions.map((x, i) => (
+              <button
+                key={x.id}
+                type="button"
+                className={s.paletteBtn}
+                data-state={i === current ? "current" : stateOf(x.id)}
+                aria-current={i === current ? "step" : undefined}
+                aria-label={`Question ${i + 1}, ${stateLabel[stateOf(x.id)]}`}
+                onClick={() => onGo(i)}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={s.mcqRough}>
+          <label htmlFor="rough-work" className={h.eyebrow}>
+            Rough work <span style={{ textTransform: "none", letterSpacing: 0 }}>(not saved or marked)</span>
+          </label>
+          <textarea id="rough-work" className={s.mcqRoughArea} value={rough} onChange={(e) => setRough(e.target.value)} placeholder="Use this space for your rough work…" spellCheck={false} />
+        </div>
+        <div className={s.legend} aria-hidden>
+          <span className={s.legendItem} data-state="current">Current</span>
+          <span className={s.legendItem} data-state="answered">Answered ({counts.answered})</span>
+          <span className={s.legendItem} data-state="visited">Not answered</span>
+          <span className={s.legendItem} data-state="marked">Marked ({counts.marked})</span>
+          <span className={s.legendItem} data-state="todo">Not visited</span>
+        </div>
+      </aside>
     </div>
   );
 }
