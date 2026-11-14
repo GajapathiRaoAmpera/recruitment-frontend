@@ -5,12 +5,12 @@ import { use } from "react";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { SetupStep } from "@/features/papers/components/setup-step";
-import { Stepper } from "@/features/papers/components/stepper";
+import { paperCrumbs, Stepper } from "@/features/papers/components/stepper";
 import { useDriveOptions } from "@/features/papers/use-drive-options";
 
 export function NewPaperScreen({ searchParams }: { searchParams: Promise<{ drive?: string }> }) {
   const { drive } = use(searchParams);
-  useBreadcrumbs([{ label: "Paper builder", href: "/hr/papers" }, { label: "New paper" }]);
+  useBreadcrumbs(paperCrumbs(drive, "New Round 1 paper"));
   const router = useRouter();
   const drives = useDriveOptions();
 

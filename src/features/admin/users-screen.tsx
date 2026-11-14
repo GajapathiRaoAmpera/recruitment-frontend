@@ -10,7 +10,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { RobotLoader } from "@/components/ui/robot-loader";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -55,7 +55,7 @@ export function UsersScreen() {
   const [busyRow, setBusyRow] = useState<string>();
 
   if (loadError) return <ErrorState message={`Couldn't load users: ${loadError}`} onRetry={reload} />;
-  if (!users) return <RobotLoader label="Loading users" />;
+  if (!users) return <RocketLoader label="Loading users" />;
 
   const validate = (name: string, email?: string): FieldErrors => {
     const e: FieldErrors = {};

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, Range } from "@/components/ui/input";
-import { RobotLoader } from "@/components/ui/robot-loader";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -47,7 +47,7 @@ export function RealShortlist({ driveId }: { driveId: string }) {
   useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive", href: `/hr/drives/${driveId}` }, { label: "Shortlist" }]);
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
-  if ((!drive.data && !drive.error) || (!list.data && !list.error)) return <RobotLoader label="Loading candidates" />;
+  if ((!drive.data && !drive.error) || (!list.data && !list.error)) return <RocketLoader label="Loading candidates" />;
   const rows: CandidateRow[] = list.data ?? [];
   const filtering = Boolean(skills.trim() || minCgpa || minMatch || show !== "all");
   const allSelected = rows.length > 0 && rows.every((c) => selected.has(c.id));

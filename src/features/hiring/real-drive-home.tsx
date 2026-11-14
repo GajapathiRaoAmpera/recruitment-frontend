@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { InfoTip } from "@/components/ui/info-tip";
-import { RobotLoader } from "@/components/ui/robot-loader";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ErrorState, NotFoundState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
 import { hire as h, PipelineSteps } from "@/components/hire/ui";
@@ -50,7 +50,7 @@ export function RealDriveHome() {
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
   if (error || drive.error) return <ErrorState message={(error ?? drive.error)!.message} onRetry={() => (reload(), drive.reload())} />;
-  if (!data || !drive.data) return <RobotLoader label="Opening drive" />;
+  if (!data || !drive.data) return <RocketLoader label="Opening drive" />;
   const d = drive.data;
 
   return (
