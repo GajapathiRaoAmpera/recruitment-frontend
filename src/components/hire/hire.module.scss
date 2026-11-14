@@ -393,9 +393,19 @@
 }
 
 /* Lists */
+// Growing content scrolls inside its own section; the page itself never stretches without limit.
 .list {
   display: flex;
   flex-direction: column;
+  max-height: min(30rem, 60dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.scrollBox {
+  max-height: min(40rem, 70dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .listItem {

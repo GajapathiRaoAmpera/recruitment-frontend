@@ -1,4 +1,4 @@
-import { Building2, ClipboardList, FolderKanban, LayoutDashboard, type LucideIcon, ScrollText, Settings2, Users, Video } from "lucide-react";
+import { BarChart3, Building2, ClipboardList, FolderKanban, LayoutDashboard, type LucideIcon, ScrollText, Settings2, Users, Video } from "lucide-react";
 import type { Role } from "@/mock/types";
 
 export interface NavItem {
@@ -13,6 +13,7 @@ export function navItems(role: Role): NavItem[] {
     { label: "Dashboard", href: "/hr", icon: LayoutDashboard, section: "main" },
     { label: "Drives", href: "/hr/drives", icon: FolderKanban, section: "main" },
     { label: "Interviews", href: "/hr/interviews", icon: Video, section: "main" },
+    { label: "Analytics", href: "/hr/analytics", icon: BarChart3, section: "main" },
   ];
   if (role === "SUPER_ADMIN") {
     items.push(

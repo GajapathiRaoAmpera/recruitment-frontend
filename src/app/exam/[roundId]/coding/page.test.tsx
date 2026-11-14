@@ -1,5 +1,5 @@
-// AC-5 (FR-16) prototype coding page: demo students get the simulated judge; real students are sent to the API-driven test.
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+// AC-5 (FR-16) prototype coding page: no coding questions are seeded (HR generates them via the API), so demo rounds show an empty state; real students are sent to the API-driven test.
+import { render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MockStoreProvider } from "@/mock/store";
 import CodingTestPage from "./page";
@@ -32,16 +32,13 @@ const page = () =>
     </MockStoreProvider>,
   );
 
-it("a demo student gets the labelled simulated judge, and Run never calls the API", async () => {
+it("a demo coding round has no built-in questions: it shows an empty state and never calls the API", async () => {
   session({ role: "STUDENT", candidateId: "d1-c0" });
   const f = vi.fn();
   vi.stubGlobal("fetch", f);
   page();
-  expect(await screen.findByText(/simulated judge0/i)).toBeInTheDocument();
-  expect(screen.getByRole("option", { name: "JavaScript (Node)" })).toHaveValue("javascript");
-  expect((screen.getByRole("textbox", { name: /^Code for/ }) as HTMLTextAreaElement).value).toContain("def solve()");
-  fireEvent.click(screen.getByRole("button", { name: /run samples/i }));
-  await waitFor(() => expect(screen.getByRole("button", { name: /run samples/i })).toBeEnabled(), { timeout: 2000 });
+  expect(await screen.findByRole("heading", { name: /no coding questions added for this round yet/i })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /run samples/i })).not.toBeInTheDocument();
   expect(f).not.toHaveBeenCalled();
 });
 

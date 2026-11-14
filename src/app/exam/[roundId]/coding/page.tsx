@@ -1,5 +1,6 @@
 "use client";
 
+import { Select } from "@/components/ui/input";
 import { CheckCircle2, Clock, Play, Send, XCircle } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -7,7 +8,7 @@ import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { NotFoundState } from "@/components/ui/states";
+import { EmptyState, NotFoundState } from "@/components/ui/states";
 import { DemoNote, hire as h } from "@/components/hire/ui";
 import { ExamGuard } from "@/components/student/exam-guard";
 import { exitFullscreen, minutesSince, useCountdown, useExamDraft, useExamRound, useStudent } from "@/components/student/hooks";
@@ -39,12 +40,13 @@ export default function CodingTestPage() {
   const { roundId } = useParams<{ roundId: string }>();
   const router = useRouter();
   const { real } = useStudent();
-  const { candidate, round } = useExamRound(roundId);
+  const { state, candidate, round } = useExamRound(roundId);
   useEffect(() => {
     if (real) router.replace(`/exam/${roundId}/test`); // real students: the server-driven test screen
   }, [real, roundId, router]);
   if (real) return null;
   if (!round || !candidate || round.type !== "coding") return <NotFoundState title="Coding test not found" />;
+  if (!state.questions.some((q) => round.questionIds?.includes(q.id))) return <EmptyState title="No coding questions added for this round yet" />;
   return <Runner roundId={roundId} />;
 }
 
@@ -180,13 +182,13 @@ function Runner({ roundId }: { roundId: string }) {
             <div className={s.editorBar}>
               <label>
                 <span className="sr-only">Language</span>
-                <select value={lang} onChange={(e) => update((d) => ({ ...d, lang: { ...d.lang, [p.id]: e.target.value as Lang } }))}>
+                <Select className={s.editorSelect} value={lang} onChange={(e) => update((d) => ({ ...d, lang: { ...d.lang, [p.id]: e.target.value as Lang } }))}>
                   {(Object.keys(LANGS) as Lang[]).map((l) => (
                     <option key={l} value={l}>
                       {LANGS[l].label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <span style={{ opacity: 0.7 }}>Drafts save per language</span>
             </div>

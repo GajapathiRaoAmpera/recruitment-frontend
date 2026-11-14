@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { fmt } from "@/features/advance/messages";
 import { useAsync } from "@/features/papers/use-async";
@@ -65,14 +65,8 @@ export function CodingSetup({ roundId }: { roundId: string }) {
     if (test.error.code === "ROUND_HAS_NO_TEST") return null;
     return <ErrorState message={codingErrorMessage(test.error)} onRetry={test.reload} />;
   }
-  if (!t && !noTest) {
-    return (
-      <div className={h.stackSm}>
-        <LoadingLabel label="Loading coding test set-up" />
-        <Skeleton style={{ height: 160 }} />
-      </div>
-    );
-  }
+  // One loader until the test and its question titles are both in (no "Loading…" rows).
+  if ((!t && !noTest) || (serverIds.length > 0 && names.loading && !names.data)) return <RocketLoader label="Loading coding test set-up" />;
 
   const ids = order ?? serverIds;
   const dirty = order !== null && !same(order, serverIds) && !(lastSaved && same(order, lastSaved));
@@ -193,7 +187,7 @@ export function CodingSetup({ roundId }: { roundId: string }) {
             <ol className={s.order} aria-label="Questions in this round">
               {ids.map((id, i) => {
                 const q = known(id);
-                const title = q ? titleOf(q.body) : names.loading ? "Loading…" : "Unknown question";
+                const title = q ? titleOf(q.body) : "Unknown question";
                 return (
                   <li key={id} className={s.orderItem}>
                     <span className={s.pos}>{i + 1}.</span>
