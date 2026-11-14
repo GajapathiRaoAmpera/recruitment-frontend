@@ -96,7 +96,7 @@ it("starts at the saved cut-off and previews a new one after the debounce", asyn
   expect(screen.getByRole("slider")).toHaveValue("70");
   expect(screen.getByRole("spinbutton", { name: "Cut-off (%)" })).toHaveValue(70);
   expect(rankingCalls()[0]).toBe("/api/v1/rounds/r1/ranking"); // first call: the saved threshold
-  expect([stat("Pass"), stat("Fail"), stat("Absent"), stat("Still writing"), stat("Locked")]).toEqual(["1", "1", "1", "0", "0"]);
+  expect([stat("Pass"), stat("Fail"), stat("Not started"), stat("Still writing"), stat("Locked")]).toEqual(["1", "1", "1", "0", "0"]);
 
   const table = within(screen.getByRole("table", { name: "Ranking" }));
   const first = within(table.getAllByRole("row")[1]!);
@@ -108,7 +108,7 @@ it("starts at the saved cut-off and previews a new one after the debounce", asyn
   expect(first.getByText("12m 05s")).toBeInTheDocument();
   expect(first.getByText("Pass")).toBeInTheDocument();
   expect(within(table.getAllByRole("row")[2]!).getByText("Fail")).toBeInTheDocument();
-  expect(within(table.getAllByRole("row")[3]!).getByText("Absent")).toBeInTheDocument();
+  expect(within(table.getAllByRole("row")[3]!).getByText("Not started")).toBeInTheDocument();
 
   fireEvent.change(screen.getByRole("slider"), { target: { value: "40" } });
   expect(advanceBtn()).toBeDisabled(); // the preview is behind the slider
@@ -154,17 +154,19 @@ it("lists locked attempts and only confirms once 'finish locked attempts' is tic
   await ready();
   fireEvent.click(advanceBtn());
   const dialog = within(await screen.findByRole("dialog"));
-  expect(dialog.getByText("1 pass, 1 fail, 1 absent. Pass students go to the next round. This can't be undone.")).toBeInTheDocument();
+  expect(dialog.getByText("1 pass, 1 fail. Pass students go to the next round. This can't be undone.")).toBeInTheDocument();
   expect(dialog.getByText("Kiran")).toBeInTheDocument();
   const confirm = dialog.getByRole("button", { name: "Advance round" });
   expect(confirm).toBeDisabled();
   expect(dialog.getByText(/stays off until you tick this/)).toBeInTheDocument();
   fireEvent.click(dialog.getByRole("checkbox", { name: "Finish locked attempts with their current marks" }));
+  expect(confirm).toBeDisabled(); // the student who never started still needs a decision
+  fireEvent.click(dialog.getByRole("checkbox", { name: "Mark 1 student absent" }));
   expect(confirm).toBeEnabled();
   fireEvent.click(confirm);
   await screen.findByText("Round advanced");
   const post = fetchMock.mock.calls.find(([u]) => String(u).endsWith("/advance"))!;
-  expect(JSON.parse(String(post[1].body))).toEqual({ threshold: 70, finalize_locked: true });
+  expect(JSON.parse(String(post[1].body))).toEqual({ threshold: 70, finalize_locked: true, mark_absent: true });
 });
 
 it("advances: shows the summary, refreshes the page and goes read-only", async () => {
@@ -177,14 +179,17 @@ it("advances: shows the summary, refreshes the page and goes read-only", async (
   await ready();
   fireEvent.click(advanceBtn());
   const dialog = within(await screen.findByRole("dialog"));
-  expect(dialog.getByText("1 pass, 1 fail, 1 absent. Pass students go to the next round. This can't be undone.")).toBeInTheDocument();
+  expect(dialog.getByText("1 pass, 1 fail. Pass students go to the next round. This can't be undone.")).toBeInTheDocument();
+  expect(dialog.getByText(/1 student hasn.t started the test/).parentElement).toHaveTextContent("marks them absent");
+  expect(dialog.getByRole("button", { name: "Advance round" })).toBeDisabled(); // not without ticking
+  fireEvent.click(dialog.getByRole("checkbox", { name: "Mark 1 student absent" }));
   fireEvent.click(dialog.getByRole("button", { name: "Advance round" }));
 
   const summary = await screen.findByRole("status");
   expect(summary).toHaveTextContent("Round advanced");
   expect(summary).toHaveTextContent("At a 70% cut-off: 1 passed, 1 failed, 1 absent.");
   expect(summary).toHaveTextContent("1 student invited to the next round.");
-  expect(summary).toHaveTextContent("No emails were sent");
+  expect(summary).toHaveTextContent("Invited students get an email with the sign-in link.");
   expect(onAdvanced).toHaveBeenCalledTimes(1);
   await waitFor(() => expect(screen.getByText(/Final ranking at a 70% cut-off\. Read-only\./)).toBeInTheDocument());
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -200,12 +205,15 @@ it.each([
   ["ROUND_NOT_ACTIVE", {}, /isn't active/],
   ["ROUND_HAS_NO_TEST", {}, /has no test/],
   ["ROUND_NOT_FOUND", {}, /wasn't found/],
+  ["NOT_STARTED", { counts: { absent: 1 } }, /haven't started the test yet/],
+  ["NEXT_ROUND_NOT_READY", { next_round_id: "r2" }, /coding test with no questions yet/],
 ])("shows a clear message for a %s refusal", async (code, details, text) => {
   advanceReply = { status: code === "ROUND_NOT_FOUND" ? 404 : 409, body: { error: { code, message: "raw", details } } };
   view();
   await ready();
   fireEvent.click(advanceBtn());
   const dialog = within(await screen.findByRole("dialog"));
+  fireEvent.click(dialog.getByRole("checkbox", { name: "Mark 1 student absent" }));
   fireEvent.click(dialog.getByRole("button", { name: "Advance round" }));
   expect(await dialog.findByRole("alert")).toHaveTextContent(text);
   expect(screen.queryByText("Round advanced")).not.toBeInTheDocument();

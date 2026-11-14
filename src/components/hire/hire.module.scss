@@ -469,3 +469,50 @@
     text-decoration: underline;
   }
 }
+
+/* One-line filter bar: fields share a baseline, wraps to two columns on small screens */
+.filterBar {
+  display: grid;
+  gap: sp(3) sp(4);
+  align-items: end;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @include up(lg) {
+    grid-template-columns: minmax(12rem, 2fr) minmax(7rem, 0.8fr) minmax(11rem, 1.4fr) auto;
+  }
+  > :first-child {
+    grid-column: 1 / -1;
+    @include up(lg) {
+      grid-column: auto;
+    }
+  }
+}
+
+.filterControl {
+  display: flex;
+  height: sp(11);
+  align-items: center;
+}
+
+/* Bulk-action strip above a selectable table; tinted while rows are selected */
+.selectionBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(3);
+  margin-block: sp(4) sp(3);
+  border-radius: var(--ui-radius-input);
+  padding: sp(2) sp(3);
+  min-height: sp(12);
+  background: var(--ui-color-surface-muted);
+  &[data-active] {
+    position: sticky;
+    top: sp(2);
+    z-index: 1;
+    background: var(--ui-color-primary-subtle);
+  }
+}
+
+.selectableRow[data-selected] {
+  background: var(--ui-color-primary-subtle);
+}

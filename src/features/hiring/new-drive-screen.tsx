@@ -241,10 +241,8 @@ export function NewDriveScreen() {
                 <span className={w.dot} aria-hidden>
                   {status === "done" ? <Check size={14} strokeWidth={3} /> : i + 1}
                 </span>
-                <span className={w.stepText}>
-                  <span className={w.stepLabel}>{s.label}</span>
-                  <span className={w.stepState}>{status === "done" ? "Completed" : status === "active" ? "In progress" : "Not started"}</span>
-                </span>
+                <span className={w.stepLabel}>{s.label}</span>
+                <span className="sr-only">{status === "done" ? ", completed" : status === "active" ? ", current step" : ", not started"}</span>
               </button>
             </li>
           );
