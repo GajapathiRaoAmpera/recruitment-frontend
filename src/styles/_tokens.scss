@@ -64,6 +64,17 @@
   --ui-color-doll-ink: #2a1630;
   --ui-color-doll-lips: #e0507a;
 
+  /* Interviewer video backdrop: a softly blurred office (decor only; never used for text) */
+  --ui-color-office-wall: #e4ded5;
+  --ui-color-office-wall-shade: #cfc6b9;
+  --ui-color-office-light: rgb(255 255 255 / 0.45);
+  --ui-color-office-glass: #eef3f6;
+  --ui-color-office-frame: #b9b2a8;
+  --ui-color-office-wood: #7a6450;
+  --ui-color-office-wood-top: #8f7760;
+  --ui-color-office-plant: #4f6b4a;
+  --ui-color-interviewer-suit: #232b38; /* matches the blazer painted in features/interview/outfit.ts */
+
   /* Plan timeline: one fixed hue per role (non-text, >=3:1 on white). Roles beyond six reuse the cycle. */
   --ui-color-role-1: var(--ampera-magenta-600);
   --ui-color-role-2: var(--ampera-navy-900);
