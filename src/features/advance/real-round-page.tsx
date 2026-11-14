@@ -23,6 +23,7 @@ export function RealRoundPage({ driveId, roundId }: { driveId: string; roundId: 
   const [version, setVersion] = useState(0);
   const rounds = useAsync(() => listRounds(driveId), [driveId]);
   const round = rounds.data?.find((r) => r.id === roundId);
+  const open = round?.status !== "pending"; // a pending round only shows its setup: no advance, no results yet
   return (
     <div className={h.stack}>
       <RealRoundProgress key={version} driveId={driveId} roundId={roundId} />
@@ -30,9 +31,9 @@ export function RealRoundPage({ driveId, roundId }: { driveId: string; roundId: 
       {rounds.error && !rounds.data && <ErrorState message={`Couldn't load the round type: ${rounds.error.message}`} onRetry={rounds.reload} />}
       {round?.type === "aptitude" && <RoundPaperPanel driveId={driveId} />}
       {round?.type === "coding" && <CodingSetup roundId={roundId} />}
-      {round && TEST_ROUNDS.has(round.type) && <AdvancePanel roundId={roundId} onAdvanced={() => setVersion((v) => v + 1)} />}
-      {round && HR_DECIDED.has(round.type) && <DecisionPanel roundId={roundId} onDecided={() => setVersion((v) => v + 1)} />}
-      {round?.type === "coding" && <CodingResults roundId={roundId} />}
+      {round && open && TEST_ROUNDS.has(round.type) && <AdvancePanel roundId={roundId} driveId={driveId} onAdvanced={() => setVersion((v) => v + 1)} />}
+      {round && open && HR_DECIDED.has(round.type) && <DecisionPanel roundId={roundId} onDecided={() => setVersion((v) => v + 1)} />}
+      {round?.type === "coding" && open && <CodingResults roundId={roundId} />}
     </div>
   );
 }

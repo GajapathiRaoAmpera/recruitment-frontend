@@ -5,6 +5,8 @@ declare module "@met4citizen/talkinghead" {
     constructor(node: HTMLElement, opt?: Record<string, unknown>);
     opt: { update: ((dt: number) => void) | null } & Record<string, unknown>;
     mtAvatar: Record<string, { newvalue?: number; needsUpdate?: boolean }>;
+    /** The loaded avatar's three.js scene root (set by showAvatar). */
+    armature: { traverse(fn: (o: never) => void): void };
     showAvatar(avatar: { url: string } & Record<string, unknown>, onprogress?: ((e: ProgressEvent) => void) | null): Promise<void>;
     setMood(mood: string): void;
     playGesture(name: string, dur?: number, mirror?: boolean, ms?: number): void;

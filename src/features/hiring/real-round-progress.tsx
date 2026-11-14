@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
-import { hire as h, StatCard } from "@/components/hire/ui";
+import { hire as h, RoundStatusBadge, StatCard } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
 import { roundTitle } from "@/mock/data";
 import type { Round } from "@/mock/types";
@@ -35,25 +35,48 @@ const tick = (v: boolean | null) => (v === null ? "—" : v ? "✓" : "✗");
 export function RealRoundProgress({ driveId, roundId }: { driveId: string; roundId: string }) {
   const { data, error, loading, reload } = useAsync(() => getRoundProgress(driveId, roundId), [driveId, roundId]);
   const [auto, setAuto] = useState(true);
+  const pending = data?.status === "pending"; // not open: nothing to watch, so no refresh
+  const title = data ? (roundTitle[data.type as Round["type"]] ?? data.type) : "Round";
   // Quiet refresh while the tab is visible; the table keeps showing the last data meanwhile.
   useEffect(() => {
-    if (!auto) return;
+    if (!auto || pending) return;
     const id = setInterval(() => document.visibilityState === "visible" && reload(), AUTO_MS);
     return () => clearInterval(id);
-  }, [auto, reload]);
-  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: "Drive", href: `/hr/drives/${driveId}` }, { label: "Round progress" }]);
+  }, [auto, pending, reload]);
+  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: "Drive", href: `/hr/drives/${driveId}` }, { label: title }]);
 
   if (error?.status === 404) return <NotFoundState title="Round not found" />;
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
   if (!data) return <RocketLoader label="Loading progress" />;
+
+  if (pending) {
+    return (
+      <div className={h.stack}>
+        <PageHeader title={title} description={<RoundStatusBadge status="pending" />} />
+        <section className={h.card} aria-labelledby="pending-h">
+          <h2 id="pending-h" className={h.row} style={{ fontWeight: 600 }}>
+            <Clock aria-hidden size={18} /> This round isn&apos;t open yet
+          </h2>
+          <p className={h.muted} style={{ marginTop: 8 }}>
+            It opens when you advance the round before it. Students who pass that round join here automatically and get an email to start.
+          </p>
+          <p className={h.small} style={{ marginTop: 8 }}>
+            {data.type === "coding"
+              ? "Set up the coding test below first: the round before can't be advanced until this test has questions."
+              : "There's nothing to set up here before it opens."}
+          </p>
+        </section>
+      </div>
+    );
+  }
 
   const rows = data.candidates;
   const count = (f: (r: ProgressRow) => boolean) => rows.filter(f).length;
   return (
     <div className={h.stack}>
       <PageHeader
-        title={roundTitle[data.type as Round["type"]] ?? data.type}
-        description={`Round progress · ${data.status}`}
+        title={title}
+        description={<RoundStatusBadge status={data.status as Round["status"]} />}
         actions={
           <span className={h.row}>
             <Button variant={auto ? "primary" : "secondary"} aria-pressed={auto} onClick={() => setAuto((a) => !a)}>
@@ -76,7 +99,7 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
           Candidates
         </h2>
         {rows.length === 0 ? (
-          <EmptyState title="No candidates in this round" description="Shortlist candidates to invite them." />
+          <EmptyState title="No candidates in this round" description="Students join when they're shortlisted (Round 1) or pass the round before this one." />
         ) : (
           <Table>
             <thead>

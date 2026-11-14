@@ -70,3 +70,10 @@ it("advancing remounts the progress view", async () => {
   act(() => advanced.fn());
   expect(mounts.progress).toBe(2);
 });
+
+it("pending coding round shows only what HR can do now: the setup (no advance, no results)", async () => {
+  listRounds.mockResolvedValue([{ id: "r1", position: 2, type: "coding", status: "pending" }]);
+  const { container } = render(<RealRoundPage driveId="d1" roundId="r1" />);
+  expect(await screen.findByText("coding setup")).toBeInTheDocument();
+  expect([...container.querySelectorAll("p")].map((p) => p.textContent)).toEqual(["progress view", "coding setup"]);
+});

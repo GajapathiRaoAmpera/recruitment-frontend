@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, CheckCircle2, Clock, UserX, XCircle } from "lucide-react";
+import Link from "next/link";
 import { useId, useState } from "react";
 import { ApiError } from "@/api/client";
 import { advanceRound, getRanking, type AdvanceResult, type RankingRow } from "@/api/rounds";
@@ -41,7 +42,7 @@ function ResultCell({ row, open }: { row: RankingRow; open: boolean }) {
  * Cut-off preview + Advance for one test round (aptitude / coding / technical), from GET /rounds/{id}/ranking and
  * POST /rounds/{id}/advance. Active rounds get the slider; completed rounds show the final ranking read-only.
  */
-export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvanced: () => void }) {
+export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string; driveId?: string; onAdvanced: () => void }) {
   const [threshold, setThreshold] = useState<number | null>(null); // null until the saved cut-off is known
   const [typed, setTyped] = useState<string | null>(null); // the number box while it is being edited
   const query = useDebouncedValue(threshold, PREVIEW_DEBOUNCE_MS);
@@ -52,6 +53,7 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
   const [markAbsent, setMarkAbsent] = useState(false); // students who never started block Advance until ticked
   const [busy, setBusy] = useState(false);
   const [advanceError, setAdvanceError] = useState<string>();
+  const [setupRound, setSetupRound] = useState<string>(); // NEXT_ROUND_NOT_READY: the coding round to set up
   const reasonId = useId();
 
   // First answer (sent without a threshold) carries the saved cut-off: start the slider there, else at 60%.
@@ -121,6 +123,7 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
     } catch (e) {
       const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Nothing was saved; try again.");
       setAdvanceError(advanceErrorMessage(err));
+      setSetupRound(err.code === "NEXT_ROUND_NOT_READY" && typeof err.details.next_round_id === "string" ? err.details.next_round_id : undefined);
       if (STALE_CODES.has(err.code)) reload();
       if (err.code === "ROUND_ALREADY_ADVANCED") onAdvanced();
     } finally {
@@ -295,7 +298,8 @@ export function AdvancePanel({ roundId, onAdvanced }: { roundId: string; onAdvan
             {editable && blockReason && <p className={h.xs}>{blockReason}</p>}
             {advanceError && (
               <p role="alert" className={a.error}>
-                {advanceError}
+                {advanceError}{" "}
+                {driveId && setupRound && <Link href={`/hr/drives/${encodeURIComponent(driveId)}/rounds/${encodeURIComponent(setupRound)}`}>Set up the coding round</Link>}
               </p>
             )}
           </div>
