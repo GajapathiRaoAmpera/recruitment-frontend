@@ -1,10 +1,10 @@
 "use client";
 
-import { UserRoundCog } from "lucide-react";
+import { FileDown, UserRoundCog } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { getDrive, listRounds, reassignDrive } from "@/api/hiring";
+import { downloadDriveReport, getDrive, listRounds, reassignDrive } from "@/api/hiring";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -46,12 +46,24 @@ export function RealDriveHome() {
   const drive = useAsync(() => getDrive(driveId), [driveId]);
   const { data, error, reload } = useAsync(() => listRounds(driveId), [driveId]);
   const [reassigning, setReassigning] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const toast = useToast();
   useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive" }]);
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
   if (error || drive.error) return <ErrorState message={(error ?? drive.error)!.message} onRetry={() => (reload(), drive.reload())} />;
   if (!data || !drive.data) return <RocketLoader label="Opening drive" />;
   const d = drive.data;
+  const download = async () => {
+    setDownloading(true);
+    try {
+      await downloadDriveReport(d.id, `${d.company}-${d.roleTitle}-report.pdf`);
+    } catch (e) {
+      toast({ tone: "danger", title: "Couldn't create the report", description: e instanceof Error ? e.message : "Try again in a moment." });
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className={h.stack}>
@@ -59,11 +71,18 @@ export function RealDriveHome() {
         title={d.roleTitle}
         description={`${d.company} · ${d.campus}${d.ownerName ? ` · Run by ${d.ownerName}` : ""}`}
         actions={
-          isAdmin && (
-            <Button variant="secondary" onClick={() => setReassigning(true)}>
-              <UserRoundCog aria-hidden size={16} style={{ marginRight: 6 }} /> Change HR
-            </Button>
-          )
+          <>
+            {d.status === "closed" && (
+              <Button onClick={() => void download()} loading={downloading}>
+                <FileDown aria-hidden size={16} style={{ marginRight: 6 }} /> Download report
+              </Button>
+            )}
+            {isAdmin && (
+              <Button variant="secondary" onClick={() => setReassigning(true)}>
+                <UserRoundCog aria-hidden size={16} style={{ marginRight: 6 }} /> Change HR
+              </Button>
+            )}
+          </>
         }
       />
       <section className={h.card} aria-labelledby="rounds-h">
