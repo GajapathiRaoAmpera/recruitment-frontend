@@ -1,7 +1,7 @@
 "use client";
 
-import { Copy, Plus } from "lucide-react";
-import { useState } from "react";
+import { Copy, Mail, Link2, Plus } from "lucide-react";
+import { useState, type FormEvent } from "react";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,8 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RobotLoader } from "@/components/ui/robot-loader";
+import { ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { hire as h, Person } from "@/components/hire/ui";
@@ -18,60 +19,130 @@ import { useStaffUsers } from "@/features/admin/use-staff-users";
 import { useStore } from "@/mock/store";
 import type { StaffRole, StaffUser } from "@/mock/types";
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ROLE_LABEL: Record<StaffRole, string> = { HR: "HR", SUPER_ADMIN: "Super Admin" };
+const EMPTY_FORM = { name: "", email: "", title: "", role: "HR" as StaffRole };
+type FieldErrors = Partial<Record<"name" | "email", string>>;
+
 export default function UsersPage() {
   useBreadcrumbs([{ label: "Users & roles" }]);
   const { state } = useStore();
-  const { real, users, loadError, invite, update, remove } = useStaffUsers();
+  const { real, users, loadError, reload, invite, update, remove } = useStaffUsers();
   const toast = useToast();
-  const [saving, setSaving] = useState(false);
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", title: "", role: "HR" as StaffRole });
-  const [error, setError] = useState<string>();
 
-  const [editing, setEditing] = useState<StaffUser>();
-  const [edit, setEdit] = useState({ name: "", role: "HR" as StaffRole });
-  const [editError, setEditError] = useState<string>();
+  // Invite
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [formErrors, setFormErrors] = useState<FieldErrors>({});
+  const [inviteError, setInviteError] = useState<string>();
+  const [inviting, setInviting] = useState<"email" | "link">();
   const [link, setLink] = useState<{ email: string; url: string }>();
   const [copied, setCopied] = useState(false);
-  const [deleting, setDeleting] = useState<StaffUser>();
-  const [deleteError, setDeleteError] = useState<string>();
 
-  const saveEdit = async () => {
+  // Edit
+  const [editing, setEditing] = useState<StaffUser>();
+  const [edit, setEdit] = useState({ name: "", role: "HR" as StaffRole });
+  const [editErrors, setEditErrors] = useState<FieldErrors>({});
+  const [editError, setEditError] = useState<string>();
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [confirmPromote, setConfirmPromote] = useState(false);
+
+  // Row actions
+  const [deactivating, setDeactivating] = useState<StaffUser>();
+  const [deleting, setDeleting] = useState<StaffUser>();
+  const [rowError, setRowError] = useState<string>();
+  const [busyRow, setBusyRow] = useState<string>();
+
+  if (loadError) return <ErrorState message={`Couldn't load users: ${loadError}`} onRetry={reload} />;
+  if (!users) return <RobotLoader label="Loading users" />;
+
+  const validate = (name: string, email?: string): FieldErrors => {
+    const e: FieldErrors = {};
+    if (!name.trim()) e.name = "Enter their full name.";
+    if (email !== undefined) {
+      const em = email.trim().toLowerCase();
+      if (!EMAIL.test(em)) e.email = "Enter a valid work email, like name@ampera.tech.";
+      else if (users.some((u) => u.email.toLowerCase() === em)) e.email = "Someone already has an account with this email.";
+    }
+    return e;
+  };
+
+  const openInvite = () => {
+    setForm(EMPTY_FORM);
+    setFormErrors({});
+    setInviteError(undefined);
+    setOpen(true);
+  };
+
+  const add = async (sendEmail: boolean) => {
+    const e = validate(form.name, form.email);
+    setFormErrors(e);
+    if (Object.keys(e).length) {
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('#invite-form [aria-invalid="true"]')?.focus());
+      return;
+    }
+    setInviting(sendEmail ? "email" : "link");
+    setInviteError(undefined);
+    const res = await invite({ ...form, name: form.name.trim(), email: form.email.trim() }, sendEmail);
+    setInviting(undefined);
+    if (res.error) return setInviteError(res.error);
+    if (res.link) {
+      setCopied(false);
+      setLink({ email: form.email.trim(), url: res.link });
+    } else {
+      toast({ tone: "success", title: "Invite sent", description: `${form.email.trim()} will get an email to set their password.` });
+    }
+    setOpen(false);
+  };
+  const submitInvite = (e: FormEvent) => {
+    e.preventDefault();
+    void add(true);
+  };
+
+  const openEdit = (u: StaffUser) => {
+    setEdit({ name: u.name, role: u.role });
+    setEditErrors({});
+    setEditError(undefined);
+    setEditing(u);
+  };
+  const editChanged = editing !== undefined && (edit.name.trim() !== editing.name || edit.role !== editing.role);
+  const saveEdit = async (promoteOk = false) => {
     if (!editing) return;
-    if (!edit.name.trim()) return setEditError("Enter a name.");
-    setSaving(true);
+    const e = validate(edit.name);
+    setEditErrors(e);
+    if (Object.keys(e).length) return;
+    // Super Admin is a big grant: ask once more before saving it.
+    if (edit.role === "SUPER_ADMIN" && editing.role !== "SUPER_ADMIN" && !promoteOk) return setConfirmPromote(true);
+    setConfirmPromote(false);
+    setSavingEdit(true);
     const err = await update(editing, { name: edit.name.trim(), role: edit.role });
-    setSaving(false);
+    setSavingEdit(false);
     if (err) return setEditError(err);
     toast({ tone: "success", title: "User updated", description: edit.name.trim() });
     setEditing(undefined);
   };
 
-  const confirmDelete = async () => {
-    if (!deleting) return;
-    setSaving(true);
-    const err = await remove(deleting);
-    setSaving(false);
-    if (err) return setDeleteError(err);
-    toast({ tone: "success", title: "User deleted", description: deleting.email });
-    setDeleting(undefined);
+  const setActive = async (u: StaffUser, active: boolean) => {
+    setBusyRow(u.id);
+    setRowError(undefined);
+    const err = await update(u, { active });
+    setBusyRow(undefined);
+    if (err) {
+      if (!active) return setRowError(err); // shown inside the open confirm
+      return toast({ tone: "danger", title: `Couldn't activate ${u.name}`, description: err });
+    }
+    setDeactivating(undefined);
+    toast({ tone: "success", title: active ? `${u.name} can sign in again` : `${u.name} is deactivated`, description: active ? undefined : "They can't sign in until you activate them." });
   };
 
-  const add = async (sendEmail: boolean) => {
-    if (!form.name.trim() || !/^\S+@\S+\.\S+$/.test(form.email)) return setError("Enter a name and a valid email.");
-    if (users?.some((u) => u.email.toLowerCase() === form.email.trim().toLowerCase())) return setError("A user with this email already exists.");
-    setSaving(true);
-    const res = await invite(form, sendEmail);
-    setSaving(false);
-    if (res.error) return setError(res.error);
-    if (res.link) {
-      setCopied(false);
-      setLink({ email: form.email.trim(), url: res.link });
-    } else {
-      toast({ tone: "success", title: "Invite sent", description: `${form.email} will get an email to set their password.` });
-    }
-    setOpen(false);
-    setForm({ name: "", email: "", title: "", role: "HR" });
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setBusyRow(deleting.id);
+    const err = await remove(deleting);
+    setBusyRow(undefined);
+    if (err) return setRowError(err);
+    toast({ tone: "success", title: "User deleted", description: deleting.email });
+    setDeleting(undefined);
   };
 
   return (
@@ -80,7 +151,7 @@ export default function UsersPage() {
         title="Users & roles"
         description="Staff accounts. Students don't have accounts — they sign in per round with Student ID and date of birth."
         actions={
-          <Button onClick={() => { setError(undefined); setOpen(true); }}>
+          <Button onClick={openInvite}>
             <Plus aria-hidden size={16} style={{ marginRight: 4 }} /> Invite user
           </Button>
         }
@@ -98,30 +169,13 @@ export default function UsersPage() {
           </tr>
         </thead>
         <tbody>
-          {!users && !loadError && (
-            <tr>
-              <Td colSpan={5}>
-                <LoadingLabel label="Loading users" />
-                <Skeleton style={{ height: 40 }} />
-              </Td>
-            </tr>
-          )}
-          {loadError && (
-            <tr>
-              <Td colSpan={5}>
-                <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
-                  Couldn&apos;t load users: {loadError} Refresh the page to try again.
-                </p>
-              </Td>
-            </tr>
-          )}
-          {users?.map((u) => (
+          {users.map((u) => (
             <tr key={u.id}>
               <Td>
                 <Person name={u.name} meta={real ? u.email : `${u.email} · ${u.title}`} />
               </Td>
               <Td>
-                <Badge tone={u.role === "SUPER_ADMIN" ? "primary" : "neutral"}>{u.role === "SUPER_ADMIN" ? "Super Admin" : "HR"}</Badge>
+                <Badge tone={u.role === "SUPER_ADMIN" ? "primary" : "neutral"}>{ROLE_LABEL[u.role]}</Badge>
               </Td>
               <Td>
                 <Badge tone={u.active ? "success" : "danger"}>{u.active ? "Active" : "Inactive"}</Badge>
@@ -129,25 +183,22 @@ export default function UsersPage() {
               <Td className={h.small}>{u.lastLogin}</Td>
               <Td>
                 {/* Own row: no actions, so nobody can lock themselves out (the API refuses too). */}
-                {u.id !== state.session?.userId && (
+                {u.id === state.session?.userId ? (
+                  <span className={h.xs}>You</span>
+                ) : (
                   <div className={h.row}>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => {
-                        setEdit({ name: u.name, role: u.role });
-                        setEditError(undefined);
-                        setEditing(u);
-                      }}
-                    >
+                    <Button size="sm" variant="secondary" onClick={() => openEdit(u)}>
                       Edit
                     </Button>
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={async () => {
-                        const err = await update(u, { active: !u.active });
-                        if (err) toast({ tone: "danger", title: `Couldn't ${u.active ? "deactivate" : "activate"} ${u.name}`, description: err });
+                      loading={busyRow === u.id && u.active === false}
+                      disabled={busyRow === u.id}
+                      onClick={() => {
+                        setRowError(undefined);
+                        if (u.active) setDeactivating(u);
+                        else void setActive(u, true);
                       }}
                     >
                       {u.active ? "Deactivate" : "Activate"}
@@ -158,7 +209,7 @@ export default function UsersPage() {
                         size="sm"
                         variant="tertiary"
                         onClick={() => {
-                          setDeleteError(undefined);
+                          setRowError(undefined);
                           setDeleting(u);
                         }}
                       >
@@ -173,47 +224,65 @@ export default function UsersPage() {
         </tbody>
       </Table>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={(o) => !inviting && setOpen(o)}>
         <DialogContent
           title="Invite user"
+          description="They get a link to set their own password."
           footer={
             <>
-              <Button variant="secondary" onClick={() => setOpen(false)}>
+              <Button variant="secondary" disabled={inviting !== undefined} onClick={() => setOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="secondary" onClick={() => add(false)} disabled={saving}>
-                Create &amp; copy link
+              <Button variant="secondary" loading={inviting === "link"} disabled={inviting !== undefined} onClick={() => add(false)}>
+                <Link2 aria-hidden size={16} style={{ marginRight: 4 }} /> Create &amp; copy link
               </Button>
-              <Button onClick={() => add(true)} loading={saving}>
-                Send invite email
+              <Button type="submit" form="invite-form" loading={inviting === "email"} disabled={inviting !== undefined}>
+                <Mail aria-hidden size={16} style={{ marginRight: 4 }} /> Send invite email
               </Button>
             </>
           }
         >
-          <div className={h.stackSm}>
-            {error && (
+          <form id="invite-form" className={h.stackSm} onSubmit={submitInvite} noValidate>
+            {inviteError && (
               <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
-                {error}
+                Couldn&apos;t create the account: {inviteError}
               </p>
             )}
-            <Field label="Full name" required>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            <Field label="Full name" required error={formErrors.name}>
+              <Input
+                autoComplete="name"
+                value={form.name}
+                onChange={(e) => {
+                  setForm({ ...form, name: e.target.value });
+                  setFormErrors((x) => ({ ...x, name: undefined }));
+                }}
+              />
             </Field>
-            <Field label="Work email" required>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            <Field label="Work email" required error={formErrors.email}>
+              <Input
+                type="email"
+                autoComplete="email"
+                inputMode="email"
+                value={form.email}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  setFormErrors((x) => ({ ...x, email: undefined }));
+                }}
+                onBlur={() => form.email.trim() && setFormErrors((x) => ({ ...x, email: validate("x", form.email).email }))}
+              />
             </Field>
             {!real && (
               <Field label="Job title">
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </Field>
             )}
-            <Field label="Role">
+            <Field label="Role" hint={form.role === "SUPER_ADMIN" ? "Super Admins can manage users, AI settings and every drive." : "HR runs campus drives."}>
               <Select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value as StaffRole })}>
-                <option value="HR">HR — runs drives</option>
-                <option value="SUPER_ADMIN">Super Admin — everything + system settings</option>
+                <option value="HR">HR</option>
+                <option value="SUPER_ADMIN">Super Admin</option>
               </Select>
             </Field>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 
@@ -234,61 +303,99 @@ export default function UsersPage() {
             <Field label="Invite link">
               <Input value={link?.url ?? ""} readOnly onFocus={(e) => e.currentTarget.select()} />
             </Field>
-            <Button
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(link!.url);
-                  setCopied(true);
-                } catch {
-                  toast({ tone: "danger", title: "Couldn't copy automatically", description: "Select the link above and copy it with Ctrl+C." });
-                }
-              }}
-            >
-              <Copy aria-hidden size={16} style={{ marginRight: 4 }} /> {copied ? "Copied" : "Copy link"}
-            </Button>
+            <div>
+              <Button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(link!.url);
+                    setCopied(true);
+                  } catch {
+                    toast({ tone: "danger", title: "Couldn't copy automatically", description: "Select the link above and copy it with Ctrl+C." });
+                  }
+                }}
+              >
+                <Copy aria-hidden size={16} style={{ marginRight: 4 }} /> {copied ? "Copied" : "Copy link"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={editing !== undefined} onOpenChange={(o) => !o && setEditing(undefined)}>
+      <Dialog open={editing !== undefined} onOpenChange={(o) => !o && !savingEdit && setEditing(undefined)}>
         <DialogContent
           title={`Edit ${editing?.name ?? "user"}`}
           footer={
             <>
-              <Button variant="secondary" onClick={() => setEditing(undefined)}>
+              <Button variant="secondary" disabled={savingEdit} onClick={() => setEditing(undefined)}>
                 Cancel
               </Button>
-              <Button onClick={saveEdit} loading={saving}>
+              <Button type="submit" form="edit-form" loading={savingEdit} disabled={!editChanged}>
                 Save changes
               </Button>
             </>
           }
         >
-          <div className={h.stackSm}>
+          <form
+            id="edit-form"
+            className={h.stackSm}
+            noValidate
+            onSubmit={(e) => {
+              e.preventDefault();
+              void saveEdit();
+            }}
+          >
             {editError && (
               <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
-                {editError}
+                Couldn&apos;t save: {editError}
               </p>
             )}
-            <Field label="Full name" required>
-              <Input value={edit.name} onChange={(e) => setEdit({ ...edit, name: e.target.value })} />
+            <Field label="Full name" required error={editErrors.name}>
+              <Input
+                value={edit.name}
+                onChange={(e) => {
+                  setEdit({ ...edit, name: e.target.value });
+                  setEditErrors({});
+                }}
+              />
             </Field>
             <Field label="Work email" hint="Email can't be changed here; it's their sign-in.">
               <Input value={editing?.email ?? ""} disabled />
             </Field>
             <Field label="Role">
               <Select value={edit.role} onChange={(e) => setEdit({ ...edit, role: e.target.value as StaffRole })}>
-                <option value="HR">HR — runs drives</option>
-                <option value="SUPER_ADMIN">Super Admin — everything + system settings</option>
+                <option value="HR">HR</option>
+                <option value="SUPER_ADMIN">Super Admin</option>
               </Select>
             </Field>
-          </div>
+          </form>
         </DialogContent>
       </Dialog>
 
       <ConfirmDialog
+        open={confirmPromote}
+        onOpenChange={setConfirmPromote}
+        destructive={false}
+        title={`Make ${editing?.name ?? "this user"} a Super Admin?`}
+        description="They will be able to manage every user (including you), AI settings and all drives."
+        confirmLabel="Make Super Admin"
+        loading={savingEdit}
+        onConfirm={() => saveEdit(true)}
+      />
+
+      <ConfirmDialog
+        open={deactivating !== undefined}
+        onOpenChange={(o) => !o && busyRow === undefined && setDeactivating(undefined)}
+        title={`Deactivate ${deactivating?.name ?? "user"}?`}
+        description={`${deactivating?.email ?? "They"} won't be able to sign in until you activate them again. Their drives and history stay.`}
+        confirmLabel="Deactivate"
+        loading={busyRow !== undefined && busyRow === deactivating?.id}
+        error={rowError}
+        onConfirm={() => deactivating && setActive(deactivating, false)}
+      />
+
+      <ConfirmDialog
         open={deleting !== undefined}
-        onOpenChange={(o) => !o && setDeleting(undefined)}
+        onOpenChange={(o) => !o && busyRow === undefined && setDeleting(undefined)}
         title={`Delete ${deleting?.name ?? "user"}?`}
         description={
           <>
@@ -298,8 +405,8 @@ export default function UsersPage() {
         }
         confirmLabel={`Delete ${deleting?.name ?? "user"}`}
         onConfirm={confirmDelete}
-        loading={saving}
-        error={deleteError}
+        loading={busyRow !== undefined && busyRow === deleting?.id}
+        error={rowError}
       />
     </>
   );

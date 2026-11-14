@@ -7,7 +7,7 @@ import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
+import { RobotLoader } from "@/components/ui/robot-loader";
 import type { Draft, Level, PaperSettings } from "@/features/papers/types";
 import { useAsync } from "@/features/papers/use-async";
 import { supabase } from "@/lib/supabase";
@@ -93,7 +93,7 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
     <form onSubmit={submit} noValidate>
       <div className={h.stack}>
         {providers.loading && !providers.data ? (
-          <Skeleton style={{ height: 44 }} />
+          <RobotLoader size="inline" label="Checking the AI providers" />
         ) : providers.error ? (
           <p role="alert" className={s.banner} data-tone="danger">
             <AlertTriangle aria-hidden size={16} />

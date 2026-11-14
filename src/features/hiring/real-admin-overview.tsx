@@ -7,7 +7,7 @@ import { getProgressOverview } from "@/api/hiring";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel } from "@/components/ui/skeleton";
+import { RobotLoader } from "@/components/ui/robot-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h } from "@/components/hire/ui";
@@ -29,7 +29,7 @@ export function RealAdminOverview() {
   useBreadcrumbs([{ label: "Admin overview" }]);
 
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (!data) return <LoadingLabel label="Loading drives" />;
+  if (!data) return <RobotLoader label="Loading drives" />;
 
   return (
     <div className={h.stack}>

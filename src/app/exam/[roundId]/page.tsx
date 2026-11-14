@@ -11,6 +11,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NotFoundState } from "@/components/ui/states";
 import { DemoNote, hire as h } from "@/components/hire/ui";
+import { RealExamShell } from "@/features/student/real-exam-shell";
 import { RealSystemCheck } from "@/features/student/real-system-check";
 import { useExamRound, useStudent } from "@/components/student/hooks";
 import s from "@/components/student/student.module.scss";
@@ -194,5 +195,8 @@ function StepIcon({ st }: { st: Status }) {
 export default function SystemCheckPage() {
   const { roundId } = useParams<{ roundId: string }>();
   const { real } = useStudent();
-  return real ? <RealSystemCheck student={real} roundId={roundId} /> : <MockSystemCheck />;
+  if (!real) return <MockSystemCheck />;
+  // No system check for a round that can't start here yet; the shell explains instead.
+  if (real.rounds.find((r) => r.roundId === roundId)?.type === "ai_interview") return <RealExamShell student={real} roundId={roundId} />;
+  return <RealSystemCheck student={real} roundId={roundId} />;
 }

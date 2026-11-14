@@ -6,7 +6,7 @@ import { getDraft } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RobotLoader } from "@/components/ui/robot-loader";
 import { ErrorState, ForbiddenState, NotFoundState } from "@/components/ui/states";
 import { GenerationProgress } from "@/features/papers/components/generation-progress";
 import { PrototypeState } from "@/features/papers/components/prototype-state";
@@ -36,13 +36,7 @@ function DraftView({ id }: { id: string }) {
     if (loaded.error?.status === 404) return <NotFoundState title="Paper not found" />;
     if (loaded.error?.status === 403) return <ForbiddenState />;
     if (loaded.error) return <ErrorState message={loaded.error.message} onRetry={loaded.reload} />;
-    return (
-      <>
-        <LoadingLabel label="Loading paper" />
-        <Skeleton style={{ height: 32, width: "40%", marginBottom: 24 }} />
-        <Skeleton style={{ height: 160 }} />
-      </>
-    );
+    return <RobotLoader label="Loading paper" />;
   }
 
   return (

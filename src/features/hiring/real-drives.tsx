@@ -7,7 +7,7 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
+import { RobotLoader } from "@/components/ui/robot-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h } from "@/components/hire/ui";
@@ -16,6 +16,7 @@ import { useAsync } from "@/features/papers/use-async";
 export function RealDrives() {
   useBreadcrumbs([{ label: "Drives" }]);
   const { data, error, loading, reload } = useAsync(listDrives, []);
+  if (loading && !data && !error) return <RobotLoader label="Loading drives" />;
   return (
     <>
       <PageHeader
@@ -31,12 +32,6 @@ export function RealDrives() {
       />
       {error ? (
         <ErrorState message={error.message} onRetry={reload} />
-      ) : loading && !data ? (
-        <div className={h.stackSm}>
-          <LoadingLabel label="Loading drives" />
-          <Skeleton style={{ height: 48 }} />
-          <Skeleton style={{ height: 48 }} />
-        </div>
       ) : !data?.length ? (
         <EmptyState title="No drives yet" description="Create your first campus drive." action={<Button asChild><Link href="/hr/drives/new">New drive</Link></Button>} />
       ) : (

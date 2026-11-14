@@ -23,19 +23,25 @@ export function useStaffUsers() {
   const real = supabase !== null;
   const [users, setUsers] = useState<StaffUser[]>();
   const [loadError, setLoadError] = useState<string>();
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     if (!real) return;
     api<{ items: ApiUser[] }>("/admin/users")
       .then((r) => setUsers(r.items.map(toStaff)))
       .catch((e: Error) => setLoadError(e.message));
-  }, [real]);
+  }, [real, tick]);
+  const reload = () => {
+    setLoadError(undefined);
+    setTick((t) => t + 1);
+  };
 
   if (!real) {
     return {
       real,
       users: state.staff,
       loadError: undefined,
+      reload: () => {},
       invite: async (f: InviteForm, sendEmail = true): Promise<{ error?: string; link?: string }> => {
         dispatch({ type: "addUser", user: f });
         return sendEmail ? {} : { link: "https://example.invalid/prototype-invite-link" };
@@ -60,6 +66,7 @@ export function useStaffUsers() {
     real,
     users,
     loadError,
+    reload,
     invite: async (f: InviteForm, sendEmail = true): Promise<{ error?: string; link?: string }> => {
       try {
         const body = { email: f.email.trim(), full_name: f.name, role: apiRole(f.role), send_email: sendEmail };

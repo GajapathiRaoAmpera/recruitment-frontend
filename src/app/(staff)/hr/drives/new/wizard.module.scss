@@ -1,0 +1,231 @@
+@use "@/styles/mixins" as *;
+
+/* Stepper: numbered dots joined by a line; finished steps show a check and can be revisited. */
+.stepper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-auto-flow: column;
+  margin-bottom: sp(6);
+}
+
+.stepItem {
+  position: relative;
+  min-width: 0;
+  // connector to the next step
+  &:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: sp(4);
+    left: calc(sp(4) + sp(9));
+    right: sp(2);
+    height: 2px;
+    border-radius: 2px;
+    background: var(--ui-color-border);
+  }
+  &[data-status="done"]:not(:last-child)::after {
+    background: var(--ui-color-success);
+  }
+}
+
+.stepBtn {
+  display: flex;
+  max-width: 100%;
+  align-items: flex-start;
+  gap: sp(2.5);
+  border-radius: var(--ui-radius-input);
+  padding: 0 sp(2) 0 0;
+  text-align: left;
+  @include focus-ring;
+  &:disabled {
+    cursor: default;
+  }
+  &:not(:disabled):hover .stepLabel {
+    text-decoration: underline;
+  }
+}
+
+.dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  width: sp(8);
+  height: sp(8);
+  flex-shrink: 0;
+  place-items: center;
+  border: 2px solid var(--ui-color-border-strong);
+  border-radius: 999px;
+  background: var(--ui-color-surface);
+  @include text(sm);
+  font-weight: 500;
+  color: var(--ui-color-text-muted);
+  .stepItem[data-status="active"] & {
+    border-color: var(--ui-color-primary);
+    background: var(--ui-color-primary);
+    color: var(--ui-color-primary-fg);
+  }
+  .stepItem[data-status="done"] & {
+    border-color: var(--ui-color-success);
+    background: var(--ui-color-success);
+    color: var(--ui-color-surface);
+  }
+}
+
+.stepText {
+  display: none;
+  min-width: 0;
+  flex-direction: column;
+  padding-top: sp(0.5);
+  @include up(md) {
+    display: flex;
+  }
+}
+
+.stepLabel {
+  @include truncate;
+  @include text(sm);
+  font-weight: 500;
+  .stepItem[data-status="active"] & {
+    color: var(--ui-color-primary);
+  }
+}
+
+.stepState {
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+}
+
+.restored {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: sp(2);
+  margin-bottom: sp(4);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-primary-subtle);
+  padding: sp(2) sp(4);
+  @include text(sm);
+}
+
+.dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: sp(3);
+}
+
+.formError {
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-danger-subtle);
+  padding: sp(2) sp(3);
+  @include text(sm);
+  color: var(--ui-color-danger);
+}
+
+/* Rounds: one bordered row per round; fields wrap under the title on narrow screens. */
+.rounds {
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+}
+
+.round {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: sp(3) sp(4);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  padding: sp(4);
+  @include up(lg) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.roundNo {
+  display: grid;
+  width: sp(8);
+  height: sp(8);
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ui-color-primary-subtle);
+  @include text(sm);
+  font-weight: 500;
+  color: var(--ui-color-primary);
+}
+
+.roundInfo {
+  min-width: 0;
+}
+
+.roundTitle {
+  font-weight: 500;
+}
+
+.roundFields {
+  display: flex;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: sp(3);
+  @include up(lg) {
+    grid-column: auto;
+  }
+}
+
+.numberInput {
+  width: sp(24);
+}
+
+.remove {
+  // line up with the inputs, below their labels
+  margin-top: sp(6);
+}
+
+.fileCard {
+  cursor: pointer;
+  &:has(input:focus-visible) {
+    outline: 2px solid var(--ui-color-focus-ring);
+    outline-offset: 2px;
+  }
+}
+
+.review {
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  padding: sp(4);
+}
+
+.reviewTitle {
+  font-weight: 500;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: minmax(7rem, auto) minmax(0, 1fr);
+  gap: sp(2) sp(4);
+  margin-top: sp(3);
+  @include text(sm);
+  dt {
+    color: var(--ui-color-text-muted);
+  }
+  dd {
+    overflow-wrap: anywhere;
+  }
+}
+
+.clamp {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: sp(3);
+  margin-top: sp(6);
+  border-top: 1px solid var(--ui-color-border);
+  padding-top: sp(4);
+}

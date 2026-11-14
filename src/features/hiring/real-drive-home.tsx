@@ -7,7 +7,7 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel } from "@/components/ui/skeleton";
+import { RobotLoader } from "@/components/ui/robot-loader";
 import { ErrorState } from "@/components/ui/states";
 import { hire as h } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
@@ -18,7 +18,7 @@ export function RealDriveHome() {
   const { data, error, reload } = useAsync(() => listRounds(driveId), [driveId]);
   useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: "Drive" }]);
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (!data) return <LoadingLabel label="Opening drive" />;
+  if (!data) return <RobotLoader label="Opening drive" />;
   return (
     <div className={h.stack}>
       <PageHeader
