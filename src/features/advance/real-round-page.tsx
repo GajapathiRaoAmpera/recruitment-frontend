@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { listRounds } from "@/api/hiring";
 import { hire as h } from "@/components/hire/ui";
+import { LoadGate } from "@/components/ui/rocket-loader";
 import { ErrorState } from "@/components/ui/states";
 import { CodingSetup } from "@/features/coding-questions/coding-setup";
 import { CodingResults } from "@/features/coding-results/coding-results";
@@ -19,21 +20,49 @@ const HR_DECIDED = new Set(["ai_interview", "final"]); // AI recommends, HR deci
  * The real-mode HR round page: live progress (RealRoundProgress), the coding test setup (coding rounds), the cut-off &
  * advance panel (test rounds), HR's pass/fail panel (interview and final rounds), then the coding results (coding rounds). Advancing remounts the progress view so it shows the new round status.
  */
-export function RealRoundPage({ driveId, roundId }: { driveId: string; roundId: string }) {
+export function RealRoundPage({
+  driveId,
+  roundId,
+}: {
+  driveId: string;
+  roundId: string;
+}) {
   const [version, setVersion] = useState(0);
   const rounds = useAsync(() => listRounds(driveId), [driveId]);
   const round = rounds.data?.find((r) => r.id === roundId);
   const open = round?.status !== "pending"; // a pending round only shows its setup: no advance, no results yet
+  // One loader until the round and every panel's first fetch have answered: no half-built page, no stacked loaders.
   return (
-    <div className={h.stack}>
-      <RealRoundProgress key={version} driveId={driveId} roundId={roundId} />
-      {/* A missing round is already reported by the progress view above. */}
-      {rounds.error && !rounds.data && <ErrorState message={`Couldn't load the round type: ${rounds.error.message}`} onRetry={rounds.reload} />}
-      {round?.type === "aptitude" && <RoundPaperPanel driveId={driveId} />}
-      {round?.type === "coding" && <CodingSetup roundId={roundId} />}
-      {round && open && TEST_ROUNDS.has(round.type) && <AdvancePanel roundId={roundId} driveId={driveId} onAdvanced={() => setVersion((v) => v + 1)} />}
-      {round && open && HR_DECIDED.has(round.type) && <DecisionPanel roundId={roundId} driveId={driveId} onDecided={() => setVersion((v) => v + 1)} />}
-      {round?.type === "coding" && open && <CodingResults roundId={roundId} />}
-    </div>
+    <LoadGate ready={!rounds.loading} label="Loading round">
+      <div className={h.stack}>
+        <RealRoundProgress key={version} driveId={driveId} roundId={roundId} />
+        {/* A missing round is already reported by the progress view above. */}
+        {rounds.error && !rounds.data && (
+          <ErrorState
+            message={`Couldn't load the round type: ${rounds.error.message}`}
+            onRetry={rounds.reload}
+          />
+        )}
+        {round?.type === "aptitude" && <RoundPaperPanel driveId={driveId} />}
+        {round?.type === "coding" && <CodingSetup roundId={roundId} />}
+        {round && open && TEST_ROUNDS.has(round.type) && (
+          <AdvancePanel
+            roundId={roundId}
+            driveId={driveId}
+            onAdvanced={() => setVersion((v) => v + 1)}
+          />
+        )}
+        {round && open && HR_DECIDED.has(round.type) && (
+          <DecisionPanel
+            roundId={roundId}
+            driveId={driveId}
+            onDecided={() => setVersion((v) => v + 1)}
+          />
+        )}
+        {round?.type === "coding" && open && (
+          <CodingResults roundId={roundId} />
+        )}
+      </div>
+    </LoadGate>
   );
 }
