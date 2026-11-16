@@ -5,6 +5,7 @@ import { useEffect, type ReactNode } from "react";
 import { homePath, loginPath, portalOf } from "@/mock/auth";
 import { useStore } from "@/mock/store";
 import { RocketLoader } from "@/components/ui/rocket-loader";
+import { HrBot } from "@/features/hr-bot/hr-bot";
 import { Breadcrumbs, BreadcrumbsProvider } from "./breadcrumbs";
 import { ProfileMenu } from "./profile-menu";
 import s from "./shell.module.scss";
@@ -48,6 +49,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </main>
         </div>
       </div>
+      <HrBot role={role} />
     </BreadcrumbsProvider>
   );
 }
