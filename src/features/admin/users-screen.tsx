@@ -34,7 +34,6 @@ export function UsersScreen() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [formErrors, setFormErrors] = useState<FieldErrors>({});
-  const [inviteError, setInviteError] = useState<string>();
   const [emailFailed, setEmailFailed] = useState(false); // only then offer the copy-link fallback
   const [inviting, setInviting] = useState<"email" | "link">();
   const [link, setLink] = useState<{ email: string; url: string }>();
@@ -44,7 +43,6 @@ export function UsersScreen() {
   const [editing, setEditing] = useState<StaffUser>();
   const [edit, setEdit] = useState({ name: "", role: "HR" as StaffRole });
   const [editErrors, setEditErrors] = useState<FieldErrors>({});
-  const [editError, setEditError] = useState<string>();
   const [savingEdit, setSavingEdit] = useState(false);
   const [confirmPromote, setConfirmPromote] = useState(false);
 
@@ -71,7 +69,6 @@ export function UsersScreen() {
   const openInvite = () => {
     setForm(EMPTY_FORM);
     setFormErrors({});
-    setInviteError(undefined);
     setEmailFailed(false);
     setOpen(true);
   };
@@ -84,12 +81,11 @@ export function UsersScreen() {
       return;
     }
     setInviting(sendEmail ? "email" : "link");
-    setInviteError(undefined);
     const res = await invite({ ...form, name: form.name.trim(), email: form.email.trim() }, sendEmail);
     setInviting(undefined);
     if (res.error) {
       setEmailFailed(sendEmail);
-      return setInviteError(res.error);
+      return toast({ tone: "danger", title: "Couldn't create the account", description: res.error });
     }
     if (res.link) {
       setCopied(false);
@@ -107,7 +103,6 @@ export function UsersScreen() {
   const openEdit = (u: StaffUser) => {
     setEdit({ name: u.name, role: u.role });
     setEditErrors({});
-    setEditError(undefined);
     setEditing(u);
   };
   const editChanged = editing !== undefined && (edit.name.trim() !== editing.name || edit.role !== editing.role);
@@ -122,7 +117,7 @@ export function UsersScreen() {
     setSavingEdit(true);
     const err = await update(editing, { name: edit.name.trim(), role: edit.role });
     setSavingEdit(false);
-    if (err) return setEditError(err);
+    if (err) return toast({ tone: "danger", title: "Couldn't save", description: err });
     toast({ tone: "success", title: "User updated", description: edit.name.trim() });
     setEditing(undefined);
   };
@@ -245,11 +240,6 @@ export function UsersScreen() {
           }
         >
           <form id="invite-form" className={h.stackSm} onSubmit={submitInvite} noValidate>
-            {inviteError && (
-              <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
-                Couldn&apos;t create the account: {inviteError}
-              </p>
-            )}
             {emailFailed && (
               <Button
                 type="button"
@@ -358,11 +348,6 @@ export function UsersScreen() {
               void saveEdit();
             }}
           >
-            {editError && (
-              <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
-                Couldn&apos;t save: {editError}
-              </p>
-            )}
             <Field label="Full name" required error={editErrors.name}>
               <Input
                 value={edit.name}

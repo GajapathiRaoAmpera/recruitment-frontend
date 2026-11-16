@@ -183,7 +183,7 @@ describe("states", () => {
   it("load error offers a retry", async () => {
     server.use(http.get("*/api/v1/questions/:id", () => HttpResponse.json({ error: { code: "QUESTION_NOT_FOUND", message: "x" } }, { status: 404 })));
     render(<QuestionForm questionId="q1" onClose={onClose} onSaved={onSaved} />);
-    expect(await dialog().findByText(/This question wasn't found/)).toBeInTheDocument();
+    expect(await screen.findByText(/This question wasn't found/)).toBeInTheDocument();
     expect(dialog().getByRole("button", { name: /retry|try again/i })).toBeInTheDocument();
   });
 
@@ -210,6 +210,6 @@ describe("states", () => {
     await dialog().findByRole("textbox", { name: "Function name" });
     choose("Return type", "int");
     fireEvent.click(dialog().getByRole("button", { name: "Save changes" }));
-    expect(await dialog().findByText("You don't have permission to change this question. Nothing was saved.")).toBeInTheDocument();
+    expect(await screen.findByText("You don't have permission to change this question. Nothing was saved.")).toBeInTheDocument();
   });
 });

@@ -458,7 +458,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         <Overlay id="end" icon={<TimerOff aria-hidden size={32} />} title="Time is up">
           {submitError ? (
             <>
-              <p className={h.muted}>Your answers are saved, but they couldn&apos;t be submitted yet: {submitError}</p>
+              <p className={h.muted}>Your answers are saved, but they couldn&apos;t be submitted yet.</p>
               <Button loading={submitting} autoFocus onClick={() => void submit(true)}>
                 Try submitting again
               </Button>

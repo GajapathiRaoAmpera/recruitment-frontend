@@ -122,7 +122,7 @@ it("puts a 422 VALIDATION_ERROR on the right fields and case row", async () => {
   const hidden2 = dialog().getByRole("textbox", { name: "Hidden 2 expected output" }); // index 4 = 3 samples + hidden #2
   expect(hidden2).toHaveAttribute("aria-invalid", "true");
   expect(hidden2.parentElement).toHaveTextContent("expected output must not be blank");
-  expect(dialog().getByText(/Some fields need fixing/)).toBeInTheDocument();
+  expect(screen.getByText(/Some fields need fixing/)).toBeInTheDocument();
   expect(onClose).not.toHaveBeenCalled();
 });
 
@@ -147,7 +147,7 @@ it("edit: QUESTION_IN_USE explains that the cases can't change", async () => {
   await screen.findByRole("spinbutton", { name: "Marks" });
   fill("Hidden 1 expected output", "changed");
   fireEvent.click(dialog().getByRole("button", { name: "Save changes" }));
-  expect(await dialog().findByRole("alert")).toHaveTextContent(/already answered this question, so its test cases can't change/);
+  expect(await screen.findByText(/already answered this question, so its test cases can.t change/)).toBeInTheDocument();
   const patch = fetchMock.mock.calls.find(([, i]) => i?.method === "PATCH")!;
   expect(Object.keys(JSON.parse(String(patch[1].body)))).toEqual(["test_cases"]);
   expect(onSaved).not.toHaveBeenCalled();

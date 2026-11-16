@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { listHrOwners } from "@/api/hiring";
 import { Field } from "@/components/ui/field";
 import { Select } from "@/components/ui/input";
 import { RocketLoader } from "@/components/ui/rocket-loader";
+import { useToast } from "@/components/ui/toast";
 import { useAsync } from "@/features/papers/use-async";
 
 export const KEEP_WITH_ME = "me";
@@ -25,10 +27,15 @@ interface OwnerSelectProps {
  */
 export function OwnerSelect({ value, onChange, error, allowSelf = false, exclude }: OwnerSelectProps) {
   const owners = useAsync(listHrOwners, []);
+  const toast = useToast();
+  const loadError = owners.error?.message;
+  useEffect(() => {
+    if (loadError) toast({ tone: "danger", title: `Couldn't load HR users: ${loadError}` });
+  }, [loadError, toast]);
   if (owners.loading && !owners.data) return <RocketLoader size="inline" label="Loading HR users" />;
   const list = (owners.data ?? []).filter((o) => o.id !== exclude);
   const hint = owners.error
-    ? `Couldn't load HR users: ${owners.error.message}`
+    ? "Couldn't load HR users."
     : owners.data && list.length === 0
       ? "No active HR users yet. Invite one from Users & roles."
       : "The drive shows up in this person's HR portal. Only they (and Super Admins) can see it.";

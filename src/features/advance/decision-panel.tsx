@@ -13,6 +13,7 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
+import { useToast } from "@/components/ui/toast";
 import { useAsync } from "@/features/papers/use-async";
 import a from "./advance.module.scss";
 import { fmt } from "./messages";
@@ -58,9 +59,8 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<DecideResult | null>(null);
-  const [decideError, setDecideError] = useState<string>();
+  const toast = useToast();
   const [reportBusy, setReportBusy] = useState(false);
-  const [reportError, setReportError] = useState<string>();
   const titleId = useId();
 
   if (!data) {
@@ -83,11 +83,10 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
 
   const getReport = async () => {
     setReportBusy(true);
-    setReportError(undefined);
     try {
       await downloadDriveReport(driveId);
     } catch (e) {
-      setReportError(e instanceof ApiError ? e.message : "Couldn't create the report. Try again.");
+      toast({ tone: "danger", title: e instanceof ApiError ? e.message : "Couldn't create the report. Try again." });
     } finally {
       setReportBusy(false);
     }
@@ -95,7 +94,6 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
   const pick = (id: string, d: Decision) => setPicks((p) => ({ ...p, [id]: d }));
   const confirm = async () => {
     setBusy(true);
-    setDecideError(undefined);
     try {
       setResult(await decideRound(roundId, picks));
       setOpen(false);
@@ -103,7 +101,7 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
       reload();
     } catch (e) {
       const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Nothing was saved; try again.");
-      setDecideError(decideErrorMessage(err));
+      toast({ tone: "danger", title: decideErrorMessage(err) });
       reload();
     } finally {
       setBusy(false);
@@ -157,7 +155,6 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
                     <Link href={`/hr/drives/${driveId}`}>Back to drive</Link>
                   </Button>
                 </div>
-                {reportError && <p role="alert" className={h.small}>{reportError}</p>}
               </>
             )}
           </div>
@@ -220,7 +217,7 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
         {editable && (
           <div className={h.stackSm}>
             <div className={h.row}>
-              <Button onClick={() => (setDecideError(undefined), setOpen(true))} disabled={blockReason !== null}>
+              <Button onClick={() => setOpen(true)} disabled={blockReason !== null}>
                 {final ? "Finish drive" : "Confirm decisions"}
               </Button>
             </div>
@@ -248,11 +245,6 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
         >
           <div className={h.stackSm}>
             <p>{final ? "This closes the drive." : "Passed students go to the next round."} This can&apos;t be undone.</p>
-            {decideError && (
-              <p role="alert" className={a.error}>
-                {decideError}
-              </p>
-            )}
           </div>
         </DialogContent>
       </Dialog>

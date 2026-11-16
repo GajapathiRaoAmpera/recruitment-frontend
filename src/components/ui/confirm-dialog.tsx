@@ -1,11 +1,12 @@
 "use client";
 
 import * as AD from "@radix-ui/react-alert-dialog";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Button } from "./button";
 import { dialogStyles as s } from "./dialog";
 import { Field } from "./field";
 import { Input } from "./input";
+import { useToast } from "./toast";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -35,6 +36,10 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const [typed, setTyped] = useState("");
   const blocked = typeToConfirm !== undefined && typed !== typeToConfirm;
+  const toast = useToast();
+  useEffect(() => {
+    if (error) toast({ tone: "danger", title: error });
+  }, [error, toast]);
 
   return (
     <AD.Root
@@ -53,11 +58,6 @@ export function ConfirmDialog({
             <Field className={s.confirmField} label={`Type ${typeToConfirm} to confirm`}>
               <Input value={typed} onChange={(e) => setTyped(e.target.value)} autoComplete="off" />
             </Field>
-          )}
-          {error && (
-            <p role="alert" className={s.alertError}>
-              {error}
-            </p>
           )}
           <div className={s.alertActions}>
             <AD.Cancel asChild>

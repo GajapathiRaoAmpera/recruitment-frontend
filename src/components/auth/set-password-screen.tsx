@@ -7,6 +7,7 @@ import { api, ApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { loginPath } from "@/mock/auth";
 import { AuthFrame } from "./auth-frame";
 import s from "./login-screen.module.scss";
@@ -24,6 +25,7 @@ function SetPassword() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
+  const toast = useToast();
 
   const submit = async () => {
     if (password.length < MIN) return setError(`Use at least ${MIN} characters.`);
@@ -34,7 +36,7 @@ function SetPassword() {
       setLink("done");
     } catch (e) {
       if (e instanceof ApiError && e.code === "LINK_INVALID") setLink("invalid");
-      else setError(e instanceof ApiError ? e.message : "Couldn't save the password. Try again.");
+      else toast({ tone: "danger", title: e instanceof ApiError ? e.message : "Couldn't save the password. Try again." });
     } finally {
       setPending(false);
     }

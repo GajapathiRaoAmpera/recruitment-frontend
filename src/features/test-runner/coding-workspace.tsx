@@ -18,6 +18,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RocketLoader } from "@/components/ui/rocket-loader";
+import { useToast } from "@/components/ui/toast";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
 import { CodeEditor } from "./code-editor";
@@ -68,7 +69,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
   const [submitOut, setSubmitOut] = useState<{ passed: number; total: number } | null>(null);
   const [best, setBest] = useState<Record<string, { passed: number; total: number }>>({});
   const [busy, setBusy] = useState<"run" | "submit" | null>(null);
-  const [callError, setCallError] = useState<string | null>(null);
+  const toast = useToast();
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [serverSaveFailed, setServerSaveFailed] = useState(false);
 
@@ -201,19 +202,17 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
     setCurrent(i);
     setRunOut(null);
     setSubmitOut(null);
-    setCallError(null);
   };
 
   const failed = (e: unknown) => {
     if (isAttemptClosed(e)) onClosed(e.code === "ATTEMPT_EXPIRED" ? "expired" : "locked");
-    else setCallError(codingErrorMessage(e));
+    else toast({ tone: "danger", title: codingErrorMessage(e) });
   };
 
   const run = async () => {
     setBusy("run");
     setSubmitOut(null);
     setRunOut(null);
-    setCallError(null);
     try {
       const results = await runCode(token, { questionId: p.id, code, language: doc.language });
       setRunOut(
@@ -239,7 +238,6 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
     setBusy("submit");
     setRunOut(null);
     setSubmitOut(null);
-    setCallError(null);
     try {
       const r = await submitCode(token, { questionId: p.id, code, language: doc.language });
       setSubmitOut(r);
@@ -399,12 +397,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
         </div>
 
         <div className={`${h.card} ${s.codingOutput}`} aria-live="polite" tabIndex={0}>
-          {callError && (
-            <p role="alert" style={{ color: "var(--ui-color-danger)" }}>
-              {callError}
-            </p>
-          )}
-          {!runOut && !submitOut && !callError && <p className={h.muted}>Run your code against the sample cases, then submit to run the hidden cases too.</p>}
+          {!runOut && !submitOut && <p className={h.muted}>Run your code against the sample cases, then submit to run the hidden cases too.</p>}
           {runOut && (
             <ul className={h.stackSm}>
               {runOut.map((r) => (

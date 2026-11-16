@@ -7,24 +7,24 @@ import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import s from "./interview.module.scss";
 
 /** Student ID + date of birth -> the interview token (POST /interview/start). */
 export function InterviewLogin({ onNext }: { onNext: (i: InterviewStart) => void }) {
   const [id, setId] = useState("");
   const [dob, setDob] = useState("");
-  const [err, setErr] = useState<string | null>(null);
+  const toast = useToast();
   const [busy, setBusy] = useState(false);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    setErr(null);
     try {
       const info = await interviewStart(id, dob);
-      if (info.status === "completed") setErr("You have already completed this interview.");
+      if (info.status === "completed") toast({ tone: "danger", title: "You have already completed this interview." });
       else onNext(info);
     } catch (x) {
-      setErr(x instanceof ApiError ? x.message : "Something went wrong. Try again.");
+      toast({ tone: "danger", title: x instanceof ApiError ? x.message : "Something went wrong. Try again." });
     } finally {
       setBusy(false);
     }
@@ -39,7 +39,6 @@ export function InterviewLogin({ onNext }: { onNext: (i: InterviewStart) => void
       <Field label="Date of birth" required>
         <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
       </Field>
-      {err && <p role="alert">{err}</p>}
       <Button type="submit" disabled={busy || !id.trim() || !dob}>
         {busy ? "Checking…" : "Continue"}
       </Button>
