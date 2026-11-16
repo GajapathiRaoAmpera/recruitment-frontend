@@ -71,7 +71,7 @@ it("Round 1 submitted → Round 2 starts clean", async () => {
 
   const { rerender } = render(<AptitudeTestPage />);
   expect(await screen.findByRole("heading", { name: "Test recorded" })).toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent("Tab switches 2 / 3");
+  expect(screen.getByText(/^Tab switches/)).toHaveTextContent("Tab switches 2 / 3");
 
   // The student opens Round 2 with the same login.
   params.roundId = "r2";
@@ -82,7 +82,7 @@ it("Round 1 submitted → Round 2 starts clean", async () => {
   expect(api.getAttempt).toHaveBeenLastCalledWith(T2);
   expect(screen.queryByRole("heading", { name: "Test recorded" })).not.toBeInTheDocument();
   expect(screen.queryByRole("heading", { name: /paused|time is up/i })).not.toBeInTheDocument();
-  expect(screen.getByRole("status")).toHaveTextContent("Tab switches 0 / 3"); // the server's count, not Round 1's 2
+  expect(screen.getByText(/^Tab switches/)).toHaveTextContent("Tab switches 0 / 3"); // the server's count, not Round 1's 2
   expect(screen.getByRole("timer")).toHaveTextContent(/^\s*(60:00|59:5\d)/); // Round 2's own deadline from server time
   expect(screen.queryByRole("radio")).not.toBeInTheDocument(); // no multiple-choice UI
   const editor = screen.getByRole("textbox", { name: "Code for Sum" }) as HTMLTextAreaElement;

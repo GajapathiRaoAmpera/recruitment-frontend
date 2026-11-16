@@ -365,15 +365,24 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
       : isCoding
         ? `${initial.coding.length} coding problem${initial.coding.length === 1 ? "" : "s"}`
         : `${answeredCount} of ${mcqs.length} answered · ${markedCount} marked for review`;
+  // Screen readers don't read a ticking role="timer", so say 10, 5 and 1 minute left once each.
+  const minsLeft = live ? [1, 5, 10].find((m) => left > 0 && left <= m * 60_000) : undefined;
 
   return (
     <>
+      {/* Spoken only: save problems and time warnings. Routine "Saving…" / "Saved" would interrupt every answer. */}
+      <p role="status" className="sr-only">
+        {offline || (saveError && unsaved > 0) ? status : ""}
+      </p>
+      <p role="status" className="sr-only">
+        {minsLeft ? `${minsLeft} minute${minsLeft === 1 ? "" : "s"} left` : ""}
+      </p>
       <div className={isCoding ? s.codingRoot : s.mcqRoot}>
       <header className={s.examBar} inert={blocked}>
         <Logo height={22} />
         <div className={s.examTitle}>
           <p>{isCoding ? (roundTitle[type as Round["type"]] ?? type) : "Online Assessment – Round 1"}</p>
-          <p className={h.xs} aria-live="polite" style={saveError || offline ? { color: "var(--ui-color-danger)" } : undefined}>
+          <p className={h.xs} style={saveError || offline ? { color: "var(--ui-color-danger)" } : undefined}>
             {status}
           </p>
         </div>
@@ -535,6 +544,14 @@ function McqBody({ questions, answers, marked, current, live, onGo, onChoose, on
   const [rough, setRough] = useState(""); // one shared scratchpad for every question; stays in this tab and is never sent to the server
   const [visited, setVisited] = useState<Set<string>>(() => new Set());
   if (q && !visited.has(q.id)) setVisited(new Set(visited).add(q.id)); // mark visited while rendering
+  // After Next/Previous/navigator, move focus to the new question so a screen reader reads it (not on first load).
+  const heading = useRef<HTMLHeadingElement>(null);
+  const shown = useRef(current);
+  useEffect(() => {
+    if (shown.current === current) return;
+    shown.current = current;
+    heading.current?.focus();
+  }, [current]);
   if (!q)
     return (
       <div className={s.examBody} style={{ maxWidth: "48rem", marginInline: "auto" }}>
@@ -558,7 +575,7 @@ function McqBody({ questions, answers, marked, current, live, onGo, onChoose, on
           <p className={h.eyebrow} style={{ marginBottom: 8 }}>
             Question {current + 1} of {questions.length} · {q.marks} mark{q.marks === 1 ? "" : "s"}
           </p>
-          <h1 id="q-h" style={{ fontSize: "1.125rem", lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+          <h1 id="q-h" ref={heading} tabIndex={-1} style={{ fontSize: "1.125rem", lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
             {q.body}
           </h1>
           <fieldset className={h.stackSm} style={{ marginTop: 24 }} disabled={!live}>

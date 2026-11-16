@@ -1,11 +1,12 @@
 "use client";
 
 import type { LiveServerMessage } from "@google/genai";
-import { Mic, Send } from "lucide-react";
+import { Mic, PenLine, Send } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type InterviewSession, interviewSession, postFrame, postTranscript, type Turn } from "@/api/interviews";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { hire as h } from "@/components/hire/ui";
@@ -53,6 +54,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   const [live_, setLive] = useState<Line | null>(null);
   const [box, setBox] = useState<Box | null>(null);
   const [draft, setDraft] = useState("");
+  const [boxHidden, setBoxHidden] = useState(false); // closed with X/Esc: the question stays open and can be reopened
   const [finishing, setFinishing] = useState(false);
   const [voice, setVoice] = useState<AudioNode | null>(null); // AI voice playback, for the avatar's lips
   const net = useNetworkQuality("watch");
@@ -143,6 +145,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
         live.current?.respondTool(fc.id, fc.name, { result: "The answer box is open on the candidate's screen." });
         setBox(b);
         setDraft("");
+        setBoxHidden(false);
       }
       showCaption();
     };
@@ -284,14 +287,10 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
             {(link === "reconnecting" || net.verdict === "offline") && <p role="status">Connection lost, reconnecting…</p>}
             {link === "lost" && <Button onClick={() => void live.current?.reconnect()}>Reconnect</Button>}
           </div>
-          {box && (
-            <div className={`${h.card} ${s.answer}`}>
-              <p style={{ fontWeight: 500 }}>{box.question}</p>
-              <Textarea aria-label="Your answer" rows={8} maxLength={8000} value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={box.mode === "text"} />
-              <Button onClick={submitBox} disabled={!draft.trim()}>
-                <Send aria-hidden size={16} style={{ marginRight: 4 }} /> Submit answer
-              </Button>
-            </div>
+          {box && boxHidden && (
+            <Button variant="secondary" onClick={() => setBoxHidden(false)} style={{ justifySelf: "start" }}>
+              <PenLine aria-hidden size={16} style={{ marginRight: 4 }} /> Open answer box
+            </Button>
           )}
           <div className={`${h.card} ${s.captions}`} aria-live="polite">
             {(live_ ? [...lines.slice(-5), live_] : lines.slice(-6)).map((l, i) => (
@@ -317,6 +316,24 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
           </div>
         </aside>
       </div>
+      <Dialog open={Boolean(box) && !boxHidden} onOpenChange={(o) => !o && setBoxHidden(true)}>
+        {box && (
+          <DialogContent
+            title={box.mode === "code" ? `Write your code${box.language ? ` (${box.language})` : ""}` : "Type your answer"}
+            className={s.answerDialog}
+            footer={
+              <Button onClick={submitBox} disabled={!draft.trim()}>
+                <Send aria-hidden size={16} style={{ marginRight: 4 }} /> Submit answer
+              </Button>
+            }
+          >
+            <div className={s.answer}>
+              <p className={s.question}>{box.question}</p>
+              <Textarea aria-label="Your answer" rows={10} maxLength={8000} value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={box.mode === "text"} autoFocus />
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
     </>
   );
 }
