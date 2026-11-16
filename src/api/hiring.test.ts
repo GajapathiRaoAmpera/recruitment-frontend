@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), getToken: () => "tok" }));
 
-import { fetchResumes, importCandidates, listCandidates, shortlist } from "./hiring";
+import { fetchResumes, getRoundProgress, importCandidates, listCandidates, resumeAttempt, shortlist } from "./hiring";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -70,4 +70,20 @@ it("sends the chosen owner only when given, maps who runs a drive, and reassigns
   expect(f.mock.calls[0]![0]).toBe("/api/v1/drives/d1/owner");
   expect(f.mock.calls[0]![1].method).toBe("PATCH");
   expect(JSON.parse(f.mock.calls[0]![1].body)).toEqual({ owner_id: "hr-2" });
+});
+
+it("progress rows carry attempt_id and resume_count; resume posts the trimmed reason (AC-7)", async () => {
+  const c = { candidate_id: "c1", student_id: "S1", full_name: "A", status: "in_progress", steps: {}, attempt_status: "locked", started_at: null, submitted_at: null, marks: null, tab_switches: 6, attempt_id: "a1", resume_count: 1 };
+  const f = stub(reply({ round_id: "r1", type: "coding", status: "active", candidates: [c] }), reply({ attempt_id: "a1", status: "in_progress", deadline_at: "2026-01-01T11:00:00Z", tab_switches: 0 }));
+  const p = await getRoundProgress("d1", "r1");
+  expect(p.candidates[0]).toMatchObject({ attemptId: "a1", resumeCount: 1, tabSwitches: 6 });
+  expect(await resumeAttempt("a1", "  power cut ")).toEqual({ attemptId: "a1", status: "in_progress", deadlineAt: "2026-01-01T11:00:00Z", tabSwitches: 0 });
+  expect(f.mock.calls[1]![0]).toBe("/api/v1/attempts/a1/resume");
+  expect(f.mock.calls[1]![1].method).toBe("POST");
+  expect(JSON.parse(f.mock.calls[1]![1].body)).toEqual({ reason: "power cut" });
+});
+
+it("resume refusals keep their code", async () => {
+  stub(reply({ error: { code: "REMAINING_TIME_UNKNOWN", message: "no time", details: {} } }, 409));
+  await expect(resumeAttempt("a1", "abc")).rejects.toMatchObject({ status: 409, code: "REMAINING_TIME_UNKNOWN" });
 });

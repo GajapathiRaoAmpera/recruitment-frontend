@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock, Hourglass, RefreshCw, ThumbsDown, ThumbsUp, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Hourglass, PlayCircle, RefreshCw, ThumbsDown, ThumbsUp, Users } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getRoundProgress, type ProgressRow, type StepName } from "@/api/hiring";
@@ -9,12 +9,13 @@ import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { RocketLoader } from "@/components/ui/rocket-loader";
-import { EmptyState, ErrorState, NotFoundState } from "@/components/ui/states";
+import { EmptyState, ErrorState, ForbiddenState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { hire as h, RoundStatusBadge, StatCard } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
 import { roundTitle } from "@/mock/data";
 import { countOutcomes, statusLabel, statusTone } from "./round-outcome";
+import { ResumeDialog } from "./resume-dialog";
 import type { Round } from "@/mock/types";
 
 const AUTO_MS = 10_000;
@@ -37,6 +38,7 @@ const tick = (v: boolean | null) => (v === null ? "—" : v ? "✓" : "✗");
 export function RealRoundProgress({ driveId, roundId }: { driveId: string; roundId: string }) {
   const { data, error, loading, reload } = useAsync(() => getRoundProgress(driveId, roundId), [driveId, roundId]);
   const [auto, setAuto] = useState(true);
+  const [resuming, setResuming] = useState<ProgressRow | null>(null);
   const pending = data?.status === "pending"; // not open: nothing to watch, so no refresh
   const title = data ? (roundTitle[data.type as Round["type"]] ?? data.type) : "Round";
   // Quiet refresh while the tab is visible; the table keeps showing the last data meanwhile.
@@ -48,6 +50,7 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
   useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: "Drive", href: `/hr/drives/${driveId}` }, { label: title }]);
 
   if (error?.status === 404) return <NotFoundState title="Round not found" />;
+  if (error?.status === 403) return <ForbiddenState />;
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
   if (!data) return <RocketLoader label="Loading progress" />;
 
@@ -76,6 +79,7 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
   const count = (f: (r: ProgressRow) => boolean) => rows.filter(f).length;
   const result = countOutcomes(rows.map((r) => r.status));
   const isFinal = data.type === "final";
+  const canResume = data.status === "active"; // the API refuses resumes once the round has moved on
   const pct = (n: number) => (result.total ? `${Math.round((n / result.total) * 100)}% of the round` : undefined);
   return (
     <div className={h.stack}>
@@ -123,9 +127,12 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
                   <Th key={s.id}>{s.label}</Th>
                 ))}
                 <Th>Status</Th>
-                <Th>Tab switches</Th>
+                <Th>Tab switches (all time)</Th>
                 <Th>Marks</Th>
                 <Th>Result</Th>
+                <Th>
+                  <span className="sr-only">Actions</span>
+                </Th>
               </tr>
             </thead>
             <tbody>
@@ -144,11 +151,24 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
                         {tick(r.steps[s.id])}
                       </Td>
                     ))}
-                    <Td>{st ? <Badge tone={st.tone}>{st.label}</Badge> : <span className={h.xs}>Not started</span>}</Td>
-                    <Td>{r.tabSwitches}</Td>
+                    <Td>
+                      <span className={h.row}>
+                        {st ? <Badge tone={st.tone}>{st.label}</Badge> : <span className={h.xs}>Not started</span>}
+                        {r.resumeCount > 0 && <Badge tone="info">Resumed ×{r.resumeCount}</Badge>}
+                      </span>
+                    </Td>
+                    {/* every switch ever made: it never drops after a resume, so it isn't the student's current count */}
+                    <Td>{r.resumeCount > 0 ? `${r.tabSwitches} total (resumed ×${r.resumeCount})` : r.tabSwitches}</Td>
                     <Td>{r.marks ?? "—"}</Td>
                     <Td>
                       <Badge tone={statusTone(r.status)}>{statusLabel(r.status)}</Badge>
+                    </Td>
+                    <Td>
+                      {canResume && r.attemptStatus === "locked" && r.attemptId && (
+                        <Button size="sm" variant="secondary" onClick={() => setResuming(r)} aria-label={`Resume ${r.fullName}'s test`}>
+                          <PlayCircle aria-hidden size={14} style={{ marginRight: 4 }} /> Resume
+                        </Button>
+                      )}
                     </Td>
                   </tr>
                 );
@@ -157,6 +177,7 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
           </Table>
         )}
       </section>
+      <ResumeDialog row={resuming} onClose={() => setResuming(null)} onDone={reload} />
     </div>
   );
 }

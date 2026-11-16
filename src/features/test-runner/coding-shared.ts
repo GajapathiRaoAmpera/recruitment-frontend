@@ -53,3 +53,8 @@ export function failText(r: { expected: string; status?: CaseStatus; detail?: st
   const first = r.detail?.split("\n").find((l) => l.trim());
   return first ? `${STATUS_LABEL[r.status]} — ${first}` : STATUS_LABEL[r.status];
 }
+
+/** Function mode: a compile error is often a solution that prints instead of returning. Only that mode gets this hint. */
+export const FUNCTION_COMPILE_HINT = "A function must return its answer; don't print it.";
+export const compileHint = (mode: CodingQuestion["mode"] | undefined, status?: CaseStatus) =>
+  mode === "function" && status === "compile_error" ? FUNCTION_COMPILE_HINT : null;

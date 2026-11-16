@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const push = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
-const api = vi.hoisted(() => ({ entryStart: vi.fn(), getAttempt: vi.fn(), reportViolation: vi.fn(), saveAnswer: vi.fn(), submitAttempt: vi.fn(), entryStep: vi.fn() }));
+const api = vi.hoisted(() => ({ entryStart: vi.fn(), getAttempt: vi.fn(), reportViolation: vi.fn(), saveAnswer: vi.fn(), submitAttempt: vi.fn(), entryStep: vi.fn(), getEntryRounds: vi.fn() }));
 vi.mock("@/api/attempt", async (orig) => ({ ...(await orig<typeof import("@/api/attempt")>()), ...api }));
-vi.mock("@/api/entry", async (orig) => ({ ...(await orig<typeof import("@/api/entry")>()), entryStep: api.entryStep }));
+vi.mock("@/api/entry", async (orig) => ({ ...(await orig<typeof import("@/api/entry")>()), entryStep: api.entryStep, getEntryRounds: api.getEntryRounds }));
 
 import { ApiError } from "@/api/client";
 import type { StudentSession } from "@/api/entry";
@@ -49,6 +49,7 @@ beforeEach(() => {
   api.saveAnswer.mockResolvedValue(undefined);
   api.submitAttempt.mockResolvedValue({ timeTakenSec: 600 });
   api.entryStep.mockResolvedValue(undefined);
+  api.getEntryRounds.mockResolvedValue([]);
   focused = true;
   Object.defineProperty(document, "fullscreenElement", { value: document.documentElement, configurable: true });
   const pos = { coords: { latitude: 1, longitude: 2, accuracy: 3 } };
@@ -100,7 +101,7 @@ describe("RealExamShell (server-driven)", () => {
     expect(api.reportViolation).toHaveBeenCalledTimes(1);
     comeBack();
     goAway();
-    await screen.findByText(/Tab switches 2 \/ 3 · 1 more closes the test/);
+    await screen.findByText(/Tab switches 2 \/ 3 · the next switch closes the test/);
     comeBack();
     goAway();
     expect(await screen.findByRole("alertdialog", { name: "Your test is paused" })).toBeInTheDocument();
@@ -170,7 +171,7 @@ describe("RealExamShell (server-driven)", () => {
 });
 
 describe("Submit and Leave", () => {
-  it("Submit warns about unanswered questions, then makes the answers final and shows the time taken", async () => {
+  it("Submit warns about unanswered questions, then makes the answers final and shows the recorded screen", async () => {
     render(<RealExamShell student={student} roundId="r1" />);
     (await screen.findByRole("radio", { name: /B\. 4/ })).click();
     fireEvent.click(await screen.findByRole("button", { name: "Next" }));
@@ -178,9 +179,12 @@ describe("Submit and Leave", () => {
     expect(await screen.findByText(/1 question\(s\) are unanswered/)).toBeInTheDocument();
     expect(api.submitAttempt).not.toHaveBeenCalled(); // not until confirmed
     fireEvent.click(screen.getAllByRole("button", { name: "Submit test" }).at(-1)!);
-    expect(await screen.findByRole("alertdialog", { name: "Test submitted" })).toBeInTheDocument();
+    expect(await screen.findByRole("alertdialog", { name: "Test recorded" })).toBeInTheDocument();
     expect(api.submitAttempt).toHaveBeenCalledWith("ATT");
-    expect(screen.getByText(/Your answers are final\. Time taken: 10 min/)).toBeInTheDocument();
+    // AC-7/F4: one shared "recorded" screen: no marks, no score, no time, no way back into the test
+    expect(screen.getByText("Your test has been recorded. Our team will review it and contact you soon.")).toBeInTheDocument();
+    expect(screen.queryByText(/Time taken|marks|score/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to dashboard" })).toHaveAttribute("href", "/student");
   });
 
   it("Leave asks first, keeps the answers un-submitted and goes back to the dashboard", async () => {
@@ -200,16 +204,16 @@ describe("Submit and Leave", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Submit test" }));
     fireEvent.click(screen.getAllByRole("button", { name: "Submit test" }).at(-1)!);
     expect(await screen.findByText(/Can't reach the server/)).toBeInTheDocument();
-    expect(screen.queryByRole("alertdialog", { name: "Test submitted" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog", { name: "Test recorded" })).not.toBeInTheDocument();
     fireEvent.click(screen.getAllByRole("button", { name: "Submit test" }).at(-1)!);
-    expect(await screen.findByRole("alertdialog", { name: "Test submitted" })).toBeInTheDocument();
+    expect(await screen.findByRole("alertdialog", { name: "Test recorded" })).toBeInTheDocument();
   });
 
   it("submits by itself when time runs out", async () => {
     api.getAttempt.mockResolvedValue(state({ status: "expired" }));
     render(<RealExamShell student={student} roundId="r1" />);
     await waitFor(() => expect(api.submitAttempt).toHaveBeenCalledWith("ATT"));
-    expect(await screen.findByRole("alertdialog", { name: "Test submitted" })).toBeInTheDocument();
+    expect(await screen.findByRole("alertdialog", { name: "Test recorded" })).toBeInTheDocument();
   });
 
   it("can't submit once locked, and a submitted attempt opens on the done screen", async () => {
@@ -220,7 +224,7 @@ describe("Submit and Leave", () => {
     unmount();
     api.getAttempt.mockResolvedValue(state({ status: "submitted" }));
     render(<RealExamShell student={student} roundId="r1" />);
-    expect(await screen.findByRole("alertdialog", { name: "Test submitted" })).toBeInTheDocument();
+    expect(await screen.findByRole("alertdialog", { name: "Test recorded" })).toBeInTheDocument();
     expect(api.submitAttempt).not.toHaveBeenCalled();
   });
 
@@ -294,3 +298,95 @@ describe("navigation and saving", () => {
   });
 });
 
+
+// AC-7: a pop-up warns after each new switch below the limit; at the limit only the lock screen shows.
+describe("tab-switch warning (AC-7)", () => {
+  const warning = () => screen.queryByRole("alertdialog", { name: /warning/i });
+  const setFullscreen = (on: boolean) => {
+    Object.defineProperty(document, "fullscreenElement", { value: on ? document.documentElement : null, configurable: true });
+    act(() => document.dispatchEvent(new Event("fullscreenchange")));
+  };
+
+  it("shows nothing at 0 and nothing on page load, even when switches were counted before", async () => {
+    api.getAttempt.mockResolvedValue(state({ tabSwitches: 2 }));
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+    expect(screen.getByText(/Tab switches 2 \/ 3/)).toBeInTheDocument();
+    expect(warning()).toBeNull();
+  });
+
+  it("warns at 1, gives the final warning at 2, and at 3 shows only the lock screen", async () => {
+    api.reportViolation.mockResolvedValueOnce({ tabSwitches: 1, locked: false }).mockResolvedValueOnce({ tabSwitches: 2, locked: false }).mockResolvedValueOnce({ tabSwitches: 3, locked: true });
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+
+    goAway();
+    const first = await screen.findByRole("alertdialog", { name: "Warning 1 of 3" });
+    expect(first).toHaveTextContent("Leaving the test tab is recorded. 2 more switches will lock your test.");
+    const ok = screen.getByRole("button", { name: "I understand" });
+    expect(ok).toHaveFocus();
+    expect(screen.getByRole("timer")).toBeInTheDocument(); // the timer keeps running behind it
+    expect(document.querySelector("main")).toHaveAttribute("inert");
+    fireEvent.click(ok);
+    expect(warning()).toBeNull();
+    expect(document.querySelector("main")).not.toHaveAttribute("inert");
+
+    comeBack();
+    goAway();
+    const last = await screen.findByRole("alertdialog", { name: "Final warning" });
+    expect(last).toHaveTextContent("One more switch locks your test and you won't be able to write code until HR resumes it.");
+    fireEvent.click(screen.getByRole("button", { name: "I understand" }));
+
+    comeBack();
+    goAway();
+    expect(await screen.findByRole("alertdialog", { name: "Your test is paused" })).toBeInTheDocument();
+    expect(warning()).toBeNull();
+  });
+
+  it("takes the numbers from the server's limit, never a hard-coded 3", async () => {
+    api.getAttempt.mockResolvedValue(state({ maxTabSwitches: 5 }));
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+    goAway();
+    expect(await screen.findByRole("alertdialog", { name: "Warning 1 of 5" })).toHaveTextContent("4 more switches will lock your test.");
+  });
+
+  it("warns for a switch queued while offline, before the server confirms it", async () => {
+    api.reportViolation.mockRejectedValue(new TypeError("offline"));
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+    goAway();
+    expect(await screen.findByText(/Offline/)).toBeInTheDocument();
+    expect(await screen.findByRole("alertdialog", { name: "Warning 1 of 3" })).toBeInTheDocument();
+  });
+
+  it("does not stack under the full-screen overlay: it shows once that clears", async () => {
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+    setFullscreen(false);
+    goAway();
+    await waitFor(() => expect(api.reportViolation).toHaveBeenCalledWith("ATT", "tab_switch"));
+    expect(await screen.findByRole("alertdialog", { name: "Return to full screen" })).toBeInTheDocument();
+    expect(warning()).toBeNull();
+    setFullscreen(true);
+    expect(await screen.findByRole("alertdialog", { name: "Warning 1 of 3" })).toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog", { name: "Return to full screen" })).toBeNull();
+  });
+});
+
+// AC-3/AC-7 safety net: a closed attempt refused by POST /entry/start gets its own screen, not a generic error.
+describe("closed attempts at start", () => {
+  it.each([
+    ["ATTEMPT_SUBMITTED", "Test recorded", "Your test has been recorded. Our team will review it and contact you soon."],
+    ["ATTEMPT_LOCKED", "Your test is paused", "Your test is paused. HR needs to resume it before you can continue."],
+    ["ATTEMPT_EXPIRED", "Time is up", "Time is up. Your answers were submitted."],
+  ])("%s shows the %s screen", async (code, title, text) => {
+    api.entryStart.mockRejectedValue(new ApiError(409, code, "refused"));
+    render(<RealExamShell student={student} roundId="r1" />);
+    expect(await screen.findByRole("heading", { name: title })).toBeInTheDocument();
+    expect(screen.getByText(text)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /try again/i })).toBeNull();
+    expect(screen.getByRole("link", { name: "Back to dashboard" })).toHaveAttribute("href", "/student");
+    expect(api.getAttempt).not.toHaveBeenCalled();
+  });
+});

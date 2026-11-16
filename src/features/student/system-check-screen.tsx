@@ -11,7 +11,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { NotFoundState } from "@/components/ui/states";
 import { DemoNote, hire as h } from "@/components/hire/ui";
-import { RealSystemCheck } from "@/features/student/real-system-check";
+import { RealRoundGate } from "@/features/student/real-round-gate";
 import { useExamRound, useStudent } from "@/components/student/hooks";
 import s from "@/components/student/student.module.scss";
 import { MAX_TAB_SWITCHES, useStore } from "@/mock/store";
@@ -194,5 +194,5 @@ function StepIcon({ st }: { st: Status }) {
 export function SystemCheckScreen() {
   const { roundId } = useParams<{ roundId: string }>();
   const { real } = useStudent();
-  return real ? <RealSystemCheck student={real} roundId={roundId} /> : <MockSystemCheck />;
+  return real ? <RealRoundGate student={real} roundId={roundId} /> : <MockSystemCheck />;
 }

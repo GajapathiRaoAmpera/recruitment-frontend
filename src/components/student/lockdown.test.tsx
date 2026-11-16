@@ -108,7 +108,7 @@ describe("TabSwitchBadge", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Tab switches 0 / 3");
     const neutral = tone();
     rerender(<TabSwitchBadge count={2} max={3} />);
-    expect(screen.getByRole("status")).toHaveTextContent("Tab switches 2 / 3 · 1 more closes the test");
+    expect(screen.getByRole("status")).toHaveTextContent("Tab switches 2 / 3 · the next switch closes the test");
     const warning = tone();
     rerender(<TabSwitchBadge count={3} max={3} />);
     expect(screen.getByRole("status")).toHaveTextContent("Tab switches 3 / 3 · test closed");

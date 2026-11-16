@@ -8,7 +8,7 @@ export function TabSwitchBadge({ count, max }: { count: number; max: number }) {
     <Badge tone={tone}>
       <span role="status" aria-live="polite">
         Tab switches {Math.min(count, max)} / {max}
-        {left === 1 && " · 1 more closes the test"}
+        {left === 1 && " · the next switch closes the test"}
         {left <= 0 && " · test closed"}
       </span>
     </Badge>

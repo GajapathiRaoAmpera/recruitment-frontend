@@ -185,7 +185,12 @@ export interface ProgressRow {
   startedAt: string | null;
   submittedAt: string | null;
   marks: number | null;
+  /** Every switch ever reported for the attempt: never drops after a resume, so it isn't the student's current count. */
   tabSwitches: number;
+  /** For POST /attempts/{id}/resume; null = not started. */
+  attemptId: string | null;
+  /** How many times HR resumed this attempt. */
+  resumeCount: number;
 }
 export interface RoundProgress {
   roundId: string;
@@ -206,9 +211,19 @@ export async function getRoundProgress(driveId: string, roundId: string): Promis
     candidates: p.candidates.map((c: any): ProgressRow => ({
       candidateId: c.candidate_id, studentId: c.student_id, fullName: c.full_name, status: c.status, steps: c.steps,
       attemptStatus: c.attempt_status, startedAt: c.started_at, submittedAt: c.submitted_at, marks: c.marks, tabSwitches: c.tab_switches,
+      attemptId: c.attempt_id ?? null, resumeCount: c.resume_count ?? 0,
     })),
   };
 }
+
+/**
+ * Reopen an attempt the 3rd tab switch locked (AC-7), with the time it had left; the student's switch count restarts at 0.
+ * `reason` is 3-500 characters. Refusals: 404 ATTEMPT_NOT_FOUND, 409 NOT_LOCKED / ROUND_NOT_ACTIVE / REMAINING_TIME_UNKNOWN.
+ */
+export const resumeAttempt = async (attemptId: string, reason: string) => {
+  const r = await api<{ attempt_id: string; status: "in_progress"; deadline_at: string; tab_switches: number }>(`/attempts/${attemptId}/resume`, json("POST", { reason: reason.trim() }));
+  return { attemptId: r.attempt_id, status: r.status, deadlineAt: r.deadline_at, tabSwitches: r.tab_switches };
+};
 
 export const listRounds = async (driveId: string) =>
   (await api<{ id: string; position: number; type: string; status: string }[]>(`/drives/${driveId}/rounds`)).map((r) => ({ id: r.id, position: r.position, type: r.type, status: r.status }));

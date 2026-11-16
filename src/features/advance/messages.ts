@@ -26,7 +26,7 @@ export function advanceErrorMessage(e: ApiError): string {
     case "LOCKED_ATTEMPTS": {
       const list = Array.isArray(e.details.attempts) ? (e.details.attempts as { name?: string; student_id?: string }[]) : [];
       const names = list.map((a) => a.name ?? a.student_id).filter(Boolean).join(", ");
-      return `${list.length ? plural(list.length, "attempt is", "attempts are") : "Some attempts are"} locked after tab switches${names ? ` (${names})` : ""}. Tick "Finish locked attempts with their current marks" to include them. Nothing was saved.`;
+      return `${list.length ? plural(list.length, "attempt is", "attempts are") : "Some attempts are"} locked after tab switches${names ? ` (${names})` : ""}. Use Resume on each locked student in the Candidates table above to let them finish with the time they had left, or tick "Finish locked attempts with their current marks" to include them as they are. Nothing was saved.`;
     }
     default:
       return e.message;

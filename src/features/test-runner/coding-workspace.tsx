@@ -22,7 +22,7 @@ import { useToast } from "@/components/ui/toast";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
 import { CodeEditor } from "./code-editor";
-import { failText, signatureText, sqlRows, starterOf } from "./coding-shared";
+import { compileHint, failText, signatureText, sqlRows, starterOf } from "./coding-shared";
 import { clearAttemptDrafts, pickRestore, readLocal, writeLocal, type Restored } from "./drafts";
 import { SqlDataTable, SqlRowsTable } from "./sql-tables";
 
@@ -259,9 +259,6 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
             </button>
           ))}
         </div>
-        <div className={h.row} style={{ marginBottom: 8 }}>
-          <Badge>{p.marks} marks</Badge>
-        </div>
         <h1 id="p-h" className={h.cardTitle}>
           {p.title}
         </h1>
@@ -412,6 +409,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
                           ? "Wrong answer — compare the rows below"
                           : failText({ expected: r.expected, status: r.status, detail: r.stderr })}</span>
                   </div>
+                  {!r.ok && compileHint(p.mode, r.status) && <p className={h.xs}>{compileHint(p.mode, r.status)}</p>}
                   {!r.ok && r.expectedRows && (
                     <div className={h.stackSm} style={{ marginTop: 8 }}>
                       {r.status === "runtime_error" ? (
