@@ -1,0 +1,404 @@
+// Public storyboard of a campus drive. Tokens only — no hex values.
+@use "@/styles/mixins" as *;
+
+.page {
+  min-height: 100vh;
+  padding: sp(6) sp(4);
+  background: var(--ui-color-bg-gradient), var(--ui-color-bg);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-sans);
+  @include up(md) {
+    padding: sp(10) sp(8);
+  }
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(3);
+  align-items: flex-end;
+  justify-content: space-between;
+  max-width: 1400px;
+  margin: 0 auto sp(6);
+}
+.eyebrow {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+.title {
+  @include text(2xl);
+  font-weight: 500;
+}
+
+.layout {
+  display: grid;
+  gap: sp(6);
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: start; // the board keeps its own height instead of stretching to the panel
+  @include up(lg) {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+.stage,
+.panel {
+  background: var(--ui-glass-bg-strong);
+  border: 1px solid var(--ui-glass-border);
+  border-radius: var(--ui-radius-card);
+  box-shadow: var(--ui-glass-shadow);
+  padding: sp(3);
+}
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--ui-radius-input);
+  font-family: var(--ui-font-sans);
+}
+
+// Floor plan
+.grass {
+  fill: var(--ui-color-office-plant);
+  opacity: 0.35;
+}
+.tree {
+  fill: var(--ui-color-office-plant);
+  opacity: 0.8;
+}
+.outsideLabel {
+  font-size: 13px;
+  fill: var(--ui-color-text);
+}
+.floor {
+  fill: var(--ui-color-canvas);
+}
+.corridor {
+  fill: var(--ui-color-surface-muted);
+}
+.room rect {
+  fill: var(--ui-color-surface);
+  stroke: var(--ui-color-office-frame);
+  stroke-width: 2;
+  transition: fill var(--ui-duration-base) var(--ui-ease-out), stroke var(--ui-duration-base) var(--ui-ease-out);
+}
+.room.active rect {
+  fill: var(--ui-color-primary-subtle);
+  stroke: var(--ui-color-primary);
+  stroke-width: 3;
+}
+.roomName {
+  font-size: 14px;
+  font-weight: 500;
+  fill: var(--ui-color-text);
+}
+.roomSub {
+  font-size: 11px;
+  fill: var(--ui-color-text-muted);
+}
+.desk {
+  fill: var(--ui-color-office-wood-top);
+}
+.paper {
+  fill: var(--ui-color-surface);
+  stroke: var(--ui-color-border-strong);
+}
+.screen {
+  fill: var(--ui-color-office-glass);
+  stroke: var(--ui-color-office-frame);
+}
+.partition {
+  stroke: var(--ui-color-office-frame);
+  stroke-width: 2;
+}
+.ai {
+  fill: var(--ui-color-primary);
+  opacity: 0.5;
+}
+.barPass {
+  fill: var(--ui-color-success);
+}
+.barFail {
+  fill: var(--ui-color-edge);
+}
+.cutoff {
+  stroke: var(--ui-color-danger);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+}
+.ranking.active .screen {
+  stroke: var(--ui-color-primary);
+  stroke-width: 2;
+}
+
+// People
+.shadow {
+  fill: var(--ui-color-text);
+  opacity: 0.22;
+}
+.lightStop {
+  stop-color: var(--ui-color-surface);
+  stop-opacity: 0.35;
+}
+.clearStop {
+  stop-color: var(--ui-color-surface);
+  stop-opacity: 0;
+}
+.darkStop {
+  stop-color: var(--ui-color-text);
+  stop-opacity: 0.18;
+}
+.shine {
+  fill: var(--ui-color-surface);
+  opacity: 0.22;
+}
+.shoe {
+  fill: var(--ui-color-person-shoe);
+}
+.chair {
+  fill: var(--ui-color-person-chair);
+}
+.collar {
+  fill: var(--ui-color-surface);
+}
+.tie {
+  stroke: var(--ui-color-primary);
+  stroke-width: 1.2;
+  stroke-linecap: round;
+}
+.badge {
+  fill: var(--ui-color-primary);
+}
+.bun {
+  stroke: var(--ui-color-text);
+  stroke-opacity: 0.25;
+  stroke-width: 0.6;
+}
+
+// Room activity: only while that stage is on, and never for reduced-motion viewers
+@media (prefers-reduced-motion: no-preference) {
+  .working {
+    animation: blink 1.4s ease-in-out infinite;
+  }
+  .glow {
+    animation: glow 1.2s ease-in-out infinite;
+  }
+  .speaking {
+    animation: speak 0.9s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  .flip {
+    animation: flip 1.6s var(--ui-ease-out) infinite;
+  }
+}
+@keyframes blink {
+  50% {
+    fill: var(--ui-color-info-subtle);
+  }
+}
+@keyframes glow {
+  50% {
+    fill: var(--ui-color-info);
+  }
+}
+@keyframes speak {
+  50% {
+    opacity: 1;
+    transform: scale(1.3);
+  }
+}
+@keyframes flip {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-28px);
+    opacity: 0;
+  }
+}
+
+.legend {
+  display: flex;
+  gap: sp(4);
+  padding: sp(2) sp(1) 0;
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+  span {
+    display: inline-flex;
+    gap: sp(1.5);
+    align-items: center;
+  }
+  i {
+    width: sp(2.5);
+    height: sp(2.5);
+    border-radius: 50%;
+  }
+}
+.dotStaff {
+  background: var(--ui-color-interviewer-suit);
+}
+.dotStudent {
+  background: var(--ui-color-person-shirt-1);
+}
+
+// Narration panel
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+  padding: sp(5);
+}
+.now {
+  display: grid;
+  gap: sp(2);
+  justify-items: start;
+}
+.step {
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.nowTitle {
+  @include text(xl);
+  font-weight: 500;
+}
+.nowText {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  min-height: 6.25rem; // stops the panel jumping between longer and shorter stages
+}
+.steps {
+  display: grid;
+  gap: sp(1);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.stepBtn {
+  display: flex;
+  gap: sp(3);
+  align-items: center;
+  width: 100%;
+  padding: sp(2) sp(3);
+  border: 0;
+  border-radius: var(--ui-radius-input);
+  background: transparent;
+  color: var(--ui-color-text);
+  font: inherit;
+  @include text(sm);
+  text-align: left;
+  cursor: pointer;
+  @include focus-ring;
+  &:hover {
+    background: var(--ui-color-surface-muted);
+  }
+}
+.current {
+  background: var(--ui-color-primary-subtle);
+  color: var(--ui-color-primary-hover);
+  font-weight: 500;
+}
+.num {
+  display: grid;
+  place-items: center;
+  width: sp(6);
+  height: sp(6);
+  border-radius: 50%;
+  border: 1px solid var(--ui-color-border-strong);
+  @include text(xs);
+  .current & {
+    background: var(--ui-color-primary);
+    border-color: var(--ui-color-primary);
+    color: var(--ui-color-primary-fg);
+  }
+}
+
+// Playback, counters, offer glow
+.ring {
+  fill: var(--ui-color-success-subtle);
+  stroke: var(--ui-color-success);
+  stroke-width: 1.5;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ring {
+    animation: pulse 1.2s ease-in-out infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+@keyframes pulse {
+  50% {
+    transform: scale(1.15);
+    opacity: 0.6;
+  }
+}
+.dotLeaving {
+  background: var(--ui-color-edge);
+}
+.hint {
+  margin-left: auto;
+  @include down(md) {
+    display: none !important; // keyboard hint is noise on touch screens
+  }
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: sp(2);
+  margin: 0;
+  div {
+    padding: sp(3);
+    border-radius: var(--ui-radius-input);
+    background: var(--ui-color-surface-muted);
+  }
+  dt {
+    @include text(xs);
+    color: var(--ui-color-text-muted);
+  }
+  dd {
+    margin: 0;
+    @include text(2xl);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+}
+.win {
+  color: var(--ui-color-success);
+}
+.controls {
+  display: flex;
+  gap: sp(3);
+  align-items: center;
+  justify-content: space-between;
+}
+.speed {
+  display: inline-flex;
+  padding: sp(0.5);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-surface-muted);
+}
+.speedBtn {
+  min-width: sp(11);
+  min-height: sp(8);
+  border: 0;
+  border-radius: var(--ui-radius-pill);
+  background: transparent;
+  color: var(--ui-color-text);
+  font: inherit;
+  @include text(sm);
+  cursor: pointer;
+  @include focus-ring;
+  &.current {
+    background: var(--ui-color-primary);
+    color: var(--ui-color-primary-fg);
+  }
+}
+.scrub {
+  width: 100%;
+  accent-color: var(--ui-color-primary);
+  cursor: pointer;
+  @include focus-ring;
+}
