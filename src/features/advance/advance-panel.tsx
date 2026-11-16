@@ -12,6 +12,7 @@ import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { RocketLoader } from "@/components/ui/rocket-loader";
+import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
@@ -90,6 +91,10 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
   const { counts } = data;
   const lockedRows = data.candidates.filter((c) => c.attemptStatus === "locked");
   const synced = !loading && !error && query === threshold && data.threshold === threshold;
+  // The shown counts and pass/fail are for another cut-off until the new preview answers: shimmer them, don't show stale numbers.
+  const updating = editable && !error && data.threshold !== value;
+  const stat = (n: number | null) => (updating ? <Skeleton style={{ width: "2.5rem", height: "1.75rem" }} /> : (n ?? "—"));
+  const skeletonRows = Math.min(data.candidates.length, 8);
   const blockReason =
     counts.stillWriting > 0
       ? `${plural(counts.stillWriting, "student is", "students are")} still writing. Advance unlocks when every attempt is submitted or out of time.`
@@ -195,18 +200,18 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
           </div>
         )}
 
-        <div className={a.counts} role="group" aria-label="Counts at this cut-off">
-          <StatCard label="Pass" value={counts.pass ?? "—"} icon={CheckCircle2} />
-          <StatCard label="Fail" value={counts.fail ?? "—"} icon={XCircle} />
-          <StatCard label={editable ? "Not started" : "Absent"} value={counts.absent} icon={UserX} />
-          <StatCard label="Still writing" value={counts.stillWriting} icon={Clock} />
-          <StatCard label="Locked" value={counts.locked} icon={AlertTriangle} />
+        <div className={a.counts} role="group" aria-label="Counts at this cut-off" aria-busy={updating}>
+          <StatCard label="Pass" value={stat(counts.pass)} icon={CheckCircle2} />
+          <StatCard label="Fail" value={stat(counts.fail)} icon={XCircle} />
+          <StatCard label={editable ? "Not started" : "Absent"} value={stat(counts.absent)} icon={UserX} />
+          <StatCard label="Still writing" value={stat(counts.stillWriting)} icon={Clock} />
+          <StatCard label="Locked" value={stat(counts.locked)} icon={AlertTriangle} />
         </div>
 
         {data.candidates.length === 0 ? (
           <EmptyState title="No candidates in this round" description="Students invited to this round show up here." />
         ) : (
-          <Table aria-label="Ranking">
+          <Table aria-label="Ranking" aria-busy={updating}>
             <thead>
               <tr>
                 <Th>Rank</Th>
@@ -219,19 +224,29 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
               </tr>
             </thead>
             <tbody>
-              {data.candidates.map((c) => (
-                <tr key={c.candidateId} className={c.wouldPass === false ? a.below : undefined}>
-                  <Td>{c.rank === null ? "—" : `#${c.rank}`}</Td>
-                  <Td className={h.mono}>{c.studentId}</Td>
-                  <Td>{c.name}</Td>
-                  <Td>{c.marks === null ? "—" : `${fmt(c.marks)} / ${fmt(c.maxMarks)}`}</Td>
-                  <Td>{c.percent === null ? "—" : `${fmt(c.percent)}%`}</Td>
-                  <Td>{formatDuration(c.timeTakenSec)}</Td>
-                  <Td>
-                    <ResultCell row={c} open={editable} />
-                  </Td>
-                </tr>
-              ))}
+              {updating
+                ? Array.from({ length: skeletonRows }, (_, i) => (
+                    <tr key={i} data-testid="ranking-skeleton-row">
+                      {["2rem", "5.5rem", "8rem", "4.5rem", "3rem", "4rem", "4.5rem"].map((w, j) => (
+                        <Td key={j}>
+                          <Skeleton style={{ width: w }} />
+                        </Td>
+                      ))}
+                    </tr>
+                  ))
+                : data.candidates.map((c) => (
+                    <tr key={c.candidateId} className={c.wouldPass === false ? a.below : undefined}>
+                      <Td>{c.rank === null ? "—" : `#${c.rank}`}</Td>
+                      <Td className={h.mono}>{c.studentId}</Td>
+                      <Td>{c.name}</Td>
+                      <Td>{c.marks === null ? "—" : `${fmt(c.marks)} / ${fmt(c.maxMarks)}`}</Td>
+                      <Td>{c.percent === null ? "—" : `${fmt(c.percent)}%`}</Td>
+                      <Td>{formatDuration(c.timeTakenSec)}</Td>
+                      <Td>
+                        <ResultCell row={c} open={editable} />
+                      </Td>
+                    </tr>
+                  ))}
             </tbody>
           </Table>
         )}

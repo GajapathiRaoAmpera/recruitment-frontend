@@ -113,7 +113,13 @@ it("starts at the saved cut-off and previews a new one after the debounce", asyn
   fireEvent.change(screen.getByRole("slider"), { target: { value: "40" } });
   expect(advanceBtn()).toBeDisabled(); // the preview is behind the slider
   expect(screen.getByText("Updating the preview…")).toBeInTheDocument();
+  // No stale numbers while the new cut-off is previewed: counts and rows shimmer until the answer arrives.
+  expect(stat("Pass")).toBe("");
+  expect(screen.getByRole("table", { name: "Ranking" })).toHaveAttribute("aria-busy", "true");
+  expect(screen.getAllByTestId("ranking-skeleton-row")).toHaveLength(3);
+  expect(screen.queryByText("Asha")).toBeNull();
   await ready();
+  expect(screen.queryAllByTestId("ranking-skeleton-row")).toHaveLength(0);
   expect(rankingCalls().at(-1)).toBe("/api/v1/rounds/r1/ranking?threshold=40");
   expect(stat("Pass")).toBe("2");
   expect(within(screen.getByRole("table", { name: "Ranking" })).getAllByText("Pass")).toHaveLength(2);

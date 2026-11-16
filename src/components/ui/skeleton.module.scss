@@ -1,0 +1,35 @@
+@use "@/styles/mixins" as *;
+
+// A soft sheen sweeping across a muted block; transform-only motion, still under reduced motion.
+.skeleton {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 1em;
+  overflow: hidden;
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-surface-muted);
+  vertical-align: middle;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ui-color-border) 70%, transparent), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@include reduced-motion {
+  .skeleton::after {
+    animation: none;
+    transform: none;
+    opacity: 0.4;
+  }
+}
