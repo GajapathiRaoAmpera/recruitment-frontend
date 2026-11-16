@@ -70,7 +70,7 @@ it("Round 1 submitted → Round 2 starts clean", async () => {
   writeLocal("A1", "c1", { language: "python", code: { python: "round one code" }, savedAt: Date.parse("2026-01-02T10:30:00Z") });
 
   const { rerender } = render(<AptitudeTestPage />);
-  expect(await screen.findByRole("heading", { name: "Test submitted" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { name: "Test recorded" })).toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent("Tab switches 2 / 3");
 
   // The student opens Round 2 with the same login.
@@ -80,7 +80,7 @@ it("Round 1 submitted → Round 2 starts clean", async () => {
   expect(await screen.findByRole("heading", { name: "Sum" })).toBeInTheDocument(); // coding screen, chosen by the round type
   expect(api.entryStart).toHaveBeenLastCalledWith("ENTRY", "r2");
   expect(api.getAttempt).toHaveBeenLastCalledWith(T2);
-  expect(screen.queryByRole("heading", { name: "Test submitted" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Test recorded" })).not.toBeInTheDocument();
   expect(screen.queryByRole("heading", { name: /paused|time is up/i })).not.toBeInTheDocument();
   expect(screen.getByRole("status")).toHaveTextContent("Tab switches 0 / 3"); // the server's count, not Round 1's 2
   expect(screen.getByRole("timer")).toHaveTextContent(/^\s*(60:00|59:5\d)/); // Round 2's own deadline from server time

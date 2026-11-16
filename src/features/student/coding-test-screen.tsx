@@ -148,7 +148,6 @@ function Runner({ roundId }: { roundId: string }) {
         <section className={h.card} aria-labelledby="p-h">
           <div className={h.row} style={{ marginBottom: 8 }}>
             <Badge tone={p.difficulty === "advanced" ? "danger" : p.difficulty === "medium" ? "warning" : "success"}>{p.difficulty}</Badge>
-            <Badge>{p.marks} marks</Badge>
           </div>
           <h1 id="p-h" className={h.cardTitle}>
             {p.title}

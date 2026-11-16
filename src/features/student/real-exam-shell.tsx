@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Circle, Clock, Lock, MapPin, Maximize, TimerOff, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Clock, MapPin, Maximize, TimerOff, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -23,6 +23,7 @@ import { TabSwitchBadge } from "@/components/student/tab-switch-badge";
 import { roundTitle } from "@/mock/data";
 import type { Round } from "@/mock/types";
 import { CodingWorkspace } from "@/features/test-runner/coding-workspace";
+import { AttemptClosedOverlay, AttemptClosedScreen, CLOSED_BY_CODE } from "./attempt-closed";
 
 const RETRY_MS = 5000;
 
@@ -59,6 +60,9 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   const notOpen = error instanceof ApiError && error.code === "ROUND_NOT_OPEN";
   // Exam not opened yet (papers not ready / drive not started): wait here and retry quietly until the server opens it.
   if (notOpen) return <WaitingRoom onRetry={() => setTries((n) => n + 1)} />;
+  // Submitted, paused or out of time: the same screens as re-entry from the dashboard, not an error.
+  const closedKind = error instanceof ApiError ? CLOSED_BY_CODE[error.code] : undefined;
+  if (closedKind) return <AttemptClosedScreen kind={closedKind} entryToken={student.entryToken} roundId={roundId} title={roundTitle[round.type as Round["type"]] ?? round.type} />;
   if (error) {
     const stepsMissing = error instanceof ApiError && error.code === "STEPS_MISSING";
     return (
@@ -182,7 +186,6 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   const [expired, setExpired] = useState(initial.status === "expired");
   const router = useRouter();
   const [submitted, setSubmitted] = useState(initial.status === "submitted");
-  const [timeTaken, setTimeTaken] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const [confirm, setConfirm] = useState<"submit" | "leave">();
@@ -205,6 +208,14 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   const [offline, setOffline] = useState(false);
   const max = initial.maxTabSwitches;
   const switches = Math.min(max, confirmed + pending);
+  // AC-7 warning: only for a switch made in this session (the count on load is the baseline), never at the limit
+  // (the lock screen says it then). Offline switches count at once, as pending ones.
+  const [seenSwitches, setSeenSwitches] = useState(switches);
+  const [warning, setWarning] = useState<number | null>(null);
+  if (switches !== seenSwitches) {
+    setSeenSwitches(switches);
+    if (switches > seenSwitches) setWarning(switches < max ? switches : null);
+  }
   // Deadline from the server's clock, computed once: a wrong laptop clock changes nothing.
   const [deadline] = useState(() => Date.now() + msLeft(initial));
   const live = !locked && !expired && !submitted;
@@ -315,8 +326,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
       return;
     }
     try {
-      const r = await submitAttempt(token);
-      setTimeTaken(r.timeTakenSec);
+      await submitAttempt(token);
       setSubmitted(true);
       safeStorage.set(markKey, "[]");
       setConfirm(undefined);
@@ -340,8 +350,11 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   const unanswered = isCoding ? 0 : mcqs.length - answeredCount;
   const markedCount = mcqs.filter((x) => marked.includes(x.id)).length;
   const closed = locked || expired || submitted;
+  // The location / full-screen / closed overlays come first; the warning waits until they clear.
+  const covered = closed || (live && (!locationOn || !fullscreen));
+  const showWarning = warning !== null && !covered;
   // Anything covering the test; dialogs underneath close and the page behind goes inert.
-  const blocked = closed || (live && (!locationOn || !fullscreen));
+  const blocked = covered || showWarning;
 
   const status = offline
     ? "Offline: reconnecting…"
@@ -434,24 +447,15 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         }}
       />
 
-      {submitted && (
-        <Overlay id="done" icon={<CheckCircle2 aria-hidden size={32} color="var(--ui-color-success)" />} title="Test submitted">
-          <p className={h.muted}>
-            Your answers are final.{timeTaken !== null && ` Time taken: ${Math.max(1, Math.round(timeTaken / 60))} min.`} HR will share the result after review.
-          </p>
-          <Button asChild variant="secondary" autoFocus>
-            <Link href="/student">Back to dashboard</Link>
-          </Button>
-        </Overlay>
-      )}
+      {submitted && <AttemptClosedOverlay kind="submitted" entryToken={student.entryToken} roundId={roundId} />}
 
       {locked && !submitted && (
-        <Overlay id="lock" icon={<Lock aria-hidden size={32} />} title="Your test is paused">
-          <p className={h.muted}>You left the test tab {max} times, so it closed. Your answers are saved. HR can let you resume with the time you had left.</p>
-          <Button asChild variant="secondary" autoFocus>
-            <Link href="/student">Back to dashboard</Link>
-          </Button>
-        </Overlay>
+        <AttemptClosedOverlay
+          kind="locked"
+          entryToken={student.entryToken}
+          roundId={roundId}
+          detail={`You left the test tab ${max} times, so it closed. Your answers and the time you had left are saved.`}
+        />
       )}
 
       {expired && !locked && !submitted && (
@@ -474,6 +478,19 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
           <p className={h.muted}>The test needs your location for the whole test. Allow it from the address bar, then check again. Your timer is still running.</p>
           <Button autoFocus onClick={checkLocation}>
             Check again
+          </Button>
+        </Overlay>
+      )}
+
+      {showWarning && (
+        <Overlay id="warn" icon={<AlertTriangle aria-hidden size={32} color="var(--ui-color-warning)" />} title={warning === max - 1 ? "Final warning" : `Warning ${warning} of ${max}`}>
+          <p className={h.muted}>
+            {warning === max - 1
+              ? "One more switch locks your test and you won't be able to write code until HR resumes it."
+              : `Leaving the test tab is recorded. ${max - warning!} more switches will lock your test.`}
+          </p>
+          <Button autoFocus onClick={() => setWarning(null)}>
+            I understand
           </Button>
         </Overlay>
       )}

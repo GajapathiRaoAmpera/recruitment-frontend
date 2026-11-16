@@ -370,6 +370,9 @@ export function useStore() {
   return ctx;
 }
 
+/** The store when a provider is mounted, else null (screens rendered on their own, e.g. in tests). */
+export const useOptionalStore = () => useContext(Ctx);
+
 // Selectors
 export const driveRounds = (s: State, driveId: string) => s.rounds.filter((r) => r.driveId === driveId).sort((a, b) => a.position - b.position);
 export const roundResults = (s: State, roundId: string) => s.results.filter((r) => r.roundId === roundId);

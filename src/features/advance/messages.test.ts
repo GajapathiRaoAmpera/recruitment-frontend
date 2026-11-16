@@ -24,6 +24,7 @@ it("LOCKED_ATTEMPTS names the locked students and points to the checkbox", () =>
   const m = advanceErrorMessage(err("LOCKED_ATTEMPTS", { attempts: [{ attempt_id: "a1", name: "Asha" }, { attempt_id: "a2", student_id: "S2" }] }));
   expect(m).toMatch(/^2 attempts are locked after tab switches \(Asha, S2\)/);
   expect(m).toContain("Finish locked attempts with their current marks");
+  expect(m).toContain("Use Resume on each locked student"); // AC-7: HR can resume instead of finalizing
 });
 
 it("falls back to the server's message for other errors", () => {

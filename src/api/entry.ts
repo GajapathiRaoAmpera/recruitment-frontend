@@ -3,12 +3,33 @@ import { ApiError } from "@/api/client";
 // Student entry (backend app/auth/entry.py). Students have no staff account: their 2-hour entry
 // token comes from Student ID + DOB, so these calls use it directly and never touch the staff session.
 
+/** Where the student's attempt in a round stands. `in_progress` past its deadline reads `expired` on the server. */
+export type EntryAttemptStatus = "not_started" | "in_progress" | "locked" | "submitted" | "expired";
+
+export interface EntryRound {
+  roundId: string;
+  type: string;
+  testId: string | null;
+  durationMin: number | null;
+  /** Missing only in a session saved before the API sent it; treat as not started and let the server decide. */
+  attemptStatus?: EntryAttemptStatus;
+}
+
 export interface StudentSession {
   entryToken: string;
   studentId: string;
   fullName: string;
-  rounds: { roundId: string; type: string; testId: string | null; durationMin: number | null }[];
+  rounds: EntryRound[];
 }
+
+interface WireRound {
+  round_id: string;
+  type: string;
+  test_id: string | null;
+  duration_min: number | null;
+  attempt_status: EntryAttemptStatus;
+}
+const toRound = (x: WireRound): EntryRound => ({ roundId: x.round_id, type: x.type, testId: x.test_id, durationMin: x.duration_min, attemptStatus: x.attempt_status });
 
 export async function call<T>(path: string, init: RequestInit): Promise<T> {
   let res: Response;
@@ -28,19 +49,18 @@ export const json = (body: unknown, token?: string): RequestInit => ({
   body: JSON.stringify(body),
 });
 
-/** Student ID + date of birth (yyyy-mm-dd). A wrong ID and a wrong DOB get the same 401 on purpose. */
+/**
+ * Student ID + date of birth (yyyy-mm-dd). A wrong ID and a wrong DOB get the same 401 on purpose.
+ * A student who has finished still gets 200, with `rounds: []` or only submitted/locked/expired rounds.
+ */
 export async function entryVerify(studentId: string, dob: string): Promise<StudentSession> {
-  const r = await call<{ entry_token: string; candidate: { full_name: string }; rounds: { round_id: string; type: string; test_id: string | null; duration_min: number | null }[] }>(
-    "/entry/verify",
-    json({ student_id: studentId.trim(), dob }),
-  );
-  return {
-    entryToken: r.entry_token,
-    studentId: studentId.trim(),
-    fullName: r.candidate.full_name,
-    rounds: r.rounds.map((x) => ({ roundId: x.round_id, type: x.type, testId: x.test_id, durationMin: x.duration_min })),
-  };
+  const r = await call<{ entry_token: string; candidate: { full_name: string }; rounds: WireRound[] }>("/entry/verify", json({ student_id: studentId.trim(), dob }));
+  return { entryToken: r.entry_token, studentId: studentId.trim(), fullName: r.candidate.full_name, rounds: r.rounds.map(toRound) };
 }
+
+/** The same round list as sign-in, read fresh (e.g. after HR resumes a locked attempt). Read only. */
+export const getEntryRounds = async (entryToken: string): Promise<EntryRound[]> =>
+  (await call<{ rounds: WireRound[] }>("/entry/rounds", { headers: { Authorization: `Bearer ${entryToken}` } })).rounds.map(toRound);
 
 export type EntryStep = "location" | "terms" | "fullscreen";
 

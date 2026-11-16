@@ -164,3 +164,45 @@ describe("stdin questions are unchanged", () => {
     await waitFor(() => expect(editor).toHaveValue(""));
   });
 });
+
+// AC-5: Round 2 shows no marks badge beside the problem title (Round 1 and the pass counts are untouched).
+describe("problem header", () => {
+  it("has no 'N marks' badge next to the title", async () => {
+    await open([functionQuestion()]);
+    expect(screen.getByRole("heading", { name: "Two sum" })).toBeInTheDocument();
+    expect(screen.queryByText(/\d+ marks/)).not.toBeInTheDocument();
+  });
+});
+
+// AC-5: a function-mode compile error gets one extra hint line; other modes and statuses don't.
+describe("compile-error hint", () => {
+  const HINT = "A function must return its answer; don't print it.";
+  const run = (status: string, stderr: string) => {
+    server.use(
+      http.post("*/api/v1/attempt/run", () => HttpResponse.json({ results: [{ case: 1, passed: false, status, stdout: "", stderr, time: null }] })),
+      http.put("*/api/v1/attempt/code-drafts/:id", () => new HttpResponse(null, { status: 204 })),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Run samples/ }));
+  };
+
+  it("function mode + compile_error: shows the hint under the error", async () => {
+    await open([functionQuestion()]);
+    run("compile_error", "line 2: SyntaxError: invalid syntax");
+    expect(await screen.findByText("Compile error — line 2: SyntaxError: invalid syntax")).toBeInTheDocument();
+    expect(screen.getByText(HINT)).toBeInTheDocument();
+  });
+
+  it("function mode + wrong answer: no hint", async () => {
+    await open([functionQuestion()]);
+    run("wrong_answer", "");
+    expect(await screen.findByText(/Wrong answer/)).toBeInTheDocument();
+    expect(screen.queryByText(HINT)).not.toBeInTheDocument();
+  });
+
+  it("stdin mode + compile_error: no hint", async () => {
+    await open([stdinQuestion]);
+    run("compile_error", "main.c:1: error");
+    expect(await screen.findByText("Compile error — main.c:1: error")).toBeInTheDocument();
+    expect(screen.queryByText(HINT)).not.toBeInTheDocument();
+  });
+});
