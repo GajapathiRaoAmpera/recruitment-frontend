@@ -36,6 +36,9 @@
   }
   &[aria-current="page"] {
     background: var(--ui-color-sidebar-active);
+    box-shadow:
+      0 0 0 1px var(--ui-glass-sidebar-active-border),
+      var(--ui-glass-sidebar-active-shadow);
     font-weight: 500;
     color: var(--ui-color-sidebar-fg);
   }
@@ -111,7 +114,7 @@
   padding: sp(2);
   color: var(--ui-color-text);
   &:hover {
-    background: var(--ui-color-surface-muted);
+    background: var(--ui-glass-hover);
   }
   @include up(md) {
     display: none;

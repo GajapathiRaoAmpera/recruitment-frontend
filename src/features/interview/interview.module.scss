@@ -1,3 +1,5 @@
+@use "@/styles/mixins" as *;
+
 .stage { display: grid; gap: 8px; justify-items: center; }
 .canvasBox { position: relative; isolation: isolate; width: 100%; aspect-ratio: 4 / 3; max-height: 46vh; min-height: 200px; border-radius: var(--ui-radius-card); background: var(--ui-color-office-wall); overflow: hidden; }
 // Office behind the interviewer, blurred like a camera's background (the avatar canvas is transparent).
@@ -26,8 +28,9 @@
 @media (max-width: 860px) { .room { grid-template-columns: minmax(0, 1fr); } }
 .main { display: grid; gap: 12px; align-content: start; }
 .side { display: grid; gap: 12px; align-content: start; }
-.captions { max-height: 30vh; overflow-y: auto; display: grid; gap: 8px; }
-.line { margin: 0; font-size: 0.9375rem; }
+.captions { margin-top: 12px; min-height: 8rem; max-height: 34vh; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { .captions { scroll-behavior: auto; } }
+.line { margin: 2px 0 0; font-size: 0.9375rem; overflow-wrap: anywhere; }
 .who { font-weight: 600; margin-right: 6px; }
 .cam { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--ui-radius-input); background: var(--ui-color-surface-muted); transform: scaleX(-1); }
 .bars { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; margin-right: 6px; vertical-align: middle; }
@@ -53,3 +56,21 @@
 .checkIcon[data-s="ok"] { color: var(--ui-color-success); }
 .checkIcon[data-s="warn"] { color: var(--ui-color-warning); }
 .startHint { margin: -4px 0 0; text-align: center; font-size: 0.875rem; color: var(--ui-color-text-muted); }
+
+/* Live room */
+.camBox { position: relative; }
+.camTag { position: absolute; left: 8px; bottom: 8px; padding: 2px 10px; border-radius: var(--ui-radius-pill); @include frost(true); font-size: 0.75rem; font-weight: 500; }
+.meterLabel { display: flex; gap: 6px; align-items: center; margin: 12px 0 6px; }
+.tips { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 6px; font-size: 0.875rem; color: var(--ui-color-text-muted); }
+// Inline notice inside the room: reconnecting (warning) or a waiting answer box (info).
+.banner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0 0; padding: 10px 12px;
+  border: 1px solid alpha(var(--ui-color-warning), 35%); border-radius: var(--ui-radius-input);
+  background: alpha(var(--ui-color-warning), 10%); font-size: 0.875rem;
+  > button { margin-left: auto; }
+  &[data-tone="info"] { margin: 0; border-color: var(--ui-glass-active-border); background: var(--ui-glass-active-bg); }
+}
+/* Thank-you / stopped screens */
+.notice { display: grid; gap: 12px; justify-items: center; text-align: center; }
+.noticeIcon { color: var(--ui-color-success); }
+.noticeIcon[data-tone="danger"] { color: var(--ui-color-danger); }

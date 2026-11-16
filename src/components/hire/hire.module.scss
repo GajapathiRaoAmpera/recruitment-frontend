@@ -293,7 +293,7 @@
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-pill);
   padding: 3px;
-  background: var(--ui-color-surface);
+  @include glass;
 }
 
 .segmentBtn {
@@ -303,9 +303,8 @@
   color: var(--ui-color-text-muted);
   @include focus-ring;
   &[aria-pressed="true"] {
-    background: var(--ui-color-primary-subtle);
+    @include glass-active;
     font-weight: 500;
-    color: var(--ui-color-primary);
   }
 }
 
@@ -367,7 +366,7 @@
   flex-direction: column;
   gap: sp(3);
   border-radius: var(--ui-radius-card);
-  background: var(--ui-color-surface-muted);
+  @include glass;
   padding: sp(3);
 }
 
@@ -514,15 +513,18 @@
   border-radius: var(--ui-radius-input);
   padding: sp(2) sp(3);
   min-height: sp(12);
-  background: var(--ui-color-surface-muted);
+  @include glass;
   &[data-active] {
     position: sticky;
     top: sp(2);
     z-index: 1;
-    background: var(--ui-color-primary-subtle);
+    @include glass-active;
+    // sticky over rows: tint layered on the strong frost so rows never read through
+    background: linear-gradient(var(--ui-glass-active-bg), var(--ui-glass-active-bg)), var(--ui-glass-bg-strong);
+    color: inherit;
   }
 }
 
 .selectableRow[data-selected] {
-  background: var(--ui-color-primary-subtle);
+  background: var(--ui-glass-active-bg); // tr: tint only, no border/shadow/colour
 }

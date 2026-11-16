@@ -1,15 +1,17 @@
 "use client";
 
 import type { LiveServerMessage } from "@google/genai";
-import { Mic, PenLine, Send } from "lucide-react";
+import { AlertCircle, Clock, Mic, PenLine, Send, WifiOff } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type InterviewSession, interviewSession, postFrame, postTranscript, type Turn } from "@/api/interviews";
-import { Badge } from "@/components/ui/badge";
+import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { hire as h } from "@/components/hire/ui";
+import st from "@/components/student/student.module.scss";
 import { AudioEngine } from "./audio-engine";
 import type { CharacterState } from "./character-state";
 import { geminiConnect } from "./gemini-connect";
@@ -56,6 +58,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   const [draft, setDraft] = useState("");
   const [boxHidden, setBoxHidden] = useState(false); // closed with X/Esc: the question stays open and can be reopened
   const [finishing, setFinishing] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState(false);
   const [voice, setVoice] = useState<AudioNode | null>(null); // AI voice playback, for the avatar's lips
   const net = useNetworkQuality("watch");
 
@@ -66,6 +69,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   const uploader = useRef<TurnUploader | null>(null);
   const videoEl = useRef<HTMLVideoElement>(null);
   const meterEl = useRef<HTMLDivElement>(null);
+  const chatEl = useRef<HTMLDivElement>(null);
   const deadline = useRef(0);
   const closingSeen = useRef(false);
   const done = useRef(false);
@@ -241,6 +245,11 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
     };
   }, [finish]);
 
+  useEffect(() => {
+    const el = chatEl.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [lines, live_]);
+
   const submitBox = () => {
     const sess = session.current;
     if (!box || !draft.trim() || !sess) return;
@@ -255,67 +264,119 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   if (error)
     return (
       <div className={s.center}>
-        <p>The interview stopped.</p>
-        {lines.length === 0 && !finishing ? (
-          // nothing recorded yet: rejoining resumes the same interview, so never show "complete"
-          <Button onClick={() => window.location.reload()}>Try again</Button>
-        ) : (
-          <Button variant="secondary" onClick={() => void finish()}>
-            End interview
-          </Button>
-        )}
+        <div className={`${h.card} ${s.notice}`}>
+          <AlertCircle aria-hidden size={32} className={s.noticeIcon} data-tone="danger" />
+          <h1 className={s.checkTitle}>The interview stopped</h1>
+          <p className={s.stateText}>{error}</p>
+          {lines.length === 0 && !finishing ? (
+            // nothing recorded yet: rejoining resumes the same interview, so never show "complete"
+            <Button onClick={() => window.location.reload()}>Try again</Button>
+          ) : (
+            <Button variant="secondary" onClick={() => void finish()}>
+              Save and end interview
+            </Button>
+          )}
+        </div>
       </div>
     );
 
   const verdict: Verdict = link === "reconnecting" && net.verdict === "good" ? "weak" : net.verdict;
+  const shown = live_ ? [...lines, live_] : lines;
   return (
     <>
-      <header className={h.between} style={{ padding: "12px 16px" }}>
-        <strong>AI interview — {roleTitle}</strong>
-        <span style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <NetworkBars verdict={verdict} />
-          <span>{left === null ? "—" : clock(left)} left</span>
-          <Button variant="secondary" onClick={() => void finish()} disabled={finishing}>
-            {finishing ? "Saving…" : "End interview"}
-          </Button>
+      <header className={st.examBar}>
+        <Logo height={22} />
+        <div className={st.examTitle}>
+          <p>{roleTitle} interview</p>
+          <p className={h.xs}>AI interviewer · speak naturally, it hears you</p>
+        </div>
+        {link === "open" && <span className={st.live}>Live</span>}
+        <NetworkBars verdict={verdict} />
+        <span className={st.timer} data-low={left !== null && left <= WRAP_UP_AT_S} role="timer" aria-label="Time left">
+          <Clock aria-hidden size={14} />
+          {left === null ? "—" : clock(left)}
         </span>
+        <Button variant="secondary" onClick={() => setConfirmEnd(true)} disabled={finishing} loading={finishing}>
+          {finishing ? "Saving…" : "End interview"}
+        </Button>
       </header>
       <div className={s.room}>
         <main className={s.main}>
-          <div className={h.card}>
+          <section className={h.card} aria-label="Interviewer">
             <InterviewerCharacter state={link === "lost" ? "idle" : char} getLevel={getLevel} voice={voice} />
-            {(link === "reconnecting" || net.verdict === "offline") && <p role="status">Connection lost, reconnecting…</p>}
-            {link === "lost" && <Button onClick={() => void live.current?.reconnect()}>Reconnect</Button>}
-          </div>
-          {box && boxHidden && (
-            <Button variant="secondary" onClick={() => setBoxHidden(false)} style={{ justifySelf: "start" }}>
-              <PenLine aria-hidden size={16} style={{ marginRight: 4 }} /> Open answer box
-            </Button>
-          )}
-          <div className={`${h.card} ${s.captions}`} aria-live="polite">
-            {(live_ ? [...lines.slice(-5), live_] : lines.slice(-6)).map((l, i) => (
-              <p key={i} className={s.line}>
-                <span className={s.who}>{l.role === "ai" ? "AI" : "You"}:</span>
-                {l.text}
+            {(link === "reconnecting" || net.verdict === "offline") && (
+              <p role="status" className={s.banner}>
+                <WifiOff aria-hidden size={16} /> Connection lost. Reconnecting… your answers so far are safe.
               </p>
-            ))}
-          </div>
+            )}
+            {link === "lost" && (
+              <div className={s.banner} role="alert">
+                <WifiOff aria-hidden size={16} /> Couldn&apos;t reconnect.
+                <Button size="sm" onClick={() => void live.current?.reconnect()}>
+                  Reconnect
+                </Button>
+              </div>
+            )}
+          </section>
+          {box && boxHidden && (
+            <div className={s.banner} data-tone="info">
+              <PenLine aria-hidden size={16} /> The interviewer is waiting for a typed answer.
+              <Button size="sm" onClick={() => setBoxHidden(false)}>
+                Open answer box
+              </Button>
+            </div>
+          )}
+          <section className={h.card} aria-label="Conversation">
+            <p className={h.eyebrow}>Live captions</p>
+            <div ref={chatEl} className={`${st.chat} ${s.captions}`} aria-live="polite">
+              {shown.length === 0 ? (
+                <p className={s.stateText}>The interviewer will greet you in a moment.</p>
+              ) : (
+                shown.map((l, i) => (
+                  <div key={i} className={st.bubble} data-role={l.role}>
+                    <p className={h.xs}>{l.role === "ai" ? "AI interviewer" : "You"}</p>
+                    <p className={s.line}>{l.text}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
         </main>
         <aside className={s.side}>
-          <div className={h.card}>
-            <video ref={videoEl} className={s.cam} muted playsInline aria-label="Your camera preview" />
-            <p className={h.xs} style={{ display: "flex", gap: 6, alignItems: "center", marginTop: 8 }}>
+          <section className={h.card} aria-label="You">
+            <div className={s.camBox}>
+              <video ref={videoEl} className={s.cam} muted playsInline aria-label="Your camera preview" />
+              <span className={s.camTag}>You</span>
+            </div>
+            <p className={`${h.xs} ${s.meterLabel}`}>
               <Mic aria-hidden size={14} /> Mic level
             </p>
             <div className={s.meter}>
               <div ref={meterEl} style={{ width: 0 }} />
             </div>
-            <p className={h.xs} style={{ marginTop: 8 }}>
-              <Badge tone="info">Live</Badge> HR may watch your camera. It is not recorded.
-            </p>
-          </div>
+          </section>
+          <section className={h.card} aria-label="Tips">
+            <p className={h.eyebrow}>Tips</p>
+            <ul className={s.tips}>
+              <li>Wait for the interviewer to finish, then answer out loud.</li>
+              <li>Ask it to repeat if you missed a question.</li>
+              <li>Coding questions open a box to type into.</li>
+              <li>HR may watch your camera live. Nothing is recorded.</li>
+            </ul>
+          </section>
         </aside>
       </div>
+      <ConfirmDialog
+        open={confirmEnd}
+        onOpenChange={setConfirmEnd}
+        title="End the interview?"
+        description="Your answers so far are saved and sent to HR. You can't continue the interview after ending it."
+        confirmLabel="End interview"
+        onConfirm={() => {
+          setConfirmEnd(false);
+          void finish();
+        }}
+      />
       <Dialog open={Boolean(box) && !boxHidden} onOpenChange={(o) => !o && setBoxHidden(true)}>
         {box && (
           <DialogContent

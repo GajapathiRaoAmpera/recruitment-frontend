@@ -51,7 +51,7 @@
   width: sp(10);
   height: sp(10);
   border-radius: 50%;
-  background: var(--ui-color-surface);
+  @include frost;
   color: var(--ui-color-warning);
 }
 

@@ -45,10 +45,10 @@
     cursor: default;
   }
   &:not(:disabled):hover {
-    background: var(--ui-color-primary-subtle);
+    background: var(--ui-glass-hover);
   }
   .stepItem[data-status="active"] & {
-    background: var(--ui-color-primary-subtle);
+    @include glass-active;
   }
 }
 
@@ -60,7 +60,7 @@
   place-items: center;
   border: 2px solid var(--ui-color-border-strong);
   border-radius: 999px;
-  background: var(--ui-color-surface);
+  @include frost;
   @include text(sm);
   font-weight: 600;
   font-variant-numeric: tabular-nums;

@@ -85,7 +85,7 @@
   padding: sp(2) sp(3);
   border: 1px solid var(--ui-color-border);
   border-radius: 8px;
-  background: var(--ui-color-surface);
+  @include frost(true);
   box-shadow: 0 6px 18px rgb(5 5 5 / 0.14);
   font-size: 0.8125rem;
   color: var(--ui-color-text-muted);

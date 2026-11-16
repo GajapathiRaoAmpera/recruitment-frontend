@@ -168,7 +168,7 @@
     background var(--ui-duration-fast) ease-out,
     color var(--ui-duration-fast) ease-out;
   &:hover {
-    background: var(--ui-color-surface-muted);
+    background: var(--ui-glass-hover);
     color: var(--ui-color-text);
   }
 }
@@ -176,7 +176,7 @@
 /* Where you are: a tinted pill in the brand colour. */
 .crumbCurrent {
   max-width: 22rem;
-  background: var(--ui-color-primary-subtle);
+  @include glass-active;
   color: var(--ui-color-primary-hover);
   font-weight: 600;
 }
@@ -206,7 +206,7 @@
   border-radius: var(--ui-radius-pill);
   padding: sp(1) sp(3) sp(1) sp(1);
   &:hover {
-    background: var(--ui-color-surface-muted);
+    background: var(--ui-glass-hover);
   }
 }
 
@@ -275,6 +275,6 @@
   @include text(sm);
   outline: none;
   &[data-highlighted] {
-    background: var(--ui-color-surface-muted);
+    background: var(--ui-glass-hover);
   }
 }

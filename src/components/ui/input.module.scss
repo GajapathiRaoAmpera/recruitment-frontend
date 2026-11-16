@@ -4,7 +4,7 @@
   width: 100%;
   border: 1px solid var(--ui-color-border-input);
   border-radius: var(--ui-radius-input);
-  background: var(--ui-color-surface);
+  @include frost;
   padding-inline: sp(3.5);
   color: var(--ui-color-text);
   @include text(base);
@@ -120,7 +120,7 @@
 }
 
 .optionActive {
-  background: var(--ui-color-surface-muted);
+  background: var(--ui-glass-active-bg);
 }
 
 .optionSelected {

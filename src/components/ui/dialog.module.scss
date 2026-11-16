@@ -35,7 +35,7 @@
   right: 0;
   width: 100%;
   max-width: 28rem;
-  border-left: 1px solid var(--ui-color-border);
+  border-left: 1px solid var(--ui-glass-border);
 }
 
 .header {
@@ -63,7 +63,7 @@
   padding: sp(1.5);
   color: var(--ui-color-text-muted);
   &:hover {
-    background: var(--ui-color-surface-muted);
+    background: var(--ui-glass-hover);
   }
 }
 

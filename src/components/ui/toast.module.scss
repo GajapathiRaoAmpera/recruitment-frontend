@@ -22,7 +22,7 @@
   @include card;
   background: var(--ui-glass-bg-strong);
   padding: sp(3) sp(3) sp(3) sp(4);
-  box-shadow: var(--ui-shadow-md);
+  box-shadow: var(--ui-glass-shadow), var(--ui-shadow-md);
   animation: toast-in var(--ui-duration-base) var(--ui-ease-out);
 }
 
@@ -84,7 +84,7 @@
   padding: sp(1);
   color: var(--ui-color-text-muted);
   &:hover {
-    background: var(--ui-color-surface-muted);
+    background: var(--ui-glass-hover);
     color: var(--ui-color-text);
   }
 }

@@ -293,11 +293,11 @@
   cursor: pointer;
   @include focus-ring;
   &:hover {
-    background: var(--ui-color-surface-muted);
+    background: var(--ui-glass-hover);
   }
 }
 .current {
-  background: var(--ui-color-primary-subtle);
+  @include glass-active;
   color: var(--ui-color-primary-hover);
   font-weight: 500;
 }
@@ -352,7 +352,7 @@
   div {
     padding: sp(3);
     border-radius: var(--ui-radius-input);
-    background: var(--ui-color-surface-muted);
+    @include frost;
   }
   dt {
     @include text(xs);
@@ -378,7 +378,7 @@
   display: inline-flex;
   padding: sp(0.5);
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-surface-muted);
+  @include frost;
 }
 .speedBtn {
   min-width: sp(11);

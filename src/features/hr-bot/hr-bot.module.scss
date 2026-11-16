@@ -58,7 +58,7 @@
   overflow: hidden;
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-card);
-  background: var(--ui-color-surface);
+  @include frost(true);
   box-shadow: var(--ui-shadow-md);
   animation: rise var(--ui-duration-base) var(--ui-ease-out);
 }
@@ -158,7 +158,7 @@
   gap: sp(3);
   overflow-y: auto;
   padding: sp(4);
-  background: var(--ui-color-surface-muted);
+  @include frost;
 }
 
 .msg {
@@ -173,7 +173,7 @@
   align-self: flex-start;
   border: 1px solid var(--ui-color-border);
   border-bottom-left-radius: 4px;
-  background: var(--ui-color-surface);
+  @include frost;
   color: var(--ui-color-text);
 }
 
@@ -234,7 +234,7 @@
   padding: sp(1.5) sp(3);
   border: 1px solid var(--ui-color-border-strong);
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-surface);
+  @include frost;
   color: var(--ui-color-text);
   cursor: pointer;
   text-align: left;
@@ -249,7 +249,7 @@
   gap: sp(2);
   padding: sp(3);
   border-top: 1px solid var(--ui-color-border);
-  background: var(--ui-color-surface);
+  @include frost;
 }
 
 .input {
@@ -259,7 +259,7 @@
   padding: sp(2) sp(3);
   border: 1px solid var(--ui-color-border-input);
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-surface);
+  @include frost;
   color: var(--ui-color-text);
   &:focus-visible {
     outline: 2px solid var(--ui-color-focus-ring);

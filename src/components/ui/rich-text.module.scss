@@ -13,7 +13,7 @@
   border: 1px solid var(--ui-color-border-input);
   border-bottom: 0;
   border-radius: var(--ui-radius-input) var(--ui-radius-input) 0 0;
-  background: var(--ui-color-surface-muted);
+  @include frost(true);
 }
 
 .tool {
@@ -31,7 +31,7 @@
     color var(--ui-duration-fast) var(--ui-ease-out);
 
   &:hover {
-    background: var(--ui-color-surface);
+    background: var(--ui-glass-hover);
     color: var(--ui-color-text);
   }
 

@@ -10,7 +10,8 @@
   transition:
     background-color var(--ui-duration-fast),
     color var(--ui-duration-fast),
-    border-color var(--ui-duration-fast);
+    border-color var(--ui-duration-fast),
+    box-shadow var(--ui-duration-fast);
 
   &:disabled {
     cursor: not-allowed;
@@ -21,24 +22,30 @@
 .primary {
   background: var(--ui-color-primary);
   color: var(--ui-color-primary-fg);
+  box-shadow: var(--ui-glass-primary-shadow);
   &:hover:not(:disabled) {
     background: var(--ui-color-primary-hover);
   }
 }
 
 .secondary {
-  border: 1px solid var(--ui-color-text);
-  background: var(--ui-color-surface);
+  @include glass;
+  border-color: var(--ui-color-text);
   color: var(--ui-color-text);
   &:hover:not(:disabled) {
-    background: var(--ui-color-surface-muted);
+    background: var(--ui-glass-hover);
+  }
+  &[aria-pressed="true"] {
+    @include glass-active;
+    border-color: var(--ui-color-primary);
   }
 }
 
 .tertiary {
   color: var(--ui-color-primary);
-  &:hover:not(:disabled) {
-    background: var(--ui-color-primary-subtle);
+  &:hover:not(:disabled),
+  &[aria-pressed="true"] {
+    @include glass-active;
   }
 }
 

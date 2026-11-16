@@ -191,7 +191,7 @@
   & th {
     padding: sp(2) sp(3);
     border-bottom: 1px solid var(--ui-color-border);
-    background: var(--ui-color-surface-muted);
+    @include frost(true);
     font-weight: 500;
     text-align: left;
     color: var(--ui-color-text-muted);

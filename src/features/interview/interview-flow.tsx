@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import type { InterviewStart } from "@/api/interviews";
 import { Logo } from "@/components/brand/logo";
+import { hire as h } from "@/components/hire/ui";
 import { InterviewCheck } from "./interview-check";
 import s from "./interview.module.scss";
 import { InterviewLogin } from "./interview-login";
@@ -25,8 +27,11 @@ export function InterviewFlow() {
   ) : (
     <div className={s.center}>
       <Logo height={24} />
-      <h1>Thank you</h1>
-      <p>Your interview is complete and saved. HR will be in touch with next steps. You can close this tab.</p>
+      <div className={`${h.card} ${s.notice}`}>
+        <CheckCircle2 aria-hidden size={40} className={s.noticeIcon} />
+        <h1 className={s.checkTitle}>Thank you</h1>
+        <p className={s.stateText}>Your interview is complete and saved. HR will be in touch with next steps. You can close this tab.</p>
+      </div>
     </div>
   );
 }

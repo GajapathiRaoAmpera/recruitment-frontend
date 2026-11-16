@@ -78,15 +78,28 @@ $type: (
   overflow: hidden;
 }
 
-@mixin glass($strong: false) {
-  border: 1px solid var(--ui-glass-border);
+// Frosted fill only: keeps the element's own border and shadow (inputs, tooltips, sticky headers).
+@mixin frost($strong: false) {
   background: var(--ui-glass-bg);
   @if $strong {
     background: var(--ui-glass-bg-strong);
   }
-  box-shadow: var(--ui-glass-shadow);
   -webkit-backdrop-filter: var(--ui-glass-blur);
   backdrop-filter: var(--ui-glass-blur);
+}
+
+@mixin glass($strong: false) {
+  border: 1px solid var(--ui-glass-border);
+  @include frost($strong);
+  box-shadow: var(--ui-glass-shadow);
+}
+
+// Selected/pressed/current state on a glass surface.
+@mixin glass-active {
+  border-color: var(--ui-glass-active-border);
+  background: var(--ui-glass-active-bg);
+  box-shadow: var(--ui-glass-active-shadow);
+  color: var(--ui-color-primary);
 }
 
 @mixin card {

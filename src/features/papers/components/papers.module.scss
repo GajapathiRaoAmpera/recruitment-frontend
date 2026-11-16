@@ -6,7 +6,7 @@
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-pill);
   padding: 3px;
-  background: var(--ui-color-surface);
+  @include frost;
 }
 
 .radio {
@@ -17,9 +17,8 @@
   color: var(--ui-color-text-muted);
   @include focus-ring;
   &[aria-checked="true"] {
-    background: var(--ui-color-primary-subtle);
+    @include glass-active;
     font-weight: 500;
-    color: var(--ui-color-primary);
   }
 }
 
@@ -204,7 +203,7 @@
   list-style: none;
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-card);
-  background: var(--ui-color-surface-muted);
+  @include frost;
 }
 
 .stage {
@@ -235,7 +234,7 @@
   place-items: center;
   border: 2px solid var(--ui-color-border-strong);
   border-radius: 999px;
-  background: var(--ui-color-surface);
+  @include frost;
   @include text(sm);
   font-weight: 600;
   color: var(--ui-color-text-muted);
@@ -318,7 +317,7 @@
   padding: sp(3) sp(4);
   border: 1px solid var(--ui-color-border);
   border-radius: var(--ui-radius-card);
-  background: var(--ui-color-surface);
+  @include frost(true);
   box-shadow: var(--ui-shadow-md);
   @include text(sm);
 }
