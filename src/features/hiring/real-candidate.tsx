@@ -52,7 +52,11 @@ export function RealCandidate({ candidateId }: { candidateId: string }) {
   // The drive's whole pipeline, so rounds the student hasn't reached yet still show up as "Not reached".
   const driveRounds = useAsync(() => (driveId ? listRounds(driveId) : Promise.resolve([])), [driveId]);
   const [opening, setOpening] = useState(false);
-  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, ...(c ? [{ label: "Shortlist", href: `/hr/drives/${c.driveId}/candidates` }] : []), { label: c?.fullName ?? "Candidate" }]);
+  useBreadcrumbs([
+    { label: "Drives", href: "/hr/drives" },
+    ...(c ? [{ driveId: c.driveId, href: `/hr/drives/${c.driveId}` }, { label: "Shortlist", href: `/hr/drives/${c.driveId}/candidates` }] : []),
+    { label: c?.fullName },
+  ]);
 
   if (error?.status === 404) return <NotFoundState title="Candidate not found" />;
   if (error) return <ErrorState message={error.message} onRetry={reload} />;

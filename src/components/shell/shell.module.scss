@@ -128,33 +128,74 @@
 .crumbs {
   display: flex;
   align-items: center;
-  gap: sp(1.5);
+  gap: sp(1);
   @include text(sm);
+  animation: crumbs-in var(--ui-duration-fast) ease-out; // the trail arrives whole, so let it fade in
 }
 
 .crumb {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: sp(1.5);
+  gap: sp(1);
+  // Phones: only the last two levels fit; earlier ones are a tap away in the sidebar.
+  @include down(sm) {
+    &:not(:nth-last-child(-n + 2)) {
+      display: none;
+    }
+  }
+}
+
+/* Links and plain levels: quiet text that lights up as a pill on hover. Long names truncate (full name on hover). */
+.crumbLink,
+.crumbText,
+.crumbCurrent {
+  @include truncate;
+  max-width: 16rem;
+  padding: sp(1) sp(2.5);
+  border-radius: var(--ui-radius-pill);
+}
+
+.crumbLink,
+.crumbText {
+  color: var(--ui-color-text-muted);
 }
 
 .crumbLink {
-  @include truncate; /* long project names wrapped over the next crumb at 375px */
-  color: var(--ui-color-text-muted);
+  @include focus-ring;
+  text-decoration: none;
+  transition:
+    background var(--ui-duration-fast) ease-out,
+    color var(--ui-duration-fast) ease-out;
   &:hover {
+    background: var(--ui-color-surface-muted);
     color: var(--ui-color-text);
   }
 }
 
+/* Where you are: a tinted pill in the brand colour. */
 .crumbCurrent {
-  @include truncate;
-  font-weight: 500;
+  max-width: 22rem;
+  background: var(--ui-color-primary-subtle);
+  color: var(--ui-color-primary-hover);
+  font-weight: 600;
 }
 
 .crumbSep {
   flex-shrink: 0;
-  color: var(--ui-color-text-muted);
+  color: var(--ui-color-border-strong);
+}
+
+@keyframes crumbs-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@include reduced-motion {
+  .crumbs {
+    animation: none;
+  }
 }
 
 /* Profile menu */

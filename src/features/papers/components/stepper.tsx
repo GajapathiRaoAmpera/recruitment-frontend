@@ -3,8 +3,8 @@ import { hire as h } from "@/components/hire/ui";
 export const PAPER_STEPS = ["Setup", "Generate", "Review", "Send"] as const;
 
 /** Paper screens sit under their drive (Drives › Drive › page); there is no separate Paper builder section. */
-export function paperCrumbs(driveId: string | undefined, label: string, driveLabel = "Drive") {
-  return [{ label: "Drives", href: "/hr/drives" }, ...(driveId ? [{ label: driveLabel, href: `/hr/drives/${encodeURIComponent(driveId)}` }] : []), { label }];
+export function paperCrumbs(driveId: string | undefined, label: string) {
+  return [{ label: "Drives", href: "/hr/drives" }, ...(driveId ? [{ driveId, href: `/hr/drives/${encodeURIComponent(driveId)}` }] : []), { label }];
 }
 
 /** The 4-step progress strip; `current` is the index of the active step. */

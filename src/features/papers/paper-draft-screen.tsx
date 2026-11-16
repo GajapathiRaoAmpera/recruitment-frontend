@@ -31,7 +31,7 @@ function DraftView({ id }: { id: string }) {
   const draft = live?.id === id ? live : loaded.data;
   const drive = useAsync(async () => (draft?.driveRef ? await getDrive(draft.driveRef) : null), [draft?.driveRef]);
   const driveName = drive.data ? `${drive.data.roleTitle} — ${drive.data.campus}` : undefined;
-  useBreadcrumbs(paperCrumbs(draft?.driveRef, "Round 1 paper", drive.data?.roleTitle));
+  useBreadcrumbs(paperCrumbs(draft?.driveRef, "Round 1 paper"));
   // After a send: refetch for the new issues; on failure the toast already confirmed the send, so keep the old copy.
   const refresh = () => void getDraft(id).then(setLive, () => {});
 

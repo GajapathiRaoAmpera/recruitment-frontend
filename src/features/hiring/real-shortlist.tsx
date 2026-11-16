@@ -44,7 +44,7 @@ export function RealShortlist({ driveId }: { driveId: string }) {
     [driveId, f.skills, f.minCgpa, f.minMatch, f.show],
   );
   const all = useAsync(() => listCandidates(driveId), [driveId]);
-  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive", href: `/hr/drives/${driveId}` }, { label: "Shortlist" }]);
+  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { driveId, href: `/hr/drives/${driveId}` }, { label: "Shortlist" }]);
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
   if ((!drive.data && !drive.error) || (!list.data && !list.error)) return <RocketLoader label="Loading candidates" />;

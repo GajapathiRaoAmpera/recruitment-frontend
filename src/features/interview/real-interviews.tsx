@@ -133,7 +133,7 @@ export function RealInterviewDetail({ id }: { id: string }) {
   const { data: iv, error, reload } = useAsync(() => getInterview(id), [id]);
   const [notes, setNotes] = useState<string>();
   const [busy, setBusy] = useState<"notes" | "score">();
-  useBreadcrumbs([{ label: "Interviews", href: "/hr/interviews" }, { label: iv?.fullName ?? "Interview" }]);
+  useBreadcrumbs([{ label: "Interviews", href: "/hr/interviews" }, { label: iv?.fullName }]);
   useAutoReload(reload, iv?.status === "live" || iv?.scoring === "pending");
 
   if (error?.status === 404) return <NotFoundState title="Interview not found" />;

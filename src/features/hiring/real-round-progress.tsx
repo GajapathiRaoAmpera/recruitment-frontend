@@ -47,7 +47,7 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
     const id = setInterval(() => document.visibilityState === "visible" && reload(), AUTO_MS);
     return () => clearInterval(id);
   }, [auto, pending, reload]);
-  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: "Drive", href: `/hr/drives/${driveId}` }, { label: title }]);
+  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { driveId, href: `/hr/drives/${driveId}` }, { label: data ? title : undefined }]);
 
   if (error?.status === 404) return <NotFoundState title="Round not found" />;
   if (error?.status === 403) return <ForbiddenState />;

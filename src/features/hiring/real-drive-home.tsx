@@ -67,7 +67,7 @@ export function RealDriveHome() {
   const [reassigning, setReassigning] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const toast = useToast();
-  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: drive.data?.roleTitle ?? "Drive" }]);
+  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { driveId }]);
 
   if (drive.error?.status === 404) return <NotFoundState title="Drive not found" />;
   if (error || drive.error) return <ErrorState message={(error ?? drive.error)!.message} onRetry={() => (reload(), drive.reload())} />;
