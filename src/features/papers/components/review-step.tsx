@@ -5,6 +5,7 @@ import { useState } from "react";
 import { acceptDraft } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/ui/toast";
 import type { DraftDetail, KeyItem } from "@/features/papers/types";
@@ -46,10 +47,9 @@ export function ReviewStep({ draft, onChange }: { draft: DraftDetail; onChange: 
   return (
     <div className={h.stack}>
       {!editable && (
-        <p className={s.banner} data-tone="info">
-          <Lock aria-hidden size={16} />
-          <span>This paper is accepted. Settings and questions are locked.</span>
-        </p>
+        <Notice tone="success" icon={Lock} title="This paper is accepted">
+          Settings and questions are locked, so every student gets the same paper.
+        </Notice>
       )}
 
       {draft.pool.length > 0 && <PoolPicker draft={draft} onChange={onChange} onEdit={editable ? setEditing : undefined} onDirtyChange={setUnsaved} />}
@@ -75,7 +75,13 @@ export function ReviewStep({ draft, onChange }: { draft: DraftDetail; onChange: 
             {draft.editedCount ? ` · ${draft.editedCount} edited` : ""}
           </p>
         </div>
-        {hasTechnical && editable && <p className={h.xs} style={{ marginBottom: "0.75rem" }}>The AI wrote the {technicalLabel} questions: check their answers before accepting.</p>}
+        {hasTechnical && editable && (
+          <div style={{ marginBottom: "0.75rem" }}>
+            <Notice compact tone="warning" title={`Check the ${technicalLabel} answers`}>
+              The AI wrote these questions. Check each answer before accepting.
+            </Notice>
+          </div>
+        )}
         <ChecksList checks={draft.checks} />
       </section>
 

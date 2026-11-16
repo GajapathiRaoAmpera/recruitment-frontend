@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Circle, Maximize, MapPin, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Maximize, MapPin, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -36,6 +36,7 @@ function MockSystemCheck() {
     return (
       <div className={s.overlay}>
         <div className={s.overlayCard}>
+          <Lock aria-hidden size={32} color="var(--ui-color-warning)" />
           <h1 className={h.cardTitle}>This test is paused</h1>
           <p className={h.muted}>It closed after {MAX_TAB_SWITCHES} tab switches. HR has been alerted and can let you resume.</p>
           <Button asChild variant="secondary">

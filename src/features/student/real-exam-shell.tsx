@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Circle, Clock, MapPin, Maximize, TimerOff, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Clock, Info, MapPin, Maximize, TimerOff, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
@@ -10,6 +10,7 @@ import { ApiError } from "@/api/client";
 import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ErrorState, NotFoundState } from "@/components/ui/states";
@@ -98,11 +99,29 @@ function WaitingRoom({ onRetry }: { onRetry: () => void }) {
   }, [onRetry]);
   return (
     <main className={s.examBody} style={{ maxWidth: "36rem", marginInline: "auto", width: "100%" }}>
-      <section className={h.card} role="status" aria-live="polite">
-        <h1 className={h.cardTitle}>The exam hasn&apos;t started yet</h1>
-        <p className={h.muted}>Your system check is done. Please wait and follow your invigilator&apos;s instructions. Keep this page open and in full screen. You&apos;ll be taken to the exam automatically when it starts.</p>
+      <section className={`${h.card} ${h.stack}`} role="status" aria-live="polite">
+        <Notice tone="success" title="System check done">
+          You&apos;ll be taken to the exam automatically when it starts. No need to refresh.
+        </Notice>
+        <div>
+          <h1 className={h.cardTitle}>The exam hasn&apos;t started yet</h1>
+          <ul className={h.list} style={{ marginTop: 12 }}>
+            {(
+              [
+                [Clock, "Keep this page open"],
+                [Maximize, "Stay in full screen"],
+                [Info, "Follow your invigilator's instructions"],
+              ] as const
+            ).map(([Icon, text]) => (
+              <li key={text} className={h.listItem} style={{ justifyContent: "flex-start" }}>
+                <Icon aria-hidden size={18} color="var(--ui-color-primary)" />
+                <span className={h.small}>{text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
         <RocketLoader size="inline" still label="Waiting for the exam to start" />
-        <Button asChild variant="secondary" style={{ marginTop: 12 }}>
+        <Button asChild variant="secondary">
           <Link href="/student">Back to dashboard</Link>
         </Button>
       </section>

@@ -1,0 +1,49 @@
+// Interview transcript as a chat log. Tokens only.
+@use "@/styles/mixins" as *;
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Long transcripts scroll inside the card; the page stays put.
+.scroll {
+  max-height: min(65dvh, 44rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: sp(2);
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.turn {
+  display: flex;
+  gap: sp(3);
+  align-items: flex-start;
+}
+
+.bubble {
+  min-width: 0;
+  max-width: 85%;
+  padding: sp(2.5) sp(3.5);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface-muted);
+  overflow-wrap: anywhere;
+  p + p,
+  p + pre {
+    margin-top: sp(1);
+  }
+}
+
+// Candidate turns sit on the right, tinted, like a chat.
+.candidate {
+  flex-direction: row-reverse;
+  .bubble {
+    background: var(--ui-color-primary-subtle);
+  }
+}

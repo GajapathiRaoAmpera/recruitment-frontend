@@ -1,16 +1,15 @@
 "use client";
 
-import { AlertTriangle } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { editQuestion } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import type { DraftDetail, KeyItem, QuestionEdit } from "@/features/papers/types";
-import s from "./papers.module.scss";
 import { letter } from "./question-card";
 
 /** Mirrors the backend QuestionEdit validator so most mistakes are caught before the round trip. */
@@ -76,14 +75,13 @@ export function QuestionEditDialog({ draftId, question, onClose, onSaved, save: 
         }
       >
         <div className={h.stackSm}>
-          <p className={s.banner}>
-            <AlertTriangle aria-hidden size={16} />
-            <span>{warning}</span>
-          </p>
+          <Notice compact tone="warning">
+            {warning}
+          </Notice>
           {error && (
-            <p role="alert" className={h.small} style={{ color: "var(--ui-color-danger)" }}>
+            <Notice role="alert" compact tone="danger" title="Couldn't save">
               {error}
-            </p>
+            </Notice>
           )}
           <Field label="Question" required hint="Wrap code in ``` fences to show it as a code block.">
             <Textarea rows={5} value={q.text} onChange={(e) => setQ({ ...q, text: e.target.value })} />

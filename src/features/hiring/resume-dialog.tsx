@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ApiError } from "@/api/client";
 import { resumeAttempt, type ProgressRow } from "@/api/hiring";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
@@ -100,9 +101,11 @@ export function ResumeDialog({ row, onClose, onDone }: { row: ProgressRow | null
               <Textarea value={reason} maxLength={MAX} rows={3} onChange={(e) => setReason(e.target.value)} onBlur={() => setTouched(true)} />
             </Field>
             {error && (
-              <p role="alert" style={{ marginTop: 12, color: "var(--ui-color-danger)" }}>
-                {error}
-              </p>
+              <div style={{ marginTop: 12 }}>
+                <Notice role="alert" compact tone="danger" title="Couldn't save">
+                  {error}
+                </Notice>
+              </div>
             )}
           </form>
         </DialogContent>

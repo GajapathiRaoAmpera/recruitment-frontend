@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InlineEmpty } from "@/components/ui/notice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { EmptyState, NotFoundState } from "@/components/ui/states";
 import { DemoNote, hire as h } from "@/components/hire/ui";
@@ -207,7 +208,7 @@ function Runner({ roundId }: { roundId: string }) {
           </div>
 
           <div className={h.card} aria-live="polite">
-            {!runOut && !submitOut && <p className={h.muted}>Run your code against the sample cases, then submit for the full 18.</p>}
+            {!runOut && !submitOut && <InlineEmpty icon={Play}>Run your code against the sample cases, then submit for the full 18.</InlineEmpty>}
             {runOut && (
               <ul className={h.stackSm}>
                 {runOut.map((r) => (

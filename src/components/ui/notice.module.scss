@@ -1,0 +1,125 @@
+// Notice, InlineEmpty and Hint: every message in the platform is a designed block, never a bare paragraph. Tokens only.
+@use "@/styles/mixins" as *;
+
+.notice {
+  --tone: var(--ui-color-info);
+  --tone-bg: var(--ui-color-info-subtle);
+  display: flex;
+  gap: sp(3);
+  align-items: flex-start;
+  padding: sp(4) sp(5);
+  border: 1px solid alpha(var(--tone), 28%);
+  border-radius: var(--ui-radius-card);
+  background: var(--tone-bg);
+  color: var(--ui-color-text);
+}
+
+.success {
+  --tone: var(--ui-color-success);
+  --tone-bg: var(--ui-color-success-subtle);
+}
+.warning {
+  --tone: var(--ui-color-warning);
+  --tone-bg: var(--ui-color-warning-subtle);
+}
+.danger {
+  --tone: var(--ui-color-danger);
+  --tone-bg: var(--ui-color-danger-subtle);
+}
+.neutral {
+  --tone: var(--ui-color-text-muted);
+  --tone-bg: var(--ui-color-surface-muted);
+}
+
+.icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: sp(9);
+  height: sp(9);
+  border-radius: 50%;
+  background: var(--ui-color-surface);
+  color: var(--tone);
+  box-shadow: 0 0 0 1px alpha(var(--tone), 18%);
+}
+
+.body {
+  display: grid;
+  flex: 1;
+  gap: sp(1);
+  min-width: 0;
+  padding-top: sp(1.5); // line the title up with the icon's centre
+}
+
+.title {
+  font-weight: 600;
+}
+
+.text {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  overflow-wrap: anywhere;
+  strong {
+    color: var(--ui-color-text);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(2);
+  margin-top: sp(2);
+}
+
+.compact {
+  gap: sp(2.5);
+  padding: sp(3) sp(4);
+  .icon {
+    width: sp(7);
+    height: sp(7);
+  }
+  .body {
+    padding-top: sp(0.5);
+  }
+}
+
+.inlineEmpty {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+  align-items: center;
+  padding: sp(6) sp(4);
+  border: 1px dashed var(--ui-color-border);
+  border-radius: var(--ui-radius-input);
+  text-align: center;
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.inlineEmptyIcon {
+  display: grid;
+  place-items: center;
+  width: sp(9);
+  height: sp(9);
+  border-radius: 50%;
+  background: var(--ui-color-surface-muted);
+}
+
+.hint {
+  display: flex;
+  gap: sp(1.5);
+  align-items: flex-start;
+  margin: 0;
+  @include text(xs);
+  color: var(--ui-color-text-muted);
+  svg {
+    flex: none;
+    margin-top: 2px;
+  }
+}
+.hint-warning {
+  color: var(--ui-color-warning);
+}
+.hint-danger {
+  color: var(--ui-color-danger);
+}

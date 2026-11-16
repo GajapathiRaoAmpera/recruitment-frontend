@@ -1,10 +1,12 @@
 "use client";
 
+import { MailCheck } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
 import { useToast } from "@/components/ui/toast";
 import { requestPasswordReset } from "@/features/auth/staff-sign-in";
 import { loginPath } from "@/mock/auth";
@@ -23,9 +25,9 @@ export function ForgotPasswordScreen({ portal }: { portal: "hr" | "admin" }) {
       <div className={s.card}>
         <h1 className={s.title}>Reset your password</h1>
         {sentTo ? (
-          <p role="status" className={s.lead}>
-            If <strong>{sentTo}</strong> has a Campus Hire account, a reset link is on its way. Check your inbox and spam folder.
-          </p>
+          <Notice role="status" tone="success" icon={MailCheck} title="Check your inbox">
+            If <strong>{sentTo}</strong> has a Campus Hire account, a reset link is on its way. It can take a minute; check spam too.
+          </Notice>
         ) : (
           <>
             <p className={s.lead}>Enter your work email and we&apos;ll send you a reset link.</p>

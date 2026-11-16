@@ -1,6 +1,6 @@
 "use client";
 
-import { Award, FileText, Flag, Percent, Target } from "lucide-react";
+import { Award, FileSearch, FileText, Flag, Percent, Target } from "lucide-react";
 import { useState } from "react";
 import { getCandidate, listRounds, openResume } from "@/api/hiring";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
@@ -16,6 +16,7 @@ import { useAsync } from "@/features/papers/use-async";
 import { JourneyBar, ScoreByRoundChart, type RoundPoint } from "./candidate-charts";
 import cs from "./candidate.module.scss";
 import { outcomeOf, statusLabel, statusTone } from "./round-outcome";
+import { InlineEmpty } from "@/components/ui/notice";
 
 const ROUND_NAME: Record<string, string> = { aptitude: "Aptitude test", coding: "Coding test", ai_interview: "AI interview", technical: "Technical round", final: "Final decision" };
 const roundName = (type: string) => ROUND_NAME[type] ?? type.replaceAll("_", " ");
@@ -207,7 +208,7 @@ export function RealCandidate({ candidateId }: { candidateId: string }) {
               CGPA <strong>{c.resume.cgpa ?? "not found"}</strong> · JD match <strong>{c.resume.jdMatch === null ? "—" : `${c.resume.jdMatch}%`}</strong> ·{" "}
               {c.resume.shortlisted === null ? "Undecided" : c.resume.shortlisted ? "Shortlisted" : "Not shortlisted"}
             </p>
-            {c.resume.skills.length > 0 ? <Chips items={c.resume.skills} /> : <p className={h.xs}>No known skills found in the resume.</p>}
+            {c.resume.skills.length > 0 ? <Chips items={c.resume.skills} /> : <InlineEmpty icon={FileSearch}>No known skills found in the resume.</InlineEmpty>}
             <div>
               <Button variant="secondary" size="sm" loading={opening} onClick={open}>
                 <FileText aria-hidden size={14} style={{ marginRight: 6 }} /> Open resume PDF

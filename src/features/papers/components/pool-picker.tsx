@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Pencil } from "lucide-react";
+import { Pencil, SearchX } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { setSelection } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Hint, InlineEmpty, Notice } from "@/components/ui/notice";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
@@ -123,17 +124,9 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
         </tbody>
       </table>
 
-      <p className={h.row} style={{ margin: "0.75rem 0" }} role="status">
-        {short ? (
-          <>
-            <AlertTriangle aria-hidden size={16} className={s.bad} /> Select more questions in the red cells before accepting.
-          </>
-        ) : (
-          <>
-            <CheckCircle2 aria-hidden size={16} className={s.ok} /> Enough questions selected for every section.
-          </>
-        )}
-      </p>
+      <div style={{ margin: "0.75rem 0" }}>
+        <Notice role="status" compact tone={short ? "warning" : "success"} title={short ? "Select more questions in the red cells before accepting." : "Enough questions selected for every section."} />
+      </div>
 
       <div className={h.toolbar} style={{ marginBottom: "0.75rem" }}>
         <Field label="Level">
@@ -173,7 +166,7 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
       )}
 
       {rows.length === 0 ? (
-        <p className={h.xs}>No questions match these filters.</p>
+        <InlineEmpty icon={SearchX}>No questions match these filters.</InlineEmpty>
       ) : (
         <ul className={s.poolList} aria-label="Generated questions">
           {rows.map((p) => (
@@ -202,9 +195,7 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
 
       {editable && (
         <div className={h.between} style={{ marginTop: "1rem" }}>
-          <p className={h.xs}>
-            {dirty ? "You have unsaved changes." : "Selection saved."}
-          </p>
+          <Hint tone={dirty ? "warning" : "neutral"}>{dirty ? "You have unsaved changes." : "Selection saved."}</Hint>
           <span className={h.row}>
             <Button variant="secondary" disabled={!dirty || saving} onClick={() => setPicked(saved)}>
               Undo changes

@@ -4,6 +4,7 @@ import { ArrowRight, Lock } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { DemoNote, hire as h, ResultBadge, RoundStatusBadge } from "@/components/hire/ui";
 import { useStudent } from "@/components/student/hooks";
 import { RealStudentHome } from "@/features/student/real-student-home";
@@ -43,15 +44,9 @@ function MockDashboard() {
       </section>
 
       {currentResult?.locked && (
-        <div className={h.card} role="status">
-          <div className={h.row}>
-            <Lock aria-hidden size={18} />
-            <strong>Your test is paused.</strong>
-          </div>
-          <p className={h.muted} style={{ marginTop: 6 }}>
-            It closed after {currentResult.tabSwitches} tab switches. HR has been alerted and can let you resume where you stopped.
-          </p>
-        </div>
+        <Notice role="status" tone="warning" icon={Lock} title="Your test is paused">
+          It closed after {currentResult.tabSwitches} tab switches. HR has been alerted and can let you resume where you stopped; your answers are saved.
+        </Notice>
       )}
 
       <section className={h.card} aria-labelledby="journey-h">

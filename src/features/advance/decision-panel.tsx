@@ -1,10 +1,11 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, FileDown } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock, FileDown, Mail } from "lucide-react";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { ApiError } from "@/api/client";
 import { downloadDriveReport } from "@/api/hiring";
+import { getInterview } from "@/api/interviews";
 import { decideRound, getDecisions, type DecideResult, type Decision, type DecisionRow } from "@/api/rounds";
 import { hire as h, RoundStatusBadge } from "@/components/hire/ui";
 import { Badge } from "@/components/ui/badge";
@@ -14,9 +15,31 @@ import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
+import { Hint, Notice } from "@/components/ui/notice";
+import { TranscriptList } from "@/features/interview/transcript-list";
 import { useAsync } from "@/features/papers/use-async";
 import a from "./advance.module.scss";
 import { fmt } from "./messages";
+
+/** One student's transcript in a side panel: the panel body scrolls, the decision table stays where it was. */
+function TranscriptPanel({ id, name }: { id: string; name: string }) {
+  const { data, error, reload } = useAsync(() => getInterview(id), [id]);
+  return (
+    <DialogContent
+      side
+      className={a.transcriptPanel}
+      title={`${name} · transcript`}
+      description={data ? `${data.turns} turns${data.scoring === "done" && data.average !== null ? ` · AI score ${fmt(data.average)} / 5 (advice)` : ""}` : undefined}
+      footer={
+        <Button asChild variant="secondary">
+          <Link href={`/hr/interviews/${id}`}>Open full interview</Link>
+        </Button>
+      }
+    >
+      {error ? <ErrorState message={error.message} onRetry={reload} /> : data ? <TranscriptList turns={data.transcript} candidateName={name} /> : <RocketLoader label="Loading transcript" />}
+    </DialogContent>
+  );
+}
 
 const INTERVIEW: Record<string, { label: string; tone: "neutral" | "info" | "success" | "danger" }> = {
   scheduled: { label: "Signed in", tone: "neutral" },
@@ -61,6 +84,7 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
   const [result, setResult] = useState<DecideResult | null>(null);
   const toast = useToast();
   const [reportBusy, setReportBusy] = useState(false);
+  const [transcript, setTranscript] = useState<{ id: string; name: string }>();
   const titleId = useId();
 
   if (!data) {
@@ -118,35 +142,44 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
             </h2>
             <RoundStatusBadge status={data.roundStatus} />
           </div>
-          <p className={h.muted}>
-            {data.roundStatus === "pending"
-              ? "Round not active yet. Decisions open once the earlier rounds are finished."
-              : editable
-                ? "The AI score is a recommendation. You make the final call for each student."
-                : "Decided. Read-only."}
-          </p>
+          {data.roundStatus === "pending" ? (
+            <Notice tone="neutral" icon={Clock} title="Round not active yet" className={a.gapTop}>
+              Decisions open once the earlier rounds are finished.
+            </Notice>
+          ) : (
+            <Hint>{editable ? "The AI score is a recommendation. You make the final call for each student." : "Decided. Read-only."}</Hint>
+          )}
         </div>
 
         {result && (
-          <div role="status" className={a.result}>
-            <p className={h.cardTitle}>
-              <CheckCircle2 aria-hidden size={18} className={a.resultIcon} />
-              {result.driveClosed ? "Drive finished" : "Round decided"}
-            </p>
-            <p className={h.small}>
-              {result.passed} {final ? "selected" : "passed"}, {result.failed} {final ? "rejected" : "failed"}.{" "}
-              {result.driveClosed
-                ? "The drive is closed and its report is ready to share."
-                : result.invited.length
-                  ? `${result.invited.length} invited to the next round and emailed a sign-in link.`
-                  : "Nobody moved on to the next round."}
-            </p>
-            {result.driveClosed && (
+          <div role="status" className={a.done}>
+            <div className={a.doneHead}>
+              <span className={a.doneIcon} aria-hidden>
+                <CheckCircle2 size={22} />
+              </span>
+              <div>
+                <p className={h.cardTitle}>{result.driveClosed ? "Drive finished" : "Round decided"}</p>
+                <p className={h.muted}>{result.driveClosed ? "The drive is closed and its report is ready to share." : "Your decisions are saved."}</p>
+              </div>
+            </div>
+            <dl className={a.doneStats}>
+              {(
+                [
+                  [final ? "Selected" : "Passed", result.passed, a.pass],
+                  [final ? "Rejected" : "Failed", result.failed, a.fail],
+                ] as const
+              ).map(([label, n, tone]) => (
+                <div key={label} className={a.doneStat}>
+                  <dt>{label}</dt>
+                  <dd className={tone}>{n}</dd>
+                </div>
+              ))}
+            </dl>
+            {result.driveClosed ? (
               <>
-                <p className={a.resultNote}>
-                  <AlertTriangle aria-hidden size={16} />
-                  Selected students are not emailed automatically. Tell them the result yourself.
-                </p>
+                <Notice tone="warning" compact title="Tell selected students yourself">
+                  They are not emailed automatically when the drive finishes.
+                </Notice>
                 <div className={h.row}>
                   <Button onClick={() => void getReport()} loading={reportBusy}>
                     <FileDown aria-hidden size={16} style={{ marginRight: 6 }} /> Download report
@@ -156,6 +189,26 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
                   </Button>
                 </div>
               </>
+            ) : (
+              <div className={a.doneNext}>
+                <Mail aria-hidden size={18} className={a.doneNextIcon} />
+                <p className={h.small}>
+                  {result.invited.length ? (
+                    <>
+                      <strong>{result.invited.length} invited to the next round.</strong> Each one gets an email with the sign-in link.
+                    </>
+                  ) : (
+                    "Nobody moved on to the next round."
+                  )}
+                </p>
+                {result.nextRoundId && (
+                  <Button asChild size="sm">
+                    <Link href={`/hr/drives/${encodeURIComponent(driveId)}/rounds/${encodeURIComponent(result.nextRoundId)}`}>
+                      Open next round <ArrowRight aria-hidden size={16} style={{ marginLeft: 6 }} />
+                    </Link>
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         )}
@@ -183,9 +236,9 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
                     <Td>
                       {st ? <Badge tone={st.tone}>{st.label}</Badge> : <span className={h.xs}>Not started</span>}{" "}
                       {c.interviewId && (
-                        <Link className={h.link} href={`/hr/interviews/${c.interviewId}`}>
+                        <button type="button" className={h.link} onClick={() => setTranscript({ id: c.interviewId!, name: c.name })}>
                           Transcript
-                        </Link>
+                        </button>
                       )}
                     </Td>
                     <Td>
@@ -221,10 +274,14 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
                 {final ? "Finish drive" : "Confirm decisions"}
               </Button>
             </div>
-            {blockReason && <p className={h.xs}>{blockReason}</p>}
+            {blockReason && <Hint>{blockReason}</Hint>}
           </div>
         )}
       </div>
+
+      <Dialog open={!!transcript} onOpenChange={(o) => !o && setTranscript(undefined)}>
+        {transcript && <TranscriptPanel id={transcript.id} name={transcript.name} />}
+      </Dialog>
 
       <Dialog open={open} onOpenChange={(o) => !busy && setOpen(o)}>
         <DialogContent

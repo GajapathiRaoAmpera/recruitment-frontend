@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardPaste, Code2, Plus, Trash2 } from "lucide-react";
+import { ClipboardPaste, Code2, Database, ListX, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { ApiError } from "@/api/client";
 import {
@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
+import { Hint, InlineEmpty } from "@/components/ui/notice";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ErrorState, ForbiddenState } from "@/components/ui/states";
 import { useToast } from "@/components/ui/toast";
@@ -247,9 +248,9 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
               onChange={(e) => setCase(kind, i, { expected: e.target.value })}
             />
             {err && (
-              <p role="alert" className={s.error}>
+              <Hint role="alert" tone="danger">
                 {err}
-              </p>
+              </Hint>
             )}
           </div>
         </div>
@@ -317,7 +318,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
                     <Code2 aria-hidden size={14} style={{ marginRight: 4 }} /> {showRef ? "Hide" : "Show"} reference {isSql ? "query" : "solution"}
                   </Button>
                 </div>
-                <p className={h.xs}>{isSql ? "Expected rows came from running this query on each dataset. The query itself can't be edited." : `${DRAFT_NOTE} The solution itself can't be edited.`}</p>
+                <Hint>{isSql ? "Expected rows came from running this query on each dataset. The query itself can't be edited." : `${DRAFT_NOTE} The solution itself can't be edited.`}</Hint>
                 {showRef && (
                   <div className={student.editorWrap} style={{ marginTop: 8 }}>
                     <CodeEditor
@@ -433,9 +434,9 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
                   <Plus aria-hidden size={14} style={{ marginRight: 4 }} /> Add parameter
                 </Button>
                 {errors.signature && (
-                  <p role="alert" className={s.error}>
+                  <Hint role="alert" tone="danger">
                     {errors.signature}
-                  </p>
+                  </Hint>
                 )}
               </section>
             )}
@@ -457,11 +458,11 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
                     </Button>
                   </span>
                 </div>
-                {overflow > 0 && <p className={h.xs}>This question had {overflow} more case(s) than 3 + 15; only the first ones are shown and saving keeps just these.</p>}
+                {overflow > 0 && <Hint tone="warning">This question had {overflow} more case(s) than 3 + 15; only the first ones are shown and saving keeps just these.</Hint>}
                 {errors.cases && (
-                  <p role="alert" className={s.error}>
+                  <Hint role="alert" tone="danger">
                     {errors.cases}
-                  </p>
+                  </Hint>
                 )}
                 {pasteOpen && (
                   <div className={h.cardTight} style={{ marginTop: 12 }}>
@@ -469,9 +470,9 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
                       <Textarea rows={6} className={h.mono} placeholder={PASTE_EXAMPLE} value={pasteText} onChange={(e) => setPasteText(e.target.value)} />
                     </Field>
                     {pasteError && (
-                      <p role="alert" className={s.error}>
+                      <Hint role="alert" tone="danger">
                         {pasteError}
-                      </p>
+                      </Hint>
                     )}
                     <div className={h.row} style={{ marginTop: 8 }}>
                       <Button size="sm" disabled={!pasteText.trim()} onClick={applyPaste}>
@@ -491,7 +492,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
               </section>
             )}
 
-            {problems.length > 0 && <p className={h.xs}>To save: {problems.join(" · ")}.</p>}
+            {problems.length > 0 && <Hint tone="warning">To save: {problems.join(" · ")}.</Hint>}
           </div>
         )}
       </DialogContent>
@@ -503,7 +504,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
 function SqlDetails({ schema, orderMatters, cases }: { schema: string | null; orderMatters: boolean | null; cases: CodingQuestion["testCases"] }) {
   const list = (sample: boolean, label: string) => {
     const rows = cases.filter((c) => c.isSample === sample);
-    if (rows.length === 0) return <p className={h.muted}>No {label.toLowerCase()} cases.</p>;
+    if (rows.length === 0) return <InlineEmpty icon={ListX}>No {label.toLowerCase()} cases.</InlineEmpty>;
     return rows.map((c, i) => (
       <div key={c.id} className={student.caseGrid} style={{ marginTop: 8 }}>
         <div>
@@ -528,7 +529,7 @@ function SqlDetails({ schema, orderMatters, cases }: { schema: string | null; or
       <h3 id="sql-h" className={s.subTitle} style={{ marginBottom: 0 }}>
         {MODE_LABEL.sql}
       </h3>
-      <p className={h.xs}>{SQL_NOTE}</p>
+      <Hint>{SQL_NOTE}</Hint>
       <h4 className={h.small} style={{ fontWeight: 500 }}>
         Schema
       </h4>
@@ -537,7 +538,7 @@ function SqlDetails({ schema, orderMatters, cases }: { schema: string | null; or
           {schema}
         </pre>
       ) : (
-        <p className={h.muted}>No schema came with this question.</p>
+        <InlineEmpty icon={Database}>No schema came with this question.</InlineEmpty>
       )}
       <p className={h.small}>
         {orderMatters === null

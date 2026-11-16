@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, RefreshCw, User } from "lucide-react";
+import { Hourglass, RefreshCw, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiError } from "@/api/client";
@@ -9,6 +9,7 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InlineEmpty, Notice } from "@/components/ui/notice";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
 import { RocketLoader } from "@/components/ui/rocket-loader";
@@ -17,6 +18,7 @@ import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { Chips, hire as h, Person, Progress } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
+import { TranscriptList } from "./transcript-list";
 
 const REFRESH_MS = 5000;
 const STATUS: Record<InterviewRow["status"], { label: string; tone: "neutral" | "info" | "success" | "danger" }> = {
@@ -170,26 +172,7 @@ export function RealInterviewDetail({ id }: { id: string }) {
           <h2 id="tr-h" className={h.cardTitle} style={{ marginBottom: 16 }}>
             Transcript {iv.status === "live" && <span className={h.muted}>(updating live)</span>}
           </h2>
-          {iv.transcript.length === 0 ? (
-            <p className={h.muted}>Nothing said yet.</p>
-          ) : (
-            <ol className={h.stackSm}>
-              {iv.transcript.map((t, i) => (
-                <li key={i} className={h.row} style={{ alignItems: "flex-start", flexWrap: "nowrap" }}>
-                  <span className={h.avatar} aria-hidden>
-                    {t.role === "ai" ? <Bot size={16} /> : <User size={16} />}
-                  </span>
-                  <div style={{ minWidth: 0 }}>
-                    <p className={h.xs}>
-                      {t.role === "ai" ? "AI interviewer" : iv.fullName}
-                      {t.kind === "typed" ? ` · typed answer${t.language ? ` (${t.language})` : ""}` : t.kind === "question" ? " · written question" : ""}
-                    </p>
-                    {t.kind === "typed" ? <pre className={h.code}>{t.text}</pre> : <p>{t.text}</p>}
-                  </div>
-                </li>
-              ))}
-            </ol>
-          )}
+          <TranscriptList turns={iv.transcript} candidateName={iv.fullName} scroll />
         </section>
 
         <aside className={h.stack}>
@@ -233,9 +216,15 @@ export function RealInterviewDetail({ id }: { id: string }) {
                 </p>
               </>
             ) : (
-              <p className={h.muted}>
-                {iv.scoring === "pending" ? "Scoring in progress…" : iv.scoring === "error" ? "Scoring failed. Re-run it." : "Scores appear once the interview is complete."}
-              </p>
+              iv.scoring === "error" ? (
+                <Notice compact tone="danger" title="Scoring failed">
+                  Use Re-run scoring above to try again.
+                </Notice>
+              ) : (
+                <InlineEmpty icon={iv.scoring === "pending" ? Hourglass : Sparkles}>
+                  {iv.scoring === "pending" ? "Scoring in progress…" : "Scores appear once the interview is complete."}
+                </InlineEmpty>
+              )
             )}
           </section>
 

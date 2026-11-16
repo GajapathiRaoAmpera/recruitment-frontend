@@ -98,31 +98,13 @@
 }
 
 .restored {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: sp(2);
   margin-bottom: sp(4);
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-card);
-  background: var(--ui-color-primary-subtle);
-  padding: sp(2) sp(4);
-  @include text(sm);
 }
 
 .dates {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: sp(3);
-}
-
-.formError {
-  border-radius: var(--ui-radius-input);
-  background: var(--ui-color-danger-subtle);
-  padding: sp(2) sp(3);
-  @include text(sm);
-  color: var(--ui-color-danger);
 }
 
 /* Rounds: one bordered row per round; fields wrap under the title on narrow screens. */

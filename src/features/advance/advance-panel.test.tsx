@@ -193,9 +193,9 @@ it("advances: shows the summary, refreshes the page and goes read-only", async (
 
   const summary = await screen.findByRole("status");
   expect(summary).toHaveTextContent("Round advanced");
-  expect(summary).toHaveTextContent("At a 70% cut-off: 1 passed, 1 failed, 1 absent.");
-  expect(summary).toHaveTextContent("1 student invited to the next round.");
-  expect(summary).toHaveTextContent("Invited students get an email with the sign-in link.");
+  expect(summary).toHaveTextContent("Closed at a 70% cut-off.");
+  for (const [label, n] of [["Passed", "1"], ["Failed", "1"], ["Absent", "1"]]) expect(within(summary).getByText(label).nextSibling).toHaveTextContent(n);
+  expect(summary).toHaveTextContent("1 student invited to the next round. Each one gets an email with the sign-in link.");
   expect(onAdvanced).toHaveBeenCalledTimes(1);
   await waitFor(() => expect(screen.getByText(/Final ranking at a 70% cut-off\. Read-only\./)).toBeInTheDocument());
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -238,7 +238,8 @@ it("shows a completed round's final ranking read-only", async () => {
 it("shows a short note for a round that isn't active yet", async () => {
   roundStatus = "pending";
   view();
-  expect(await screen.findByText(/Round not active yet\./)).toBeInTheDocument();
+  expect(await screen.findByText("Round not active yet")).toBeInTheDocument();
+  expect(screen.getByText(/appear once the earlier rounds are advanced/)).toBeInTheDocument();
   expect(screen.queryByRole("table")).not.toBeInTheDocument();
 });
 

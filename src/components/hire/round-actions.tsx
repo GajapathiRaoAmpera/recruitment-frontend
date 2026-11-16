@@ -3,6 +3,7 @@
 import { Mail, SkipForward, TrendingUp } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/notice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
@@ -85,7 +86,7 @@ export function RoundActions({ round }: { round: Round }) {
             <p>
               <strong>{wouldPass}</strong> of {round.type === "shortlist" ? state.candidates.filter((c) => c.driveId === round.driveId).length : results.length} will advance.
             </p>
-            {unfinished > 0 && <p className={h.xs}>{unfinished} candidate(s) haven&apos;t finished — they will be marked not advanced.</p>}
+            {unfinished > 0 && <Hint tone="warning">{unfinished} candidate(s) haven&apos;t finished. They will be marked not advanced.</Hint>}
           </div>
         </DialogContent>
       </Dialog>

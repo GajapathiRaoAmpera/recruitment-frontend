@@ -6,6 +6,7 @@ import { ApiError } from "@/api/client";
 import { DIFFICULTIES, generateCodingQuestions, isSqlQuestion, MODE_LABEL, titleOf, type CodingMode, type Difficulty, type GenerateResult } from "@/api/coding-questions";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
+import { Hint, Notice } from "@/components/ui/notice";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
@@ -107,10 +108,15 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
         }
       >
         {result ? (
-          <div role="status" className={h.stackSm}>
-            <p className={h.cardTitle}>
-              {result.created.length} created, {result.failed.length} failed
-            </p>
+          <div role="status" className={h.stack}>
+            <Notice
+              tone={result.failed.length === 0 ? "success" : result.created.length === 0 ? "danger" : "warning"}
+              title={`${result.created.length} created, ${result.failed.length} failed`}
+            >
+              {result.created.length > 0
+                ? "Drafts are saved as not approved. Review each one, then approve it to add it to a round."
+                : "Nothing was saved. Adjust the settings and try again."}
+            </Notice>
             {result.created.length > 0 && (
               <ul className={h.list} aria-label="Created drafts">
                 {result.created.map((q) => (
@@ -136,7 +142,6 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
                 ))}
               </ul>
             )}
-            {result.created.length > 0 && <p className={h.xs}>Drafts are saved as not approved. Review each one, then approve it to add it to a round.</p>}
           </div>
         ) : (
           <div className={h.stack}>
@@ -178,16 +183,11 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
             <Field label="Tags (optional)" hint="Comma separated, up to 10.">
               <Input value={tags} disabled={busy} placeholder="arrays, strings" onChange={(e) => setTags(e.target.value)} />
             </Field>
-            {problems.length > 0 && <p className={h.xs}>To generate: {problems.join(" · ")}.</p>}
+            {problems.length > 0 && <Hint tone="warning">To generate: {problems.join(" · ")}.</Hint>}
             {busy && (
-              <div className={h.cardTight} role="status" aria-live="polite">
-                <p className={h.small} style={{ fontWeight: 500 }}>
-                  {LOADING_TEXT}
-                </p>
-                <p className={h.xs}>
-                  Elapsed {clock(elapsed)}. About 11 seconds per question; keep this open. Drafts are saved even if you leave the page.
-                </p>
-              </div>
+              <Notice role="status" compact icon={Sparkles} title={LOADING_TEXT}>
+                Elapsed {clock(elapsed)}. About 11 seconds per question; keep this open. Drafts are saved even if you leave the page.
+              </Notice>
             )}
           </div>
         )}

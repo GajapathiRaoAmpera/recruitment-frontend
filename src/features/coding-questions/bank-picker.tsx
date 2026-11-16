@@ -7,6 +7,7 @@ import { approveCodingQuestion, DIFFICULTIES, isSqlQuestion, listCodingQuestions
 import { hire as h } from "@/components/hire/ui";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Hint } from "@/components/ui/notice";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
@@ -183,7 +184,7 @@ export function BankPicker({ inRound, locked, onAdd, onEdit, onNew, onGenerate, 
               })}
             </tbody>
           </Table>
-          {data.length === LIST_LIMIT && <p className={h.xs}>Showing the newest {LIST_LIMIT}. Filter by difficulty to see older ones.</p>}
+          {data.length === LIST_LIMIT && <Hint>Showing the newest {LIST_LIMIT}. Filter by difficulty to see older ones.</Hint>}
         </>
       )}
       <ConfirmDialog

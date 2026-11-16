@@ -1,5 +1,6 @@
 "use client";
 
+import { Link as LinkIcon } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -7,6 +8,7 @@ import { api, ApiError } from "@/api/client";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { PasswordInput } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
 import { useToast } from "@/components/ui/toast";
 import { loginPath } from "@/mock/auth";
 import { AuthFrame } from "./auth-frame";
@@ -47,25 +49,40 @@ function SetPassword() {
       <h1 className={s.title}>{link === "done" ? "Password saved" : "Set your password"}</h1>
       {link === "invalid" && (
         <>
-          <p role="alert" className={s.lead}>
-            This link has expired or was already used.
-          </p>
-          <Link href="/forgot-password" className={s.link}>
-            Get a new link
-          </Link>
+          <Notice
+            role="alert"
+            tone="warning"
+            icon={LinkIcon}
+            title="This link has expired or was already used"
+            actions={
+              <Button asChild size="sm">
+                <Link href="/forgot-password">Get a new link</Link>
+              </Button>
+            }
+          >
+            Links work once and expire after an hour, so nothing was changed.
+          </Notice>
         </>
       )}
       {link === "done" && (
         <>
-          <p role="status" className={s.lead}>
-            You can now sign in with your email and new password.
-          </p>
-          <Link href={loginPath.hr} className={s.link}>
-            Sign in as HR
-          </Link>
-          <Link href={loginPath.admin} className={s.link}>
-            Sign in as Super Admin
-          </Link>
+          <Notice
+            role="status"
+            tone="success"
+            title="You're all set"
+            actions={
+              <>
+                <Button asChild size="sm">
+                  <Link href={loginPath.hr}>Sign in as HR</Link>
+                </Button>
+                <Button asChild size="sm" variant="secondary">
+                  <Link href={loginPath.admin}>Sign in as Super Admin</Link>
+                </Button>
+              </>
+            }
+          >
+            Sign in with your work email and the new password.
+          </Notice>
         </>
       )}
       {link === "ok" && (

@@ -1,12 +1,13 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, FileSpreadsheet, FileText, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, FileSpreadsheet, FileText, History, Pencil, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
+import { Hint, Notice } from "@/components/ui/notice";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { FormattedText, RichTextArea } from "@/components/ui/rich-text";
@@ -225,12 +226,20 @@ export function NewDriveScreen() {
       <PageHeader title="Create campus drive" description="Set up the drive and its rounds. You can change round settings later from the drive." />
 
       {showRestored && (
-        <div className={w.restored} role="status">
-          <span>We restored the drive you were setting up.</span>
-          <Button variant="tertiary" size="sm" onClick={startOver}>
-            Start over
-          </Button>
-        </div>
+        <Notice
+          role="status"
+          compact
+          icon={History}
+          title="We restored the drive you were setting up."
+          className={w.restored}
+          actions={
+            <Button variant="secondary" size="sm" onClick={startOver}>
+              Start over
+            </Button>
+          }
+        >
+          Pick up where you left off, or start over with a blank form.
+        </Notice>
       )}
 
       <ol className={w.stepper} aria-label="Steps">
@@ -297,13 +306,13 @@ export function NewDriveScreen() {
 
         {current === "rounds" && (
           <div className={h.stack}>
-            <p className={h.muted}>
+            <Hint>
               Candidates go through these rounds in order. <strong>Cut-off</strong> is the minimum share of a round&apos;s total marks needed to move on; HR still confirms who advances.
-            </p>
+            </Hint>
             {errors.rounds && (
-              <p role="alert" className={w.formError}>
+              <Notice role="alert" compact tone="danger">
                 {errors.rounds}
-              </p>
+              </Notice>
             )}
             <ol className={w.rounds}>
               {rounds.map((r, i) => (
@@ -454,7 +463,11 @@ export function NewDriveScreen() {
                 ))}
               </ol>
             </section>
-            {liveApi && <p className={h.muted}>After the drive is created you&apos;ll import the Google Form export and fetch the resumes.</p>}
+            {liveApi && (
+              <Notice icon={FileSpreadsheet} title="Next: import candidates">
+                After the drive is created you&apos;ll import the Google Form export and fetch the resumes.
+              </Notice>
+            )}
           </div>
         )}
 

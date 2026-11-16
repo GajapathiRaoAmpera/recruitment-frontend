@@ -1,12 +1,13 @@
 "use client";
 
-import { Bot, User } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { InlineEmpty } from "@/components/ui/notice";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
 import { EmptyState, NotFoundState } from "@/components/ui/states";
@@ -14,6 +15,7 @@ import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { Chips, hire as h, Person, Progress, ResultBadge } from "@/components/hire/ui";
 import { candidateById, useStore } from "@/mock/store";
+import { TranscriptList } from "./transcript-list";
 
 /** Prototype mode (live API off): the interview list from the in-memory mock store. */
 export function MockInterviews() {
@@ -106,19 +108,7 @@ export function MockInterviewConsole({ interviewId }: { interviewId: string }) {
           <h2 id="tr-h" className={h.cardTitle} style={{ marginBottom: 16 }}>
             Transcript
           </h2>
-          <ol className={h.stackSm}>
-            {iv.transcript.map((t, i) => (
-              <li key={i} className={h.row} style={{ alignItems: "flex-start", flexWrap: "nowrap" }}>
-                <span className={h.avatar} aria-hidden>
-                  {t.role === "ai" ? <Bot size={16} /> : <User size={16} />}
-                </span>
-                <div>
-                  <p className={h.xs}>{t.role === "ai" ? "AI interviewer" : c.name}</p>
-                  <p>{t.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <TranscriptList turns={iv.transcript} candidateName={c.name} scroll />
         </section>
 
         <aside className={h.stack}>
@@ -144,7 +134,7 @@ export function MockInterviewConsole({ interviewId }: { interviewId: string }) {
                 </p>
               </>
             ) : (
-              <p className={h.muted}>Scores appear once the interview is complete.</p>
+              <InlineEmpty icon={Sparkles}>Scores appear once the interview is complete.</InlineEmpty>
             )}
           </section>
 

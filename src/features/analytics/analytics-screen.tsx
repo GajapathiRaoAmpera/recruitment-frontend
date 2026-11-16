@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, BarChart3, Clock, Gauge, Medal, Target, Trophy, Users } from "lucide-react";
+import { Activity, BarChart3, Clock, Gauge, Medal, Target, Timer, Trophy, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 import { listDrives } from "@/api/hiring";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
@@ -19,6 +19,7 @@ import { GroupedColumns, HBars, Radar, Scatter, SERIES, StackedColumns, type Ser
 import cs from "./analytics.module.scss";
 import { loadDriveAnalytics, type DriveAnalytics } from "./load";
 import { BANDS, SKILLS, cohortSkills, insights, mean, percentile, rankByIndex, roundScore, roundStats, type RoundMeta, type SkillScores, type Student } from "./scoring";
+import { InlineEmpty } from "@/components/ui/notice";
 
 type Tab = "cohort" | "student" | "method";
 
@@ -160,7 +161,7 @@ function CohortView({ a, onOpen }: { a: DriveAnalytics; onOpen: (id: string) => 
               ]}
             />
           ) : (
-            <p className={h.muted}>No scores yet.</p>
+            <InlineEmpty icon={BarChart3}>No scores yet.</InlineEmpty>
           )}
         </ChartCard>
       </div>
@@ -174,7 +175,7 @@ function CohortView({ a, onOpen }: { a: DriveAnalytics; onOpen: (id: string) => 
               stacks={BANDS.map((b, i) => ({ name: b.label, color: BAND_COLORS[i]!, values: scoredRounds.map((r) => stats[rounds.indexOf(r)]!.bands[i]!) }))}
             />
           ) : (
-            <p className={h.muted}>No scores yet.</p>
+            <InlineEmpty icon={BarChart3}>No scores yet.</InlineEmpty>
           )}
         </ChartCard>
         <ChartCard title="Time used per round" note="Average share of the allotted time students used.">
@@ -185,7 +186,7 @@ function CohortView({ a, onOpen }: { a: DriveAnalytics; onOpen: (id: string) => 
               series={[{ name: "Time used", color: SERIES.teal, values: timedRounds.map((r) => stats[rounds.indexOf(r)]!.avgTimeUsedPct) }]}
             />
           ) : (
-            <p className={h.muted}>No timing data yet.</p>
+            <InlineEmpty icon={Timer}>No timing data yet.</InlineEmpty>
           )}
         </ChartCard>
       </div>
@@ -203,7 +204,7 @@ function CohortView({ a, onOpen }: { a: DriveAnalytics; onOpen: (id: string) => 
         {board.length ? (
           <HBars label="Top students by performance index" items={board.map((s) => ({ id: s.id, label: s.name, sub: s.studentId, value: s.index as number, display: pct(s.index) }))} onSelect={onOpen} />
         ) : (
-          <p className={h.muted}>No student has a score yet.</p>
+          <InlineEmpty icon={Trophy}>No student has a score yet.</InlineEmpty>
         )}
       </ChartCard>
     </div>
@@ -321,7 +322,7 @@ function StudentView({ a, studentId, onStudent, compareId, onCompare }: { a: Dri
               ]}
             />
           ) : (
-            <p className={h.muted}>No round scores yet.</p>
+            <InlineEmpty icon={BarChart3}>No round scores yet.</InlineEmpty>
           )}
         </ChartCard>
       </div>
@@ -338,7 +339,7 @@ function StudentView({ a, studentId, onStudent, compareId, onCompare }: { a: Dri
               ]}
             />
           ) : (
-            <p className={h.muted}>No timing data for this student yet.</p>
+            <InlineEmpty icon={Timer}>No timing data for this student yet.</InlineEmpty>
           )}
         </ChartCard>
         <ChartCard title="Strengths and gaps" note={`Skills at least 8 points above or below ${cmpName.toLowerCase()}.`}>

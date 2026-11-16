@@ -1,11 +1,12 @@
 "use client";
 
-import { FileSpreadsheet, FileUp, RefreshCw } from "lucide-react";
+import { FileSpreadsheet, FileUp, FileWarning, Hourglass, RefreshCw } from "lucide-react";
 import { useRef, useState } from "react";
 import { fetchResumes, importCandidates, type FetchItem, type FetchStatus, type ImportResult } from "@/api/hiring";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InfoTip } from "@/components/ui/info-tip";
+import { Notice } from "@/components/ui/notice";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { hire as h, Progress } from "@/components/hire/ui";
@@ -88,26 +89,36 @@ export function ImportPanel({ driveId, onChanged, missingResumes = 0, total = 0 
       </div>
 
       {(busy || missingResumes > 0) && (
-        <div className={h.between} style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid var(--ui-color-border)" }}>
-          <div style={{ flex: "1 1 240px", minWidth: 0 }}>
-            <p className={h.small} role="status">
-              {busy === "import"
-                ? "Importing candidates…"
-                : busy === "fetch"
-                  ? "Downloading and reading resumes… about a minute per 100 candidates"
-                  : `${total - missingResumes} of ${total} resumes read · ${missingResumes} still missing`}
-            </p>
-            {total > 0 && !busy && (
-              <div style={{ marginTop: 8 }}>
-                <Progress value={((total - missingResumes) / total) * 100} label="Resumes read" />
-              </div>
+        <div style={{ marginTop: 16 }}>
+          <Notice
+            role="status"
+            compact
+            tone={busy ? "info" : "warning"}
+            icon={busy ? Hourglass : FileWarning}
+            title={busy === "import" ? "Importing candidates…" : busy === "fetch" ? "Reading resumes…" : `${missingResumes} resume${missingResumes === 1 ? "" : "s"} still missing`}
+            actions={
+              !busy && (
+                <Button size="sm" onClick={() => run(fetchAll)}>
+                  <RefreshCw aria-hidden size={14} style={{ marginRight: 6 }} /> Fetch {missingResumes} resume{missingResumes === 1 ? "" : "s"}
+                </Button>
+              )
+            }
+          >
+            {busy === "import" ? (
+              "Adding and updating candidates from the sheet."
+            ) : busy === "fetch" ? (
+              "Downloading and reading resumes. About a minute per 100 candidates; you can keep working."
+            ) : (
+              <>
+                {total - missingResumes} of {total} read.
+                {total > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <Progress value={((total - missingResumes) / total) * 100} label="Resumes read" />
+                  </div>
+                )}
+              </>
             )}
-          </div>
-          {!busy && (
-            <Button size="sm" onClick={() => run(fetchAll)}>
-              <RefreshCw aria-hidden size={14} style={{ marginRight: 6 }} /> Fetch {missingResumes} resume{missingResumes === 1 ? "" : "s"}
-            </Button>
-          )}
+          </Notice>
         </div>
       )}
 

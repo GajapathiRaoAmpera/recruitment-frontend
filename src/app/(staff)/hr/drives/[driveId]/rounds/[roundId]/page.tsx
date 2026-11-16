@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock, Mail, Play, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Inbox, Mail, Play, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -18,6 +18,7 @@ import { BuildPaperLink } from "@/features/papers/components/build-paper-link";
 import { RealRoundPage } from "@/features/advance/real-round-page";
 import { liveApi } from "@/lib/auth";
 import { candidateById, pct, rank, roundResults, useStore } from "@/mock/store";
+import { InlineEmpty } from "@/components/ui/notice";
 
 type Tab = "overview" | "ranking" | "alerts" | "questions" | "emails";
 
@@ -116,7 +117,7 @@ function RoundDashboard() {
                 Score distribution
               </h2>
               {scored.length === 0 ? (
-                <p className={h.muted}>No submissions yet.</p>
+                <InlineEmpty icon={Inbox}>No submissions yet.</InlineEmpty>
               ) : (
                 <ul className={h.stackSm}>
                   {[80, 60, 40, 0].map((lo, i, arr) => {

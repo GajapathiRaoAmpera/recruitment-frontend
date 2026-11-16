@@ -27,6 +27,7 @@ it("offers Fetch resumes only when some are missing", () => {
   const { rerender } = render(<ImportPanel driveId="d1" />);
   expect(screen.queryByRole("button", { name: /Fetch/ })).not.toBeInTheDocument();
   rerender(<ImportPanel driveId="d1" missingResumes={3} total={5} />);
-  expect(screen.getByText("2 of 5 resumes read · 3 still missing")).toBeInTheDocument();
+  expect(screen.getByText("3 resumes still missing")).toBeInTheDocument();
+  expect(screen.getByText(/2 of 5 read\./)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /Fetch 3 resumes/ })).toBeInTheDocument();
 });

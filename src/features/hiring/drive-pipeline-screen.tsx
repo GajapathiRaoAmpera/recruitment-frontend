@@ -8,6 +8,7 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Field } from "@/components/ui/field";
 import { Input, Range, Select } from "@/components/ui/input";
 import { NotFoundState } from "@/components/ui/states";
@@ -160,12 +161,17 @@ function MockPipeline() {
       </div>
 
       {shortlist.status === "active" ? (
-        <p className={h.muted}>
-          Shortlisting is in progress.{" "}
-          <Link href={`/hr/drives/${drive.id}/candidates`} className={h.link}>
-            Review resumes and shortlist
-          </Link>
-        </p>
+        <Notice
+          icon={Users}
+          title="Shortlisting is in progress"
+          actions={
+            <Button asChild size="sm">
+              <Link href={`/hr/drives/${drive.id}/candidates`}>Review resumes and shortlist</Link>
+            </Button>
+          }
+        >
+          The pipeline board appears once you finish the shortlist.
+        </Notice>
       ) : view === "board" ? (
         <div className={h.board}>
           {rounds

@@ -1,10 +1,11 @@
 "use client";
 
-import { AlertTriangle, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { createDraft, aiStatus } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
+import { Hint, Notice } from "@/components/ui/notice";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { RocketLoader } from "@/components/ui/rocket-loader";
@@ -100,22 +101,23 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
     <form onSubmit={submit} noValidate>
       <div className={h.stack}>
         {providers.error ? (
-          <p role="alert" className={s.banner} data-tone="danger">
-            <AlertTriangle aria-hidden size={16} />
-            <span>
-              Could not check the AI providers.{" "}
-              <Button variant="tertiary" size="sm" onClick={providers.reload}>
+          <Notice
+            role="alert"
+            tone="danger"
+            compact
+            title="Couldn't check the AI providers"
+            actions={
+              <Button variant="secondary" size="sm" onClick={providers.reload}>
                 Try again
               </Button>
-            </span>
-          </p>
+            }
+          >
+            Generation may fail until the check passes.
+          </Notice>
         ) : keyMissing ? (
-          <p role="alert" className={s.banner}>
-            <AlertTriangle aria-hidden size={16} />
-            <span>
-              Missing NVIDIA API key. Ask a Super Admin to add <code>NVIDIA_API_KEY</code> to the backend <code>.env</code> and restart the API.
-            </span>
-          </p>
+          <Notice role="alert" tone="warning" compact title="Missing NVIDIA API key">
+            Ask a Super Admin to add <code>NVIDIA_API_KEY</code> to the backend <code>.env</code> and restart the API.
+          </Notice>
         ) : null}
 
         <section className={h.card} aria-labelledby="paper-basics">
@@ -206,7 +208,7 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
           <p className={s.summaryText}>
             <strong>{total} questions</strong> · will generate ~{total * settings.poolFactor} · {settings.durationMin} min
           </p>
-          {blocker && <p className={h.xs}>{blocker}</p>}
+          {blocker && <Hint tone="warning">{blocker}</Hint>}
         </div>
         <Button type="submit" disabled={Boolean(blocker)} loading={submitting}>
           <Sparkles aria-hidden size={16} style={{ marginRight: 6 }} /> Create and generate

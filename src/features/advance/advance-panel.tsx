@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, CheckCircle2, Clock, Code2, UserX, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Clock, Code2, Mail, SkipForward, UserX, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { ApiError } from "@/api/client";
@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
+import { Hint, Notice } from "@/components/ui/notice";
 import { useAsync } from "@/features/papers/use-async";
 import a from "./advance.module.scss";
 import { advanceErrorMessage, ATTEMPT_STATUS, fmt, formatDuration } from "./messages";
@@ -78,10 +79,9 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
     return (
       <section className={h.card}>
         {title}
-        <p className={h.muted}>
-          Round not active yet.{" "}
-          {data.roundStatus === "skipped" ? "This round was skipped." : "The cut-off and Advance appear once the earlier rounds are advanced."}
-        </p>
+        <Notice tone="neutral" icon={data.roundStatus === "skipped" ? SkipForward : Clock} title={data.roundStatus === "skipped" ? "This round was skipped" : "Round not active yet"}>
+          {data.roundStatus === "skipped" ? "Students moved straight past it, so there is no cut-off to set." : "The cut-off and Advance appear once the earlier rounds are advanced."}
+        </Notice>
       </section>
     );
   }
@@ -144,24 +144,57 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
             </h2>
             <RoundStatusBadge status={data.roundStatus} />
           </div>
-          {!editable && <p className={h.muted}>{data.threshold === null ? "Final ranking. Read-only." : `Final ranking at a ${fmt(data.threshold)}% cut-off. Read-only.`}</p>}
+          {!editable && (
+            <Hint>
+              {data.threshold === null ? "Final ranking. Read-only." : `Final ranking at a ${fmt(data.threshold)}% cut-off. Read-only.`}
+            </Hint>
+          )}
         </div>
 
         {result && (
-          <div role="status" className={h.cardTight}>
-            <p className={h.cardTitle}>
-              <CheckCircle2 aria-hidden size={18} style={{ marginRight: 6, verticalAlign: "-3px" }} />
-              Round advanced
-            </p>
-            <p className={h.small}>
-              At a {fmt(result.threshold)}% cut-off: {result.passed} passed, {result.failed} failed, {result.absent} absent.
-            </p>
-            <p className={h.small}>
-              {result.nextRoundId === null
-                ? "This was the last round, so nobody was invited to another round."
-                : `${plural(result.invited.length, "student")} invited to the next round.`}
-            </p>
-            <p className={h.xs}>Invited students get an email with the sign-in link.</p>
+          <div role="status" className={a.done}>
+            <div className={a.doneHead}>
+              <span className={a.doneIcon} aria-hidden>
+                <CheckCircle2 size={22} />
+              </span>
+              <div>
+                <p className={h.cardTitle}>Round advanced</p>
+                <p className={h.muted}>Closed at a {fmt(result.threshold)}% cut-off.</p>
+              </div>
+            </div>
+            <dl className={a.doneStats}>
+              {(
+                [
+                  ["Passed", result.passed, a.pass],
+                  ["Failed", result.failed, a.fail],
+                  ["Absent", result.absent, undefined],
+                ] as const
+              ).map(([label, n, tone]) => (
+                <div key={label} className={a.doneStat}>
+                  <dt>{label}</dt>
+                  <dd className={tone}>{n}</dd>
+                </div>
+              ))}
+            </dl>
+            <div className={a.doneNext}>
+              <Mail aria-hidden size={18} className={a.doneNextIcon} />
+              <p className={h.small}>
+                {result.nextRoundId === null ? (
+                  "This was the last round, so nobody was invited to another round."
+                ) : (
+                  <>
+                    <strong>{plural(result.invited.length, "student")} invited to the next round.</strong> Each one gets an email with the sign-in link.
+                  </>
+                )}
+              </p>
+              {result.nextRoundId && driveId && (
+                <Button asChild size="sm">
+                  <Link href={`/hr/drives/${encodeURIComponent(driveId)}/rounds/${encodeURIComponent(result.nextRoundId)}`}>
+                    Open next round <ArrowRight aria-hidden size={16} style={{ marginLeft: 6 }} />
+                  </Link>
+                </Button>
+              )}
+            </div>
           </div>
         )}
 
@@ -191,11 +224,7 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
                 Advance
               </Button>
             </div>
-            {blockReason && (
-              <p id={reasonId} className={h.xs}>
-                {blockReason}
-              </p>
-            )}
+            {blockReason && <Hint id={reasonId}>{blockReason}</Hint>}
             {error && <ErrorState message={error.message} onRetry={reload} />}
           </div>
         )}
@@ -336,14 +365,14 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
                     <input type="checkbox" className={h.check} checked={finalize} onChange={(e) => setFinalize(e.target.checked)} />
                     <span className={h.small}>Finish locked attempts with their current marks</span>
                   </label>
-                  <p className={h.xs}>
+                  <Hint tone={finalize ? "neutral" : "warning"}>
                     {finalize
                       ? "They are submitted as they are and marked pass or fail on those marks, on top of the counts above."
                       : "Advance stays off until you tick this: the round can't close while attempts are locked."}
-                  </p>
+                  </Hint>
                 </div>
               )}
-              {editable && blockReason && <p className={h.xs}>{blockReason}</p>}
+              {editable && blockReason && <Hint>{blockReason}</Hint>}
             </div>
           </DialogContent>
         )}

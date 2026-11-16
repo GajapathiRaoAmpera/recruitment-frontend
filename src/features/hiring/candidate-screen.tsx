@@ -1,6 +1,6 @@
 "use client";
 
-import { FileText, Mail, MapPin } from "lucide-react";
+import { FileText, Mail, MapPin, Route, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -15,6 +15,7 @@ import { Chips, hire as h, ResultBadge, StatCard, Tabs } from "@/components/hire
 import { driveRounds, pct, useStore } from "@/mock/store";
 import { RealCandidate } from "@/features/hiring/real-candidate";
 import { liveApi } from "@/lib/auth";
+import { InlineEmpty } from "@/components/ui/notice";
 
 type Tab = "rounds" | "integrity" | "interview";
 
@@ -127,7 +128,7 @@ function MockCandidate() {
                 Entry checks
               </h3>
               {verif.length === 0 ? (
-                <p className={h.muted}>No round entered yet.</p>
+                <InlineEmpty icon={Route}>No round entered yet.</InlineEmpty>
               ) : (
                 <ul className={h.list}>
                   {verif.map((v, i) => (
@@ -147,7 +148,7 @@ function MockCandidate() {
                 Violations
               </h3>
               {violations.length === 0 ? (
-                <p className={h.muted}>No tab switches or full-screen exits.</p>
+                <InlineEmpty icon={ShieldCheck}>No tab switches or full-screen exits.</InlineEmpty>
               ) : (
                 <ul className={h.list}>
                   {violations.map((v) => (

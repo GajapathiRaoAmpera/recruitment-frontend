@@ -86,7 +86,3 @@ div.panel {
   padding-top: sp(2);
 }
 
-.error {
-  @include text(sm);
-  color: var(--ui-color-danger);
-}

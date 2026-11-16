@@ -1,11 +1,12 @@
 "use client";
 
-import { AlertTriangle, Check, Info, RotateCcw, WifiOff } from "lucide-react";
+import { Check, Info, RotateCcw, WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getDraft } from "@/api/papers";
 import { Progress, hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { cn } from "@/lib/cn";
 import type { DraftDetail } from "@/features/papers/types";
@@ -83,27 +84,20 @@ export function GenerationProgress({
 
   if (draft.status === "failed") {
     return (
-      <div role="alert" className={h.card}>
-        <div className={h.stackSm}>
-          <p
-            className={h.row}
-            style={{ fontWeight: 500, color: "var(--ui-color-danger)" }}
-          >
-            <AlertTriangle aria-hidden size={18} /> Generation failed
-          </p>
-          <p>{draft.error ?? "The AI models could not finish this paper."}</p>
-          <div>
-            <Button asChild variant="secondary">
-              <Link
-                href={`/hr/papers/new?drive=${encodeURIComponent(draft.driveRef)}`}
-              >
-                <RotateCcw aria-hidden size={16} style={{ marginRight: 6 }} />{" "}
-                Start over
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </div>
+      <Notice
+        role="alert"
+        tone="danger"
+        title="Generation failed"
+        actions={
+          <Button asChild>
+            <Link href={`/hr/papers/new?drive=${encodeURIComponent(draft.driveRef)}`}>
+              <RotateCcw aria-hidden size={16} style={{ marginRight: 6 }} /> Start over
+            </Link>
+          </Button>
+        }
+      >
+        {draft.error ?? "The AI models could not finish this paper."} Your drive and its settings are unchanged.
+      </Notice>
     );
   }
 

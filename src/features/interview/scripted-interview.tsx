@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Hint, Notice } from "@/components/ui/notice";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
 import { NotFoundState } from "@/components/ui/states";
@@ -94,18 +95,18 @@ export function ScriptedInterview() {
                 <p>{t.text}</p>
               </div>
             ))}
-            {thinking && <p className={h.xs}>Interviewer is responding…</p>}
+            {thinking && <Hint>Interviewer is responding…</Hint>}
           </div>
         </section>
 
         {ended ? (
-          <div className={h.card}>
-            <p style={{ fontWeight: 500 }}>Interview complete.</p>
-            <p className={h.muted}>Your transcript is saved for HR review.</p>
-            <Button style={{ marginTop: 12 }} onClick={finish}>
-              Finish
-            </Button>
-          </div>
+          <Notice
+            tone="success"
+            title="Interview complete"
+            actions={<Button onClick={finish}>Finish</Button>}
+          >
+            Your transcript is saved for HR review.
+          </Notice>
         ) : (
           <div className={h.card}>
             <Field label="Your answer" hint="In the real interview you speak; here you can type.">

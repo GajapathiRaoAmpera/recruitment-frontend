@@ -68,8 +68,86 @@
   }
 }
 
-// Result of a decision: success tint, with the one thing HR must still do called out.
-.result { display: grid; gap: 10px; padding: 16px; border-radius: var(--ui-radius-card); background: var(--ui-color-success-subtle); }
-.resultIcon { margin-right: 6px; vertical-align: -3px; color: var(--ui-color-success); }
-.resultNote { display: flex; gap: 8px; align-items: flex-start; margin: 0; padding: 8px 12px; border-radius: var(--ui-radius-input); background: var(--ui-color-warning-subtle); color: var(--ui-color-warning); font-size: 0.875rem; }
-.resultNote svg { flex: none; margin-top: 2px; }
+// "Round advanced" summary: header, three outcome tiles, then who was invited and where to go next.
+.done {
+  display: grid;
+  gap: sp(4);
+  padding: sp(5);
+  border: 1px solid alpha(var(--ui-color-success), 30%);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-success-subtle);
+}
+
+.doneHead {
+  display: flex;
+  gap: sp(3);
+  align-items: center;
+}
+
+.doneIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: sp(10);
+  height: sp(10);
+  border-radius: 50%;
+  background: var(--ui-color-surface);
+  color: var(--ui-color-success);
+}
+
+.doneStats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+  gap: sp(3);
+  margin: 0;
+}
+
+.doneStat {
+  padding: sp(3) sp(4);
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-surface);
+  dt {
+    @include eyebrow;
+  }
+  dd {
+    margin: sp(1) 0 0;
+    @include text(xl);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.pass {
+  color: var(--ui-color-success);
+}
+
+.fail {
+  color: var(--ui-color-danger);
+}
+
+.doneNext {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(3);
+  align-items: center;
+  padding-top: sp(4);
+  border-top: 1px solid alpha(var(--ui-color-success), 25%);
+  p {
+    flex: 1 1 16rem;
+    margin: 0;
+  }
+}
+
+.doneNextIcon {
+  flex: none;
+  color: var(--ui-color-success);
+}
+
+// Transcript side panel on the decision table.
+.transcriptPanel {
+  max-width: 40rem;
+}
+
+.gapTop {
+  margin-top: sp(3);
+}
