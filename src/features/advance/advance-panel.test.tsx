@@ -251,5 +251,8 @@ it("an empty next coding round links straight to its setup", async () => {
   const dialog = within(await screen.findByRole("dialog"));
   fireEvent.click(dialog.getByRole("checkbox", { name: "Mark 1 student absent" }));
   fireEvent.click(dialog.getByRole("button", { name: "Advance round" }));
-  expect(await dialog.findByRole("link", { name: "Set up the coding round" })).toHaveAttribute("href", "/hr/drives/d1/rounds/r2");
+  expect(await dialog.findByRole("link", { name: /Set up the coding round/ })).toHaveAttribute("href", "/hr/drives/d1/rounds/r2");
+  expect(dialog.getByText("Set up the next round first")).toBeInTheDocument();
+  expect(dialog.queryByRole("button", { name: "Advance round" })).toBeNull(); // the way forward is the setup, not a retry
+  expect(screen.queryByText(/coding test with no questions yet\. Open that round/)).toBeNull(); // no error toast on top
 });

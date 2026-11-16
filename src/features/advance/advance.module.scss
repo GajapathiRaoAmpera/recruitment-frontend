@@ -33,9 +33,39 @@
   margin-top: sp(3);
 }
 
-.error {
-  color: var(--ui-color-danger);
+// Advance refused because the next coding round is empty: a guided next step, not an error.
+.setup {
+  display: flex;
+  gap: sp(3);
+  align-items: flex-start;
+  padding: sp(4);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-warning-subtle);
+}
+
+.setupIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: sp(10);
+  height: sp(10);
+  border-radius: 50%;
+  background: var(--ui-color-surface);
+  color: var(--ui-color-warning);
+}
+
+.setupSteps {
+  display: flex;
+  flex-direction: column;
+  gap: sp(1);
+  margin: 0;
+  padding-left: sp(5);
+  list-style: decimal;
   @include text(sm);
+  li::marker {
+    font-weight: 600;
+  }
 }
 
 // Result of a decision: success tint, with the one thing HR must still do called out.

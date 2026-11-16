@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock, UserX, XCircle } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, Clock, Code2, UserX, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useId, useState } from "react";
 import { ApiError } from "@/api/client";
@@ -101,7 +101,9 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
   const canConfirm = editable && !blockReason && (lockedRows.length === 0 || finalize) && (counts.absent === 0 || markAbsent) && !busy;
 
   const setFrom = (n: number) => setThreshold(clamp(n));
+  const setupHref = driveId && setupRound ? `/hr/drives/${encodeURIComponent(driveId)}/rounds/${encodeURIComponent(setupRound)}` : undefined;
   const openConfirm = () => {
+    setSetupRound(undefined);
     setFinalize(false);
     setMarkAbsent(false);
     setOpen(true);
@@ -116,8 +118,10 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
       reload();
     } catch (e) {
       const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Nothing was saved; try again.");
-      toast({ tone: "danger", title: advanceErrorMessage(err) });
-      setSetupRound(err.code === "NEXT_ROUND_NOT_READY" && typeof err.details.next_round_id === "string" ? err.details.next_round_id : undefined);
+      const next = err.code === "NEXT_ROUND_NOT_READY" && typeof err.details.next_round_id === "string" ? err.details.next_round_id : undefined;
+      setSetupRound(next);
+      // The empty next round gets its own guided state in the dialog (with a button to go there), not an error toast.
+      if (!next || !driveId) toast({ tone: "danger", title: advanceErrorMessage(err) });
       if (STALE_CODES.has(err.code)) reload();
       if (err.code === "ROUND_ALREADY_ADVANCED") onAdvanced();
     } finally {
@@ -234,69 +238,100 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
       </div>
 
       <Dialog open={open} onOpenChange={(o) => !busy && setOpen(o)}>
-        <DialogContent
-          title="Advance this round?"
-          description={`Cut-off ${value}%.`}
-          footer={
-            <>
-              <DialogClose asChild>
-                <Button variant="secondary" disabled={busy}>
-                  Cancel
+        {setupHref ? (
+          <DialogContent
+            title="Set up the next round first"
+            description="Nothing was saved. This round is still open with the same results."
+            footer={
+              <>
+                <DialogClose asChild>
+                  <Button variant="secondary">Stay here</Button>
+                </DialogClose>
+                <Button asChild>
+                  <Link href={setupHref}>
+                    Set up the coding round <ArrowRight aria-hidden size={16} style={{ marginLeft: 6 }} />
+                  </Link>
                 </Button>
-              </DialogClose>
-              <Button onClick={() => void confirm()} disabled={!canConfirm} loading={busy}>
-                Advance round
-              </Button>
-            </>
-          }
-        >
-          <div className={h.stackSm}>
-            <p>
-              {counts.pass ?? 0} pass, {counts.fail ?? 0} fail. Pass students go to the next round. This can&apos;t be undone.
-            </p>
-            {counts.absent > 0 && (
-              <div className={a.locked}>
-                <p className={h.small}>
-                  <strong>{plural(counts.absent, "student hasn't", "students haven't")} started the test.</strong> Advancing now marks them absent, and
-                  they can&apos;t sit it any more. Only do this once the test window has closed.
+              </>
+            }
+          >
+            <div className={a.setup}>
+              <span className={a.setupIcon} aria-hidden>
+                <Code2 size={22} />
+              </span>
+              <div className={h.stackSm}>
+                <p>
+                  The next round is a <strong>coding test with no questions yet</strong>. The {counts.pass ?? 0} students who pass would get an empty test, so
+                  this round can&apos;t advance until it has questions.
                 </p>
-                <label className={a.checkRow}>
-                  <input type="checkbox" className={h.check} checked={markAbsent} onChange={(e) => setMarkAbsent(e.target.checked)} />
-                  <span className={h.small}>Mark {plural(counts.absent, "student")} absent</span>
-                </label>
+                <ol className={a.setupSteps}>
+                  <li>Open the coding round.</li>
+                  <li>Add its coding questions and save.</li>
+                  <li>Come back here and advance this round.</li>
+                </ol>
               </div>
-            )}
-            {lockedRows.length > 0 && (
-              <div className={a.locked}>
-                <p className={h.small}>
-                  <strong>{plural(lockedRows.length, "locked attempt")}</strong> (closed after tab switches):
-                </p>
-                <ul className={h.small}>
-                  {lockedRows.map((r) => (
-                    <li key={r.candidateId}>
-                      {r.name} <span className={h.xs}>{r.studentId}</span>
-                    </li>
-                  ))}
-                </ul>
-                <label className={a.checkRow}>
-                  <input type="checkbox" className={h.check} checked={finalize} onChange={(e) => setFinalize(e.target.checked)} />
-                  <span className={h.small}>Finish locked attempts with their current marks</span>
-                </label>
-                <p className={h.xs}>
-                  {finalize
-                    ? "They are submitted as they are and marked pass or fail on those marks, on top of the counts above."
-                    : "Advance stays off until you tick this: the round can't close while attempts are locked."}
-                </p>
-              </div>
-            )}
-            {editable && blockReason && <p className={h.xs}>{blockReason}</p>}
-            {driveId && setupRound && (
-              <p className={a.error}>
-                <Link href={`/hr/drives/${encodeURIComponent(driveId)}/rounds/${encodeURIComponent(setupRound)}`}>Set up the coding round</Link>
+            </div>
+          </DialogContent>
+        ) : (
+          <DialogContent
+            title="Advance this round?"
+            description={`Cut-off ${value}%.`}
+            footer={
+              <>
+                <DialogClose asChild>
+                  <Button variant="secondary" disabled={busy}>
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button onClick={() => void confirm()} disabled={!canConfirm} loading={busy}>
+                  Advance round
+                </Button>
+              </>
+            }
+          >
+            <div className={h.stackSm}>
+              <p>
+                {counts.pass ?? 0} pass, {counts.fail ?? 0} fail. Pass students go to the next round. This can&apos;t be undone.
               </p>
-            )}
-          </div>
-        </DialogContent>
+              {counts.absent > 0 && (
+                <div className={a.locked}>
+                  <p className={h.small}>
+                    <strong>{plural(counts.absent, "student hasn't", "students haven't")} started the test.</strong> Advancing now marks them absent, and
+                    they can&apos;t sit it any more. Only do this once the test window has closed.
+                  </p>
+                  <label className={a.checkRow}>
+                    <input type="checkbox" className={h.check} checked={markAbsent} onChange={(e) => setMarkAbsent(e.target.checked)} />
+                    <span className={h.small}>Mark {plural(counts.absent, "student")} absent</span>
+                  </label>
+                </div>
+              )}
+              {lockedRows.length > 0 && (
+                <div className={a.locked}>
+                  <p className={h.small}>
+                    <strong>{plural(lockedRows.length, "locked attempt")}</strong> (closed after tab switches):
+                  </p>
+                  <ul className={h.small}>
+                    {lockedRows.map((r) => (
+                      <li key={r.candidateId}>
+                        {r.name} <span className={h.xs}>{r.studentId}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <label className={a.checkRow}>
+                    <input type="checkbox" className={h.check} checked={finalize} onChange={(e) => setFinalize(e.target.checked)} />
+                    <span className={h.small}>Finish locked attempts with their current marks</span>
+                  </label>
+                  <p className={h.xs}>
+                    {finalize
+                      ? "They are submitted as they are and marked pass or fail on those marks, on top of the counts above."
+                      : "Advance stays off until you tick this: the round can't close while attempts are locked."}
+                  </p>
+                </div>
+              )}
+              {editable && blockReason && <p className={h.xs}>{blockReason}</p>}
+            </div>
+          </DialogContent>
+        )}
       </Dialog>
     </section>
   );
