@@ -132,24 +132,177 @@
   color: var(--ui-color-text-muted);
 }
 
-/* Generate: rocket + stage on top, then the count and bar */
+/* Generate: rocket, live count and bar on one side, the stage checklist on the other (stacked on phones) */
 .launch {
-  display: flex;
-  flex-direction: column;
-  gap: sp(4);
-}
-
-.launchRocket {
-  // the rocket reads larger here than in a form slot
-  svg {
-    width: sp(16);
+  display: grid;
+  gap: sp(6);
+  @include up(md) {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: center;
   }
 }
 
-.launchBody {
+.launchMain {
   display: flex;
   flex-direction: column;
+  gap: sp(3);
+  min-width: 0;
+}
+
+// The rocket leads the card here, so it reads larger than in a form slot.
+.launch .launchRocket {
+  gap: sp(4);
+  svg {
+    width: sp(20);
+  }
+  p {
+    @include text(lg);
+    font-weight: 600;
+    color: var(--ui-color-text);
+  }
+}
+
+// The fill glides between polls instead of jumping, and a soft sheen shows work is still running.
+.launchBar {
+  position: relative;
+  overflow: hidden;
+  border-radius: 999px;
+  div div {
+    transition: width var(--ui-duration-base) ease-out;
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--ui-color-surface) 60%, transparent),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: sheen 1.8s ease-in-out infinite;
+  }
+}
+
+.launchLost {
+  display: flex;
+  align-items: center;
   gap: sp(2);
+  padding: sp(2) sp(3);
+  border-radius: var(--ui-radius-input);
+  background: var(--ui-color-warning-subtle);
+  @include text(sm);
+}
+
+.stages {
+  display: flex;
+  flex-direction: column;
+  gap: sp(4);
+  margin: 0;
+  padding: sp(4);
+  list-style: none;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface-muted);
+}
+
+.stage {
+  position: relative;
+  display: flex;
+  gap: sp(3);
+  align-items: flex-start;
+  // Connector from this dot down to the next one.
+  &:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: sp(8);
+    bottom: calc(-1 * #{sp(4)});
+    left: calc(#{sp(4)} - 1px);
+    width: 2px;
+    background: var(--ui-color-border-strong);
+  }
+  &[data-state="done"]:not(:last-child)::after {
+    background: var(--ui-color-success);
+  }
+}
+
+.stageDot {
+  display: grid;
+  width: sp(8);
+  height: sp(8);
+  flex-shrink: 0;
+  place-items: center;
+  border: 2px solid var(--ui-color-border-strong);
+  border-radius: 999px;
+  background: var(--ui-color-surface);
+  @include text(sm);
+  font-weight: 600;
+  color: var(--ui-color-text-muted);
+  .stage[data-state="done"] & {
+    border-color: var(--ui-color-success);
+    background: var(--ui-color-success);
+    color: var(--ui-color-surface);
+  }
+  .stage[data-state="active"] & {
+    border-color: var(--ui-color-primary);
+    color: var(--ui-color-primary);
+    box-shadow: 0 0 0 4px var(--ui-color-primary-subtle);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+}
+
+.stageLabel {
+  display: block;
+  font-weight: 500;
+  .stage[data-state="todo"] & {
+    color: var(--ui-color-text-muted);
+  }
+}
+
+.stageHint {
+  display: block;
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.launchNote {
+  display: flex;
+  align-items: flex-start;
+  gap: sp(2);
+  padding-top: sp(4);
+  border-top: 1px solid var(--ui-color-border);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+  @include up(md) {
+    grid-column: 1 / -1;
+  }
+  svg {
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+}
+
+@keyframes sheen {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    box-shadow: 0 0 0 7px var(--ui-color-primary-subtle);
+  }
+}
+
+@include reduced-motion {
+  .launchBar::after,
+  .stage[data-state="active"] .stageDot {
+    animation: none;
+  }
+  .launchBar div div {
+    transition: none;
+  }
 }
 
 /* Review: Accept stays in reach while HR scrolls the pool */
