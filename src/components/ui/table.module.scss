@@ -24,6 +24,7 @@
   padding: sp(2.5) sp(4);
   font-weight: 500;
   color: var(--ui-color-text-muted);
+  white-space: nowrap; // headers stay on one line; cells carry the wrapping
 }
 
 // Row highlight helps the eye follow one student across many columns.

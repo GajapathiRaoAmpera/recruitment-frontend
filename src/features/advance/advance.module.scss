@@ -143,6 +143,22 @@
   color: var(--ui-color-success);
 }
 
+// "Live now" heading over the interview camera wall.
+.liveTitle {
+  display: flex;
+  gap: sp(2);
+  align-items: center;
+  font-weight: 600;
+}
+
+.liveDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ui-color-danger);
+  box-shadow: 0 0 0 4px var(--ui-color-danger-subtle);
+}
+
 // Transcript side panel on the decision table.
 .transcriptPanel {
   max-width: 40rem;

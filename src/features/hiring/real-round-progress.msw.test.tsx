@@ -69,9 +69,12 @@ describe("the progress table", () => {
     expect(within(rowOf("Meena Iyer")).queryByRole("button", { name: /Resume/ })).toBeNull();
     // 3 switches, a resume, 3 more: the total is 6 and never treated as the student's current count
     expect(within(rowOf("Ravi Kumar")).getByText("Resumed ×1")).toBeInTheDocument();
-    expect(within(rowOf("Ravi Kumar")).getByText("6 total (resumed ×1)")).toBeInTheDocument();
+    expect(within(rowOf("Ravi Kumar")).getByText("total across 1 resume").parentElement).toHaveTextContent("6");
     expect(within(rowOf("Asha Rao")).queryByText(/Resumed ×/)).toBeNull();
     expect(screen.getByRole("columnheader", { name: "Tab switches (all time)" })).toBeInTheDocument();
+    // the four entry checks are one icon row, each named for screen readers
+    expect(within(rowOf("Asha Rao")).getByText("ID + DOB: done")).toBeInTheDocument();
+    expect(within(rowOf("Asha Rao")).getByText("Full screen: done")).toBeInTheDocument();
   });
 
   it("no Resume once the round is no longer active", async () => {

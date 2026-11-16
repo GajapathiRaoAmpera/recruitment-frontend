@@ -2,9 +2,9 @@
 
 import { Hourglass, RefreshCw, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ApiError } from "@/api/client";
-import { evaluateInterview, getInterview, interviewFrame, isScored, listInterviews, saveInterviewNotes, type InterviewRow } from "@/api/interviews";
+import { evaluateInterview, getInterview, isScored, listInterviews, saveInterviewNotes, type InterviewRow } from "@/api/interviews";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -18,52 +18,15 @@ import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { Chips, hire as h, Person, Progress } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
+import { LiveStill, LiveWall, useAutoReload } from "./live-still";
 import { TranscriptList } from "./transcript-list";
 
-const REFRESH_MS = 5000;
 const STATUS: Record<InterviewRow["status"], { label: string; tone: "neutral" | "info" | "success" | "danger" }> = {
   scheduled: { label: "Signed in", tone: "neutral" },
   live: { label: "Live", tone: "info" },
   completed: { label: "Completed", tone: "success" },
   failed: { label: "Closed", tone: "danger" },
 };
-
-/** Quiet reload every few seconds while the tab is visible (live interviews keep changing). */
-function useAutoReload(reload: () => void, on: boolean) {
-  useEffect(() => {
-    if (!on) return;
-    const id = setInterval(() => document.visibilityState === "visible" && reload(), REFRESH_MS);
-    return () => clearInterval(id);
-  }, [on, reload]);
-}
-
-/** Latest camera still for a live interview; refreshed every 3 s, nothing kept. */
-function LiveStill({ id, name }: { id: string; name: string }) {
-  const [url, setUrl] = useState<string>();
-  useEffect(() => {
-    let current: string | undefined;
-    let stale = false;
-    const load = () =>
-      interviewFrame(id).then(
-        (b) => {
-          if (stale) return;
-          if (current) URL.revokeObjectURL(current);
-          current = URL.createObjectURL(b);
-          setUrl(current);
-        },
-        () => !stale && setUrl(undefined), // 404 NO_FRAME: camera paused or interview ended
-      );
-    void load();
-    const t = setInterval(load, 3000);
-    return () => {
-      stale = true;
-      clearInterval(t);
-      if (current) URL.revokeObjectURL(current);
-    };
-  }, [id]);
-  // eslint-disable-next-line @next/next/no-img-element -- blob URL, next/image can't optimise it
-  return url ? <img src={url} alt={`Live camera of ${name}`} style={{ width: 160, borderRadius: 8, display: "block" }} /> : <span className={h.muted}>No camera image</span>;
-}
 
 const score = (r: InterviewRow) => (r.scoring === "done" && r.average !== null ? `${r.average.toFixed(1)} / 5` : r.scoring === "pending" ? "Scoring…" : r.scoring === "error" ? "Failed" : "—");
 
@@ -82,14 +45,7 @@ export function RealInterviews() {
           <h2 id="live-h" className={h.cardTitle} style={{ marginBottom: 12 }}>
             Live now ({live.length})
           </h2>
-          <div className={h.row} style={{ flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
-            {live.map((r) => (
-              <Link key={r.id} href={`/hr/interviews/${r.id}`} className={h.stackSm}>
-                <LiveStill id={r.id} name={r.fullName} />
-                <Person name={r.fullName} meta={r.studentId} />
-              </Link>
-            ))}
-          </div>
+          <LiveWall items={live.map((r) => ({ id: r.id, name: r.fullName, meta: r.studentId }))} />
         </section>
       )}
       {data.length === 0 ? (

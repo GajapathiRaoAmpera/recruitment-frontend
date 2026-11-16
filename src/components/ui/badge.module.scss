@@ -2,7 +2,11 @@
 
 .badge {
   display: inline-flex;
+  flex: none;
+  gap: sp(1);
   align-items: center;
+  white-space: nowrap; // a pill never breaks onto two lines, even in a narrow table cell
+  line-height: 1.25rem;
   border-radius: var(--ui-radius-pill);
   padding: sp(0.5) sp(2.5);
   @include text(xs);
@@ -32,4 +36,10 @@
 .info {
   background: var(--ui-color-info-subtle);
   color: var(--ui-color-info);
+}
+
+// In a table column, status pills share one width and centre their text, so Pass / Fail / Absent line up as a stripe.
+:global(td) .badge {
+  min-width: 6.5rem;
+  justify-content: center;
 }

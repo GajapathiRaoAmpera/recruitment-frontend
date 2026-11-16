@@ -1,0 +1,48 @@
+// Round progress table: compact cells so the table fits without sideways scrolling. Tokens only.
+@use "@/styles/mixins" as *;
+
+.who {
+  display: grid;
+  gap: sp(0.5);
+  min-width: 10rem;
+}
+
+// Four entry checks as one row of icons, in step order.
+.checks {
+  display: inline-flex;
+  gap: sp(1);
+}
+
+.check {
+  display: grid;
+  place-items: center;
+  width: sp(7);
+  height: sp(7);
+  border-radius: 50%;
+}
+.done {
+  background: var(--ui-color-success-subtle);
+  color: var(--ui-color-success);
+}
+.failed {
+  background: var(--ui-color-danger-subtle);
+  color: var(--ui-color-danger);
+}
+.untried {
+  background: var(--ui-color-surface-muted);
+  color: var(--ui-color-text-muted);
+}
+
+// Status pills stay on one line each and stack neatly when there are two.
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(1.5);
+  align-items: center;
+}
+
+.num {
+  display: grid;
+  gap: sp(0.5);
+  font-variant-numeric: tabular-nums;
+}

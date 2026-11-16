@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock, Hourglass, PlayCircle, RefreshCw, ThumbsDown, ThumbsUp, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Clock, Hourglass, PlayCircle, RefreshCw, ThumbsDown, ThumbsUp, Users, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getRoundProgress, type ProgressRow, type StepName } from "@/api/hiring";
@@ -16,6 +16,7 @@ import { useAsync } from "@/features/papers/use-async";
 import { roundTitle } from "@/mock/data";
 import { countOutcomes, statusLabel, statusTone } from "./round-outcome";
 import { ResumeDialog } from "./resume-dialog";
+import pr from "./real-round-progress.module.scss";
 import type { Round } from "@/mock/types";
 
 const AUTO_MS = 10_000;
@@ -32,7 +33,30 @@ const STATUS: Record<string, { label: string; tone: "neutral" | "info" | "succes
   locked: { label: "Locked", tone: "danger" },
   expired: { label: "Time up", tone: "warning" },
 };
-const tick = (v: boolean | null) => (v === null ? "—" : v ? "✓" : "✗");
+const CHECK = {
+  done: { icon: CheckCircle2, cls: pr.done },
+  failed: { icon: XCircle, cls: pr.failed },
+  "not tried": { icon: Circle, cls: pr.untried },
+} as const;
+
+/** The four entry checks as one row of icons (hover or screen reader gives the step and its state). */
+function EntryChecks({ steps }: { steps: ProgressRow["steps"] }) {
+  return (
+    <span className={pr.checks}>
+      {STEPS.map((s) => {
+        const v = steps[s.id];
+        const state = v === null ? "not tried" : v ? "done" : "failed";
+        const { icon: Icon, cls } = CHECK[state];
+        return (
+          <span key={s.id} className={`${pr.check} ${cls}`} title={`${s.label}: ${state}`}>
+            <Icon aria-hidden size={14} />
+            <span className="sr-only">{`${s.label}: ${state}`}</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
 
 /** HR's live view of one round, read from the API (entry checks + attempts). Refresh to update. */
 export function RealRoundProgress({ driveId, roundId }: { driveId: string; roundId: string }) {
@@ -123,11 +147,11 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
             <thead>
               <tr>
                 <Th>Candidate</Th>
-                {STEPS.map((s) => (
-                  <Th key={s.id}>{s.label}</Th>
-                ))}
+                <Th>Entry checks</Th>
                 <Th>Status</Th>
-                <Th>Tab switches (all time)</Th>
+                <Th aria-label="Tab switches (all time)" title="Every switch ever made, including before a resume">
+                  Tab switches
+                </Th>
                 <Th>Marks</Th>
                 <Th>Result</Th>
                 <Th>
@@ -141,24 +165,29 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
                 return (
                   <tr key={r.candidateId}>
                     <Td>
-                      <Link href={`/hr/candidates/${r.candidateId}`} className={h.link}>
-                        {r.fullName}
-                      </Link>{" "}
-                      <span className={h.xs}>{r.studentId}</span>
+                      <span className={pr.who}>
+                        <Link href={`/hr/candidates/${r.candidateId}`} className={h.link}>
+                          {r.fullName}
+                        </Link>
+                        <span className={`${h.xs} ${h.mono}`}>{r.studentId}</span>
+                      </span>
                     </Td>
-                    {STEPS.map((s) => (
-                      <Td key={s.id} aria-label={`${s.label}: ${r.steps[s.id] === null ? "not tried" : r.steps[s.id] ? "done" : "failed"}`}>
-                        {tick(r.steps[s.id])}
-                      </Td>
-                    ))}
                     <Td>
-                      <span className={h.row}>
-                        {st ? <Badge tone={st.tone}>{st.label}</Badge> : <span className={h.xs}>Not started</span>}
-                        {r.resumeCount > 0 && <Badge tone="info">Resumed ×{r.resumeCount}</Badge>}
+                      <EntryChecks steps={r.steps} />
+                    </Td>
+                    <Td>
+                      <span className={pr.pills}>
+                        {st ? <Badge tone={st.tone}>{st.label}</Badge> : <Badge>Not started</Badge>}
+                        {r.resumeCount > 0 && <Badge tone="primary">Resumed ×{r.resumeCount}</Badge>}
                       </span>
                     </Td>
                     {/* every switch ever made: it never drops after a resume, so it isn't the student's current count */}
-                    <Td>{r.resumeCount > 0 ? `${r.tabSwitches} total (resumed ×${r.resumeCount})` : r.tabSwitches}</Td>
+                    <Td>
+                      <span className={pr.num}>
+                        {r.tabSwitches}
+                        {r.resumeCount > 0 && <span className={h.xs}>total across {r.resumeCount === 1 ? "1 resume" : `${r.resumeCount} resumes`}</span>}
+                      </span>
+                    </Td>
                     <Td>{r.marks ?? "—"}</Td>
                     <Td>
                       <Badge tone={statusTone(r.status)}>{statusLabel(r.status)}</Badge>

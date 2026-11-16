@@ -16,6 +16,7 @@ import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
 import { useToast } from "@/components/ui/toast";
 import { Hint, Notice } from "@/components/ui/notice";
+import { LiveStill, LiveWall, useAutoReload } from "@/features/interview/live-still";
 import { TranscriptList } from "@/features/interview/transcript-list";
 import { useAsync } from "@/features/papers/use-async";
 import a from "./advance.module.scss";
@@ -24,6 +25,8 @@ import { fmt } from "./messages";
 /** One student's transcript in a side panel: the panel body scrolls, the decision table stays where it was. */
 function TranscriptPanel({ id, name }: { id: string; name: string }) {
   const { data, error, reload } = useAsync(() => getInterview(id), [id]);
+  const live = data?.status === "live";
+  useAutoReload(reload, live); // the transcript grows while they talk
   return (
     <DialogContent
       side
@@ -36,7 +39,16 @@ function TranscriptPanel({ id, name }: { id: string; name: string }) {
         </Button>
       }
     >
-      {error ? <ErrorState message={error.message} onRetry={reload} /> : data ? <TranscriptList turns={data.transcript} candidateName={name} /> : <RocketLoader label="Loading transcript" />}
+      {error ? (
+        <ErrorState message={error.message} onRetry={reload} />
+      ) : data ? (
+        <div className={h.stack}>
+          {live && <LiveStill id={id} name={name} />}
+          <TranscriptList turns={data.transcript} candidateName={name} />
+        </div>
+      ) : (
+        <RocketLoader label="Loading transcript" />
+      )}
     </DialogContent>
   );
 }
@@ -78,6 +90,8 @@ export function decideErrorMessage(e: ApiError): string {
  */
 export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string; driveId: string; onDecided: () => void }) {
   const { data, error, reload } = useAsync(() => getDecisions(roundId), [roundId]);
+  // While anyone is in their interview, keep statuses and the camera wall current.
+  useAutoReload(reload, Boolean(data?.candidates.some((c) => c.interviewStatus === "live")));
   const [picks, setPicks] = useState<Record<string, Decision>>({});
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -211,6 +225,19 @@ export function DecisionPanel({ roundId, driveId, onDecided }: { roundId: string
               </div>
             )}
           </div>
+        )}
+
+        {live > 0 && (
+          <section aria-labelledby={`${titleId}-live`} className={h.stackSm}>
+            <h3 id={`${titleId}-live`} className={a.liveTitle}>
+              <span className={a.liveDot} aria-hidden /> Live now ({live})
+            </h3>
+            <LiveWall
+              items={data.candidates
+                .filter((c) => c.interviewStatus === "live" && c.interviewId)
+                .map((c) => ({ id: c.interviewId!, name: c.name, meta: c.studentId }))}
+            />
+          </section>
         )}
 
         {data.candidates.length === 0 ? (

@@ -8,7 +8,8 @@ vi.mock("@/api/rounds", () => ({ getDecisions, decideRound }));
 const downloadDriveReport = vi.hoisted(() => vi.fn());
 vi.mock("@/api/hiring", () => ({ downloadDriveReport }));
 const getInterview = vi.hoisted(() => vi.fn());
-vi.mock("@/api/interviews", () => ({ getInterview }));
+const interviewFrame = vi.hoisted(() => vi.fn());
+vi.mock("@/api/interviews", () => ({ getInterview, interviewFrame }));
 
 import { DecisionPanel } from "./decision-panel";
 
@@ -18,6 +19,7 @@ const row = (id: string, name: string, extra = {}) => ({
 }); // prettier-ignore
 
 beforeEach(() => {
+  interviewFrame.mockReset().mockRejectedValue(new Error("NO_FRAME")); // camera paused unless a test says otherwise
   getDecisions.mockReset();
   decideRound.mockReset();
 });
@@ -84,4 +86,27 @@ it("opens a student's transcript in a side panel without leaving the round (AC: 
   expect(await panel.findByText("I build APIs.")).toBeInTheDocument();
   expect(getInterview).toHaveBeenCalledWith("i-a");
   expect(panel.getByRole("link", { name: "Open full interview" })).toHaveAttribute("href", "/hr/interviews/i-a");
+});
+
+it("shows a Live now camera wall on the interview round for students in their interview (AC: HR watches the live AI interview)", async () => {
+  getDecisions.mockResolvedValue({
+    roundId: "r1", roundType: "ai_interview", roundStatus: "active",
+    candidates: [row("a", "Asha", { interviewStatus: "live", scoring: null, aiAverage: null }), row("b", "Ben")],
+  }); // prettier-ignore
+  render(<DecisionPanel roundId="r1" driveId="d1" onDecided={vi.fn()} />);
+
+  const wall = await screen.findByRole("list", { name: "Live interviews" });
+  expect(screen.getByRole("heading", { name: /Live now \(1\)/ })).toBeInTheDocument();
+  expect(within(wall).getByRole("link", { name: "Watch Asha's interview" })).toHaveAttribute("href", "/hr/interviews/i-a");
+  expect(within(wall).queryByText("Ben")).toBeNull(); // finished interviews are not on the wall
+  expect(await within(wall).findByText("Waiting for camera…")).toBeInTheDocument(); // no fresh still yet: placeholder, not an error
+  expect(interviewFrame).toHaveBeenCalledWith("i-a");
+});
+
+it("no camera wall when nobody is live", async () => {
+  getDecisions.mockResolvedValue({ roundId: "r1", roundType: "ai_interview", roundStatus: "active", candidates: [row("a", "Asha")] });
+  render(<DecisionPanel roundId="r1" driveId="d1" onDecided={vi.fn()} />);
+  await screen.findByText("4 / 5");
+  expect(screen.queryByRole("list", { name: "Live interviews" })).toBeNull();
+  expect(interviewFrame).not.toHaveBeenCalled();
 });

@@ -1,0 +1,103 @@
+// Live camera tile for HR. Tokens only.
+@use "@/styles/mixins" as *;
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  width: 100%;
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface-muted);
+}
+
+.img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.empty {
+  display: grid;
+  gap: sp(2);
+  place-content: center;
+  justify-items: center;
+  height: 100%;
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+// Red "LIVE" tag in the corner, like a broadcast.
+.live {
+  position: absolute;
+  top: sp(2);
+  left: sp(2);
+  display: inline-flex;
+  gap: sp(1.5);
+  align-items: center;
+  padding: sp(0.5) sp(2);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-danger);
+  color: var(--ui-color-primary-fg);
+  @include text(xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.6s ease-in-out infinite;
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.wall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: sp(4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: grid;
+  gap: sp(3);
+  padding: sp(2);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  transition:
+    border-color var(--ui-duration-base) var(--ui-ease-out),
+    box-shadow var(--ui-duration-base) var(--ui-ease-out);
+  @include hover {
+    border-color: alpha(var(--ui-color-primary), 35%);
+    box-shadow: var(--ui-shadow-md);
+  }
+  &:focus-visible {
+    border-color: alpha(var(--ui-color-primary), 35%);
+    box-shadow: var(--ui-shadow-md);
+  }
+}
+
+.tileFoot {
+  display: flex;
+  gap: sp(2);
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: sp(1);
+}
+
+.watch {
+  flex: none;
+  color: var(--ui-color-primary);
+}
