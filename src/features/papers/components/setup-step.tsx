@@ -1,13 +1,14 @@
 "use client";
 
 import { AlertTriangle, Sparkles } from "lucide-react";
-import { useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { createDraft, aiStatus } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
 import { RocketLoader } from "@/components/ui/rocket-loader";
+import { useToast } from "@/components/ui/toast";
 import type { Draft, Level, PaperSettings } from "@/features/papers/types";
 import { useAsync } from "@/features/papers/use-async";
 import { liveApi } from "@/lib/auth";
@@ -58,7 +59,11 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
   const [title, setTitle] = useState("Round 1 — Aptitude paper");
   const [settings, setSettings] = useState<PaperSettings>(() => ({ ...DEFAULT_SETTINGS, role: roleOf(driveRef) }));
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string>();
+  const toast = useToast();
+  const providerError = providers.error?.message;
+  useEffect(() => {
+    if (providerError) toast({ tone: "danger", title: `Could not check the AI providers: ${providerError}` });
+  }, [providerError, toast]);
   const set = (patch: Partial<PaperSettings>) => setSettings((v) => ({ ...v, ...patch }));
 
   const total = sum(settings.counts);
@@ -80,11 +85,10 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
     e.preventDefault();
     if (blocker) return;
     setSubmitting(true);
-    setError(undefined);
     try {
       onCreated(await createDraft({ driveRef, title: title.trim(), settings: { ...settings, role } }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create the paper. Try again.");
+      toast({ tone: "danger", title: err instanceof Error ? err.message : "Could not create the paper. Try again." });
       setSubmitting(false);
     }
   };
@@ -99,7 +103,7 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
           <p role="alert" className={s.banner} data-tone="danger">
             <AlertTriangle aria-hidden size={16} />
             <span>
-              Could not check the AI providers: {providers.error.message}{" "}
+              Could not check the AI providers.{" "}
               <Button variant="tertiary" size="sm" onClick={providers.reload}>
                 Try again
               </Button>
@@ -202,11 +206,7 @@ function SetupForm({ drives, initialDrive, onCreated }: SetupStepProps) {
           <p className={s.summaryText}>
             <strong>{total} questions</strong> · will generate ~{total * settings.poolFactor} · {settings.durationMin} min
           </p>
-          {(error || blocker) && (
-            <p role={error ? "alert" : undefined} className={h.xs} style={error ? { color: "var(--ui-color-danger)" } : undefined}>
-              {error ?? blocker}
-            </p>
-          )}
+          {blocker && <p className={h.xs}>{blocker}</p>}
         </div>
         <Button type="submit" disabled={Boolean(blocker)} loading={submitting}>
           <Sparkles aria-hidden size={16} style={{ marginRight: 6 }} /> Create and generate

@@ -54,7 +54,7 @@ export function QuestionEditDialog({ draftId, question, onClose, onSaved, save: 
       toast({ tone: "success", title: "Question saved", description: saveTo ? undefined : "Checks refreshed." });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save. Try again.");
+      toast({ tone: "danger", title: e instanceof Error ? e.message : "Could not save. Try again." });
       setSaving(false);
     }
   };

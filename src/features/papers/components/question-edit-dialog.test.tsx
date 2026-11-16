@@ -41,7 +41,7 @@ it("server rejection keeps the dialog open with the message", async () => {
   });
   open();
   await save();
-  expect(screen.getByRole("alert")).toHaveTextContent("This paper is already accepted.");
+  expect(await screen.findByText("This paper is already accepted.")).toBeInTheDocument();
   expect(screen.getByRole("dialog")).toBeInTheDocument();
 });
 

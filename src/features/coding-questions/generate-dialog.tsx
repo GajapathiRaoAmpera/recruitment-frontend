@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Field } from "@/components/ui/field";
 import { Input, Select } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { label, SqlBadge } from "./bank-picker";
 import s from "./coding-questions.module.scss";
 import { codingErrorMessage, failureReasons, fieldErrors } from "./messages";
@@ -41,7 +42,7 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
   const [busy, setBusy] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState<GenerateResult | null>(null);
-  const [error, setError] = useState<string>();
+  const toast = useToast();
   const inFlight = useRef(false); // a double click must not send two requests
 
   useEffect(() => {
@@ -58,7 +59,6 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
     inFlight.current = true;
     setBusy(true);
     setElapsed(0);
-    setError(undefined);
     setResult(null);
     try {
       // "stdin" is the API default and is left out, so a Standard request is exactly as before.
@@ -67,13 +67,13 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
       onGenerated();
     } catch (e) {
       if (e instanceof DOMException && (e.name === "TimeoutError" || e.name === "AbortError")) {
-        setError(codingErrorMessage(new ApiError(0, "GENERATE_TIMEOUT", "")));
+        toast({ tone: "danger", title: codingErrorMessage(new ApiError(0, "GENERATE_TIMEOUT", "")) });
         onGenerated(); // the server may still have saved some drafts
       } else {
         const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Check the question bank before trying again.");
         const other = err.code === "VALIDATION_ERROR" ? fieldErrors(err) : {};
         const detail = Object.values(other).filter((v) => typeof v === "string").join("; ");
-        setError(codingErrorMessage(err) + (detail ? ` (${detail})` : ""));
+        toast({ tone: "danger", title: codingErrorMessage(err) + (detail ? ` (${detail})` : "") });
       }
     } finally {
       inFlight.current = false;
@@ -188,11 +188,6 @@ export function GenerateDialog({ onClose, onGenerated, onReview }: Props) {
                   Elapsed {clock(elapsed)}. About 11 seconds per question; keep this open. Drafts are saved even if you leave the page.
                 </p>
               </div>
-            )}
-            {error && (
-              <p role="alert" className={s.error}>
-                {error}
-              </p>
             )}
           </div>
         )}

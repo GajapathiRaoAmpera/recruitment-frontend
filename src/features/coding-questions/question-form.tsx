@@ -32,6 +32,7 @@ import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ErrorState, ForbiddenState } from "@/components/ui/states";
+import { useToast } from "@/components/ui/toast";
 import { useAsync } from "@/features/papers/use-async";
 // A next/dynamic wrapper: Monaco is fetched only when the reference solution is first shown.
 import { CodeEditor } from "@/features/test-runner/code-editor";
@@ -138,7 +139,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
   const [original, setOriginal] = useState<FormState | null>(null);
   const [overflow, setOverflow] = useState(0);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [formError, setFormError] = useState<string>();
+  const toast = useToast();
   const [saving, setSaving] = useState(false);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
@@ -174,7 +175,6 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
     if (!form) return;
     setSaving(true);
     setErrors({});
-    setFormError(undefined);
     try {
       const body = toInput(form);
       if (questionId && original) {
@@ -197,7 +197,6 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
     if (!form || !questionId || !original) return;
     setApproving(true);
     setErrors({});
-    setFormError(undefined);
     try {
       onSaved(await approveCodingQuestion(questionId, changes(toInput(form), toInput(original), original.mode === "sql")), false);
       onClose();
@@ -211,7 +210,7 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
   const fail = (e: unknown) => {
     const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Nothing was saved; try again.");
     if (err.code === "VALIDATION_ERROR") setErrors(fieldErrors(err));
-    setFormError(err.status === 403 ? "You don't have permission to change this question. Nothing was saved." : codingErrorMessage(err));
+    toast({ tone: "danger", title: err.status === 403 ? "You don't have permission to change this question. Nothing was saved." : codingErrorMessage(err) });
   };
 
   const problems = form ? formProblems(form) : [];
@@ -493,12 +492,6 @@ export function QuestionForm({ questionId, onClose, onSaved }: Props) {
             )}
 
             {problems.length > 0 && <p className={h.xs}>To save: {problems.join(" · ")}.</p>}
-            {formError && (
-              <p role="alert" className={s.error}>
-                {formError}
-                {errors.other ? ` (${errors.other})` : ""}
-              </p>
-            )}
           </div>
         )}
       </DialogContent>

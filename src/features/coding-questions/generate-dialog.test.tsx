@@ -109,7 +109,7 @@ it.each([
   fetchMock.mockResolvedValue(json(status, { error: { code, message: "raw", details } }));
   view();
   fireEvent.click(generateBtn());
-  expect(await dialog().findByRole("alert")).toHaveTextContent(msg);
+  expect(await screen.findByText(msg)).toBeInTheDocument();
   expect(generateBtn()).toBeEnabled(); // can try again
   expect(onClose).not.toHaveBeenCalled();
 });
@@ -118,6 +118,6 @@ it("on timeout says so and reloads the bank (drafts may have been saved)", async
   fetchMock.mockRejectedValue(new DOMException("signal timed out", "TimeoutError"));
   view();
   fireEvent.click(generateBtn());
-  expect(await dialog().findByRole("alert")).toHaveTextContent(/No answer after almost 3 minutes.*reloaded/);
+  expect(await screen.findByText(/No answer after almost 3 minutes.*reloaded/)).toBeInTheDocument();
   await waitFor(() => expect(onGenerated).toHaveBeenCalledTimes(1));
 });

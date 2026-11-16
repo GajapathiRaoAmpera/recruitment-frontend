@@ -8,6 +8,7 @@ import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { CameraHeader, FaceCheck } from "@/features/student/face-check";
 import { NotFoundState } from "@/components/ui/states";
+import { useToast } from "@/components/ui/toast";
 import { hire as h } from "@/components/hire/ui";
 import s from "@/components/student/student.module.scss";
 import { roundTitle } from "@/mock/data";
@@ -31,7 +32,7 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
   const [fsFailed, setFsFailed] = useState(false);
   const [id, setId] = useState<Status>("todo");
   const [photo, setPhoto] = useState<string>(); // kept in this tab only, shown small so the invigilator can see it
-  const [error, setError] = useState<string>();
+  const toast = useToast();
 
   // Every visit walks the steps in order (photo, location, terms, full screen). Nothing is restored from the server, so no step can be skipped.
 
@@ -52,10 +53,9 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
   const record = async (step: EntryStep, ok: boolean, meta: Record<string, unknown> = {}) => {
     try {
       await entryStep(student.entryToken, roundId, step, ok, meta);
-      setError(undefined);
       return true;
     } catch (e) {
-      setError((e as Error).message);
+      toast({ tone: "danger", title: (e as Error).message });
       return false;
     }
   };
@@ -219,11 +219,6 @@ export function RealSystemCheck({ student, roundId }: { student: StudentSession;
               </div>
             </section>
 
-            {error && (
-              <p role="alert" className={s.checkText} style={{ color: "var(--ui-color-danger)" }}>
-                {error}
-              </p>
-            )}
             <section className={s.checkItem}>
               <div>
                 <p className={s.checkTitle}>{ready ? "Ready to start" : "Start test"}</p>

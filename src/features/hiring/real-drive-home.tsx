@@ -223,7 +223,7 @@ function ReassignDialog({ open, onOpenChange, driveId, current, currentName, onD
       setOwnerId("");
       onDone();
     } catch (err) {
-      setError((err as Error).message);
+      toast({ tone: "danger", title: (err as Error).message });
     } finally {
       setSaving(false);
     }

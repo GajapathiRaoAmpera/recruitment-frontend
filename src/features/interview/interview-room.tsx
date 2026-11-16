@@ -7,6 +7,7 @@ import { type InterviewSession, interviewSession, postFrame, postTranscript, typ
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { hire as h } from "@/components/hire/ui";
 import { AudioEngine } from "./audio-engine";
 import type { CharacterState } from "./character-state";
@@ -41,6 +42,10 @@ const clock = (sec: number) => `${Math.floor(sec / 60)}:${String(sec % 60).padSt
  */
 export function InterviewRoom({ token, roleTitle, media, onDone }: { token: string; roleTitle: string; media: MediaStream; onDone: () => void }) {
   const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
+  useEffect(() => {
+    if (error) toast({ tone: "danger", title: error });
+  }, [error, toast]);
   const [link, setLink] = useState<LinkStatus>("connecting");
   const [char, setChar] = useState<CharacterState>("idle");
   const [left, setLeft] = useState<number | null>(null);
@@ -247,7 +252,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   if (error)
     return (
       <div className={s.center}>
-        <p role="alert">{error}</p>
+        <p>The interview stopped.</p>
         {lines.length === 0 && !finishing ? (
           // nothing recorded yet: rejoining resumes the same interview, so never show "complete"
           <Button onClick={() => window.location.reload()}>Try again</Button>

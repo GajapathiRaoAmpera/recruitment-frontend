@@ -12,6 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
+import { useToast } from "@/components/ui/toast";
 import { fmt } from "@/features/advance/messages";
 import { useAsync } from "@/features/papers/use-async";
 import { BankPicker, DIFFICULTY_TONE, label, LIST_LIMIT, SqlBadge } from "./bank-picker";
@@ -50,14 +51,14 @@ export function CodingSetup({ roundId }: { roundId: string }) {
   // Settings
   const [minutes, setMinutes] = useState<string | null>(null); // null = show the saved value
   const [settingsBusy, setSettingsBusy] = useState(false);
-  const [settingsMsg, setSettingsMsg] = useState<{ ok: boolean; text: string }>();
+  const toast = useToast();
+  const notify = (msg: { ok: boolean; text: string }) => toast({ tone: msg.ok ? "success" : "danger", title: msg.text });
 
   // Question list
   const [order, setOrder] = useState<string[] | null>(null); // null = the saved order
   const [lastSaved, setLastSaved] = useState<string[] | null>(null);
   const [flags, setFlags] = useState<Record<string, string>>({});
   const [listBusy, setListBusy] = useState(false);
-  const [listMsg, setListMsg] = useState<{ ok: boolean; text: string }>();
   const [form, setForm] = useState<{ id?: string } | null>(null);
   const [generating, setGenerating] = useState(false);
 
@@ -77,7 +78,6 @@ export function CodingSetup({ roundId }: { roundId: string }) {
 
   const edit = (next: string[]) => {
     setOrder(next);
-    setListMsg(undefined);
   };
   const move = (i: number, by: -1 | 1) => {
     const next = [...ids];
@@ -87,14 +87,13 @@ export function CodingSetup({ roundId }: { roundId: string }) {
 
   const saveSettings = async () => {
     setSettingsBusy(true);
-    setSettingsMsg(undefined);
     try {
       await saveTestSettings(roundId, { durationSec: m * 60 });
-      setSettingsMsg({ ok: true, text: `Saved: ${m} minutes.${noTest ? " The test is created; now add questions." : ""}` });
+      notify({ ok: true, text: `Saved: ${m} minutes.${noTest ? " The test is created; now add questions." : ""}` });
       setMinutes(null);
       test.reload();
     } catch (e) {
-      setSettingsMsg({ ok: false, text: codingErrorMessage(asApiError(e)) });
+      notify({ ok: false, text: codingErrorMessage(asApiError(e)) });
     } finally {
       setSettingsBusy(false);
     }
@@ -103,7 +102,6 @@ export function CodingSetup({ roundId }: { roundId: string }) {
   const saveQuestions = async () => {
     if (!t) return;
     setListBusy(true);
-    setListMsg(undefined);
     setFlags({});
     try {
       const r = await saveTestQuestions(t.id, ids);
@@ -111,12 +109,12 @@ export function CodingSetup({ roundId }: { roundId: string }) {
         .filter(([, n]) => n)
         .map(([d, n]) => `${n} ${d}`)
         .join(", ");
-      setListMsg({ ok: true, text: `Saved ${r.questionCount} question(s)${lv ? ` (${lv})` : ""}. Students see them in this order.` });
+      notify({ ok: true, text: `Saved ${r.questionCount} question(s)${lv ? ` (${lv})` : ""}. Students see them in this order.` });
       setLastSaved(ids);
       test.reload();
     } catch (e) {
       const err = asApiError(e);
-      setListMsg({ ok: false, text: codingErrorMessage(err) });
+      notify({ ok: false, text: codingErrorMessage(err) });
       const bad = err.details.question_ids;
       if (FLAG_LABEL[err.code] && Array.isArray(bad)) setFlags(Object.fromEntries(bad.map((id) => [String(id), FLAG_LABEL[err.code]!])));
       if (err.code === "TEST_IN_USE" || err.code === "TEST_NOT_FOUND") test.reload();
@@ -129,13 +127,6 @@ export function CodingSetup({ roundId }: { roundId: string }) {
     setPicked((p) => (p.has(q.id) || ids.includes(q.id) ? new Map(p).set(q.id, q) : p));
     setBankKey((k) => k + 1);
   };
-
-  const message = (msg?: { ok: boolean; text: string }) =>
-    msg && (
-      <p role={msg.ok ? "status" : "alert"} className={msg.ok ? h.small : s.error}>
-        {msg.text}
-      </p>
-    );
 
   return (
     <section className={h.card} aria-labelledby="coding-setup-h">
@@ -171,7 +162,6 @@ export function CodingSetup({ roundId }: { roundId: string }) {
               </Button>
             )}
           </div>
-          {message(settingsMsg)}
         </section>
 
         <section aria-labelledby="round-q-h">
@@ -226,7 +216,6 @@ export function CodingSetup({ roundId }: { roundId: string }) {
               {!t && <span className={h.xs}>Create the test first (Test settings above).</span>}
             </div>
           )}
-          {message(listMsg)}
         </section>
 
         <BankPicker
@@ -238,7 +227,7 @@ export function CodingSetup({ roundId }: { roundId: string }) {
           onApproved={onSaved}
           onEdit={(id) => setForm({ id })}
           onAdd={(q) => {
-            if (ids.length >= MAX_QUESTIONS) return setListMsg({ ok: false, text: `A test can have at most ${MAX_QUESTIONS} questions.` });
+            if (ids.length >= MAX_QUESTIONS) return notify({ ok: false, text: `A test can have at most ${MAX_QUESTIONS} questions.` });
             setPicked((p) => new Map(p).set(q.id, q));
             edit([...ids, q.id]);
           }}

@@ -34,7 +34,6 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
   const [section, setSection] = useState<Section | "">("");
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string>();
 
   // The server copy changed (save, edit, reload): start again from it.
   if (seen !== saved) {
@@ -71,12 +70,11 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
 
   const save = async () => {
     setSaving(true);
-    setError(undefined);
     try {
       onChange(await setSelection(draft.id, [...picked]));
       toast({ tone: "success", title: "Selection saved", description: `${picked.size} of ${draft.pool.length} questions selected. Checks refreshed.` });
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not save the selection. Try again.");
+      toast({ tone: "danger", title: e instanceof Error ? e.message : "Could not save the selection. Try again." });
     } finally {
       setSaving(false);
     }
@@ -204,8 +202,8 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
 
       {editable && (
         <div className={h.between} style={{ marginTop: "1rem" }}>
-          <p className={h.xs} role={error ? "alert" : undefined} style={error ? { color: "var(--ui-color-danger)" } : undefined}>
-            {error ?? (dirty ? "You have unsaved changes." : "Selection saved.")}
+          <p className={h.xs}>
+            {dirty ? "You have unsaved changes." : "Selection saved."}
           </p>
           <span className={h.row}>
             <Button variant="secondary" disabled={!dirty || saving} onClick={() => setPicked(saved)}>

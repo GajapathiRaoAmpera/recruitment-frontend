@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, PasswordInput } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { entryVerify } from "@/api/entry";
 import { signInStaff } from "@/features/auth/staff-sign-in";
 import { liveApi } from "@/lib/auth";
@@ -54,6 +55,7 @@ export function LoginScreen({ portal }: { portal: Portal }) {
   const [error, setError] = useState<string>();
   const copy = COPY[portal];
   const [pending, setPending] = useState(false);
+  const toast = useToast();
   const student = portal === "student";
   // Staff sign in through the API when it's on (NEXT_PUBLIC_LIVE_API); otherwise the prototype.
   const realStaff = !student && liveApi;
@@ -83,14 +85,14 @@ export function LoginScreen({ portal }: { portal: Portal }) {
                   dispatch({ type: "login", session: { role: "STUDENT", student: await entryVerify(identifier, secret) } });
                   return router.push("/student");
                 } catch (err) {
-                  return setError((err as Error).message);
+                  return toast({ tone: "danger", title: (err as Error).message });
                 } finally {
                   setPending(false);
                 }
               }
               const res = realStaff ? await signInStaff(portal, identifier, secret) : signIn(state, portal, identifier, secret);
               setPending(false);
-              if ("error" in res) return setError(res.error);
+              if ("error" in res) return toast({ tone: "danger", title: res.error });
               dispatch({ type: "login", session: res.session });
               router.push(res.home);
             }}

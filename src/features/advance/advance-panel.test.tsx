@@ -215,7 +215,7 @@ it.each([
   const dialog = within(await screen.findByRole("dialog"));
   fireEvent.click(dialog.getByRole("checkbox", { name: "Mark 1 student absent" }));
   fireEvent.click(dialog.getByRole("button", { name: "Advance round" }));
-  expect(await dialog.findByRole("alert")).toHaveTextContent(text);
+  expect(await screen.findByText(text)).toBeInTheDocument();
   expect(screen.queryByText("Round advanced")).not.toBeInTheDocument();
 });
 

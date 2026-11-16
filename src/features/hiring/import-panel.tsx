@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { InfoTip } from "@/components/ui/info-tip";
 import { Table, Td, Th } from "@/components/ui/table";
+import { useToast } from "@/components/ui/toast";
 import { hire as h, Progress } from "@/components/hire/ui";
 
 const WHY: Record<Exclude<FetchStatus, "parsed">, string> = {
@@ -25,7 +26,7 @@ const WHY: Record<Exclude<FetchStatus, "parsed">, string> = {
 export function ImportPanel({ driveId, onChanged, missingResumes = 0, total = 0 }: { driveId: string; onChanged?: () => void; missingResumes?: number; total?: number }) {
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState<"import" | "fetch">();
-  const [error, setError] = useState<string>();
+  const toast = useToast();
   const [imported, setImported] = useState<ImportResult>();
   const [fetched, setFetched] = useState<FetchItem[]>();
 
@@ -35,11 +36,10 @@ export function ImportPanel({ driveId, onChanged, missingResumes = 0, total = 0 
   };
 
   const run = async (step: () => Promise<void>) => {
-    setError(undefined);
     try {
       await step();
     } catch (e) {
-      setError((e as Error).message);
+      toast({ tone: "danger", title: (e as Error).message });
     } finally {
       setBusy(undefined);
       onChanged?.();
@@ -111,12 +111,7 @@ export function ImportPanel({ driveId, onChanged, missingResumes = 0, total = 0 
         </div>
       )}
 
-      <div className={h.stackSm} style={{ marginTop: imported || fetched || error ? 16 : 0 }}>
-      {error && (
-        <p role="alert" style={{ color: "var(--ui-color-danger)" }}>
-          {error}
-        </p>
-      )}
+      <div className={h.stackSm} style={{ marginTop: imported || fetched ? 16 : 0 }}>
 
       {(imported || fetched) && (
         <p className={h.row}>

@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { RocketLoader } from "@/components/ui/rocket-loader";
 import { EmptyState, ErrorState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
+import { useToast } from "@/components/ui/toast";
 import { useAsync } from "@/features/papers/use-async";
 import a from "./advance.module.scss";
 import { advanceErrorMessage, ATTEMPT_STATUS, fmt, formatDuration } from "./messages";
@@ -52,7 +53,7 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
   const [finalize, setFinalize] = useState(false);
   const [markAbsent, setMarkAbsent] = useState(false); // students who never started block Advance until ticked
   const [busy, setBusy] = useState(false);
-  const [advanceError, setAdvanceError] = useState<string>();
+  const toast = useToast();
   const [setupRound, setSetupRound] = useState<string>(); // NEXT_ROUND_NOT_READY: the coding round to set up
   const reasonId = useId();
 
@@ -101,14 +102,12 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
 
   const setFrom = (n: number) => setThreshold(clamp(n));
   const openConfirm = () => {
-    setAdvanceError(undefined);
     setFinalize(false);
     setMarkAbsent(false);
     setOpen(true);
   };
   const confirm = async () => {
     setBusy(true);
-    setAdvanceError(undefined);
     try {
       const r = await advanceRound(roundId, value, finalize, markAbsent);
       setResult(r);
@@ -117,7 +116,7 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
       reload();
     } catch (e) {
       const err = e instanceof ApiError ? e : new ApiError(0, "NETWORK_ERROR", "Couldn't reach the server. Nothing was saved; try again.");
-      setAdvanceError(advanceErrorMessage(err));
+      toast({ tone: "danger", title: advanceErrorMessage(err) });
       setSetupRound(err.code === "NEXT_ROUND_NOT_READY" && typeof err.details.next_round_id === "string" ? err.details.next_round_id : undefined);
       if (STALE_CODES.has(err.code)) reload();
       if (err.code === "ROUND_ALREADY_ADVANCED") onAdvanced();
@@ -291,10 +290,9 @@ export function AdvancePanel({ roundId, driveId, onAdvanced }: { roundId: string
               </div>
             )}
             {editable && blockReason && <p className={h.xs}>{blockReason}</p>}
-            {advanceError && (
-              <p role="alert" className={a.error}>
-                {advanceError}{" "}
-                {driveId && setupRound && <Link href={`/hr/drives/${encodeURIComponent(driveId)}/rounds/${encodeURIComponent(setupRound)}`}>Set up the coding round</Link>}
+            {driveId && setupRound && (
+              <p className={a.error}>
+                <Link href={`/hr/drives/${encodeURIComponent(driveId)}/rounds/${encodeURIComponent(setupRound)}`}>Set up the coding round</Link>
               </p>
             )}
           </div>
