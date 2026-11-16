@@ -75,6 +75,23 @@
   --ui-color-office-plant: #4f6b4a;
   --ui-color-interviewer-suit: #232b38; /* matches the blazer painted in features/interview/outfit.ts */
 
+  /* Storyboard people seen from above (decor only; never used for text) */
+  --ui-color-person-skin-1: #e0ac87;
+  --ui-color-person-skin-2: #c68a5f;
+  --ui-color-person-skin-3: #a86b43;
+  --ui-color-person-skin-4: #f1c9a5;
+  --ui-color-person-hair-1: #1b1410;
+  --ui-color-person-hair-2: #3b2619;
+  --ui-color-person-hair-3: #5a3a22;
+  --ui-color-person-shirt-1: #2f4b7c; /* denim blue */
+  --ui-color-person-shirt-2: #e9e4da; /* off-white */
+  --ui-color-person-shirt-3: #7c2e3a; /* maroon */
+  --ui-color-person-shirt-4: #5d6b3a; /* olive */
+  --ui-color-person-shirt-5: #6f9cc4; /* sky */
+  --ui-color-person-shirt-6: #4a4a4f; /* charcoal */
+  --ui-color-person-shoe: #2a2420;
+  --ui-color-person-chair: #3d4350;
+
   /* Plan timeline: one fixed hue per role (non-text, >=3:1 on white). Roles beyond six reuse the cycle. */
   --ui-color-role-1: var(--ampera-magenta-600);
   --ui-color-role-2: var(--ampera-navy-900);
