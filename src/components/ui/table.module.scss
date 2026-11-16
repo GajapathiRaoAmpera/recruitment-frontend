@@ -26,6 +26,14 @@
   color: var(--ui-color-text-muted);
 }
 
+// Row highlight helps the eye follow one student across many columns.
+.table tbody tr {
+  transition: background-color var(--ui-duration-fast);
+  @include hover {
+    background: var(--ui-glass-hover);
+  }
+}
+
 .td {
   border-bottom: 1px solid var(--ui-color-border);
   padding: sp(3) sp(4);

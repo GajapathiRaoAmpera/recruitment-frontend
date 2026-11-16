@@ -120,6 +120,15 @@ $type: (
   @return color-mix(in srgb, #{$color} #{$pct}, transparent);
 }
 
+// Hover only where a real pointer can hover: touch screens never get a stuck hover state.
+@mixin hover {
+  @media (hover: hover) {
+    &:hover {
+      @content;
+    }
+  }
+}
+
 @mixin reduced-motion {
   @media (prefers-reduced-motion: reduce) {
     @content;

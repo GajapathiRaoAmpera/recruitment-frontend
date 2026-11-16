@@ -17,6 +17,10 @@
     cursor: not-allowed;
     opacity: 0.5;
   }
+  // Pressed: an instant darken, no movement (safe inside the exam screens too).
+  &:active:not(:disabled) {
+    filter: brightness(0.94);
+  }
 }
 
 .primary {
@@ -25,6 +29,9 @@
   box-shadow: var(--ui-glass-primary-shadow);
   &:hover:not(:disabled) {
     background: var(--ui-color-primary-hover);
+    box-shadow:
+      var(--ui-glass-primary-shadow),
+      0 6px 20px alpha(var(--ui-color-primary), 22%);
   }
 }
 

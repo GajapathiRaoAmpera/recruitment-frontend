@@ -385,9 +385,22 @@
   flex-direction: column;
   gap: sp(2);
   padding: sp(3);
-  transition: box-shadow var(--ui-duration-fast);
-  &:hover {
+  transition:
+    box-shadow var(--ui-duration-base) var(--ui-ease-out),
+    border-color var(--ui-duration-base) var(--ui-ease-out),
+    transform var(--ui-duration-base) var(--ui-ease-out);
+  // Clickable card: a small lift says "opens"; keyboard focus gets the same look.
+  @include hover {
+    border-color: alpha(var(--ui-color-primary), 35%);
     box-shadow: var(--ui-shadow-md);
+    transform: translateY(-2px);
+  }
+  &:focus-visible {
+    border-color: alpha(var(--ui-color-primary), 35%);
+    box-shadow: var(--ui-shadow-md);
+  }
+  @include reduced-motion {
+    transform: none !important;
   }
 }
 
@@ -474,8 +487,12 @@
 .link {
   color: var(--ui-color-primary);
   font-weight: 500;
-  &:hover {
-    text-decoration: underline;
+  text-decoration: underline transparent;
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--ui-duration-fast);
+  &:hover,
+  &:focus-visible {
+    text-decoration-color: currentColor;
   }
 }
 
