@@ -18,18 +18,15 @@ import { geminiConnect } from "./gemini-connect";
 import { InterviewerCharacter } from "./interviewer-character";
 import s from "./interview.module.scss";
 import { LiveLink, type LinkStatus } from "./live-link";
-import { saysClosing, TurnCollector, TurnUploader } from "./transcript";
+import { type AnswerBox, decideTool, leftEnglish, saysClosing, TurnCollector, TurnUploader } from "./transcript";
 import { NetworkBars } from "./network-bars";
 import { useNetworkQuality, type Verdict } from "./use-network-quality";
 
 const FRAME_EVERY_MS = 3000;
 const WRAP_UP_AT_S = 180;
+const LANG_NUDGE_MS = 20_000;
 
-interface Box {
-  question: string;
-  mode: "code" | "text";
-  language?: string;
-}
+type Box = AnswerBox;
 
 interface Line {
   role: Turn["role"];
@@ -72,6 +69,8 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   const chatEl = useRef<HTMLDivElement>(null);
   const deadline = useRef(0);
   const closingSeen = useRef(false);
+  const openBox = useRef<Box | null>(null); // the written question awaiting a typed answer (read inside the Live handler)
+  const langNudgeAt = useRef(0);
   const done = useRef(false);
   const wrapSent = useRef(false);
 
@@ -106,6 +105,13 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
     let dead = false;
 
     const showCaption = () => setLive(collector.current?.current ?? null);
+    // A platform reminder (silent to the student) when captions leave English; at most one every 20 s.
+    const nudgeEnglish = (what: string) => {
+      const tag = session.current?.protocol.systemTag;
+      if (!tag || Date.now() - langNudgeAt.current < LANG_NUDGE_MS) return;
+      langNudgeAt.current = Date.now();
+      live.current?.sendText(`${tag} ${what}`);
+    };
 
     const handle = (m: LiveServerMessage) => {
       const sc = m.serverContent;
@@ -121,9 +127,11 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
       if (sc?.inputTranscription?.text) {
         col.add("candidate", sc.inputTranscription.text);
         setChar("listening");
+        if (leftEnglish(sc.inputTranscription.text)) nudgeEnglish("The candidate spoke another language. Reply in English and politely ask them to continue in English.");
       }
       if (sc?.outputTranscription?.text) {
         col.add("ai", sc.outputTranscription.text);
+        if (leftEnglish(sc.outputTranscription.text)) nudgeEnglish("You switched away from English. Continue only in English from now on.");
         if (saysClosing(col.current?.text ?? "", session.current?.protocol.closingPhrase ?? "")) closingSeen.current = true;
       }
       if (sc?.interrupted) {
@@ -141,13 +149,16 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
         }
       }
       for (const fc of m.toolCall?.functionCalls ?? []) {
-        if (fc.name !== "show_answer_box") continue;
-        const a = (fc.args ?? {}) as Partial<Box>;
-        const b: Box = { question: String(a.question ?? ""), mode: a.mode === "code" ? "code" : "text", language: a.language };
+        const d = decideTool(fc.name, fc.args, openBox.current !== null);
+        if (d.action === "ignore") continue;
+        live.current?.respondTool(fc.id, fc.name!, d.response);
+        // Advisory note for HR (e.g. a possible second voice); the student sees nothing, the interviewer speaks to them.
+        if (d.action === "flag") uploader.current?.push({ role: "ai", kind: "flag", text: d.text, language: null, ts: new Date().toISOString() });
+        if (d.action !== "open") continue; // "refuse": the first written question stays open until it is submitted
         col.close();
-        uploader.current?.push({ role: "ai", kind: "question", text: b.question, language: b.language ?? null, ts: new Date().toISOString() });
-        live.current?.respondTool(fc.id, fc.name, { result: "The answer box is open on the candidate's screen." });
-        setBox(b);
+        uploader.current?.push({ role: "ai", kind: "question", text: d.box.question, language: d.box.language ?? null, ts: new Date().toISOString() });
+        openBox.current = d.box;
+        setBox(d.box);
         setDraft("");
         setBoxHidden(false);
       }
@@ -257,6 +268,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
     uploader.current?.push({ role: "candidate", kind: "typed", text, language: box.language ?? null, ts: new Date().toISOString() });
     live.current?.sendText(`${sess.protocol.typedPrefix}${box.language ? ` (${box.language})` : ""}:\n${text}`);
     setLines((l) => [...l, { role: "candidate", text: "(typed answer submitted)" }]);
+    openBox.current = null;
     setBox(null);
     setChar("thinking");
   };

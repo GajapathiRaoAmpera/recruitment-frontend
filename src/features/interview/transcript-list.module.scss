@@ -47,3 +47,8 @@
     background: var(--ui-color-primary-subtle);
   }
 }
+
+// Interviewer flags (e.g. a possible second voice) span the log, between the chat bubbles.
+.flag {
+  list-style: none;
+}

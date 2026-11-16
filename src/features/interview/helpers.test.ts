@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { Turn } from "@/api/interviews";
 import { type Connect, LiveLink, MAX_TRIES } from "./live-link";
 import { decodeModelAudio, downsample, encodeMicChunk, floatToPcm16, IN_RATE, level, pcm16ToFloat } from "./pcm";
-import { MAX_BATCH, saysClosing, TurnCollector, TurnUploader } from "./transcript";
+import { decideTool, leftEnglish, MAX_BATCH, saysClosing, TurnCollector, TurnUploader } from "./transcript";
 import { judge } from "./use-network-quality";
 
 // AC-8: the interview transcript reaches the server whole, and the session survives Gemini's ~10-minute reconnects.
@@ -97,6 +97,39 @@ describe("saysClosing", () => {
   it("ignores case, spacing and punctuation", () => {
     expect(saysClosing("Thanks! THAT concludes   our interview", "That concludes our interview.")).toBe(true);
     expect(saysClosing("That was a good answer", "That concludes our interview.")).toBe(false);
+  });
+});
+
+describe("leftEnglish", () => {
+  it("spots Hindi and other Indian scripts in captions, not English or romanised words", () => {
+    expect(leftEnglish("ठीक है, अगला सवाल")).toBe(true); // Hindi
+    expect(leftEnglish("Good. சரி")).toBe(true); // Tamil mixed in
+    expect(leftEnglish("ఇది")).toBe(true); // Telugu
+    expect(leftEnglish("Can you explain the time complexity?")).toBe(false);
+    expect(leftEnglish("theek hai, O(n log n) — café")).toBe(false); // romanised and accented Latin stay English
+  });
+});
+
+describe("decideTool", () => {
+  it("opens the answer box when none is open, and tells the interviewer to wait for the typed answer", () => {
+    const d = decideTool("show_answer_box", { question: "Reverse a list", mode: "code", language: "python" }, false);
+    expect(d).toMatchObject({ action: "open", box: { question: "Reverse a list", mode: "code", language: "python" } });
+    expect(d.action === "open" && d.response.result).toMatch(/Wait for their typed answer/);
+  });
+
+  it("refuses a second written question while one is still open (one question at a time)", () => {
+    const d = decideTool("show_answer_box", { question: "Next one", mode: "text" }, true);
+    expect(d.action).toBe("refuse");
+    expect(d.action === "refuse" && d.response.error).toMatch(/still open/);
+  });
+
+  it("turns flag_concern into an advisory line for HR, and ignores unknown tools", () => {
+    expect(decideTool("flag_concern", { kind: "multiple_voices", note: " A second voice read the answer " }, true)).toMatchObject({
+      action: "flag",
+      text: "multiple_voices: A second voice read the answer",
+    });
+    expect(decideTool("flag_concern", {}, false)).toMatchObject({ text: "concern: no detail" });
+    expect(decideTool("something_else", {}, false)).toEqual({ action: "ignore" });
   });
 });
 

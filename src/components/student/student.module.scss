@@ -505,6 +505,15 @@
     padding-inline: sp(2.5) sp(8);
     color: var(--ampera-cream);
     @include text(sm);
+    // Locked (SQL problems allow only SQLite): stays readable on the navy bar, no arrow since there's nothing to pick.
+    &:disabled {
+      opacity: 1;
+      cursor: default;
+      background: rgb(255 254 250 / 0.1);
+      padding-inline-end: sp(2.5);
+      color: var(--ampera-cream);
+      -webkit-text-fill-color: var(--ampera-cream);
+    }
   }
 }
 

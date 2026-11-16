@@ -109,3 +109,40 @@ export function saysClosing(text: string, phrase: string): boolean {
   const p = norm(phrase);
   return p.length > 0 && norm(text).includes(p);
 }
+
+// Devanagari through Malayalam (Hindi, Bengali, Gurmukhi, Gujarati, Odia, Tamil, Telugu, Kannada, Malayalam) and Urdu/Arabic.
+const NON_ENGLISH_SCRIPT = /[\u0600-\u06FF\u0900-\u0DFF]/;
+
+/** True when captions contain an Indian-language (or Urdu) script, i.e. the speaker left English. */
+export function leftEnglish(text: string): boolean {
+  return NON_ENGLISH_SCRIPT.test(text);
+}
+
+export interface AnswerBox {
+  question: string;
+  mode: "code" | "text";
+  language?: string;
+}
+
+/** What the room does with one interviewer tool call, and the tool response to send back. */
+export type ToolDecision =
+  | { action: "open"; box: AnswerBox; response: Record<string, string> }
+  | { action: "refuse"; response: Record<string, string> }
+  | { action: "flag"; text: string; response: Record<string, string> }
+  | { action: "ignore" };
+
+/**
+ * One written question at a time: a second show_answer_box while one is open is refused, so the interviewer waits
+ * for the typed answer. flag_concern becomes an advisory "<kind>: <note>" line for HR.
+ */
+export function decideTool(name: string | undefined, args: Record<string, unknown> | undefined, boxOpen: boolean): ToolDecision {
+  const a = args ?? {};
+  if (name === "flag_concern") {
+    const text = `${String(a.kind ?? "concern")}: ${String(a.note ?? "").trim() || "no detail"}`.slice(0, MAX_SPOKEN_CHARS);
+    return { action: "flag", text, response: { result: "Noted for HR. Continue the interview." } };
+  }
+  if (name !== "show_answer_box") return { action: "ignore" };
+  if (boxOpen) return { action: "refuse", response: { error: "A written question is still open. Wait for the candidate's typed answer before asking anything new." } };
+  const box: AnswerBox = { question: String(a.question ?? ""), mode: a.mode === "code" ? "code" : "text", language: typeof a.language === "string" ? a.language : undefined };
+  return { action: "open", box, response: { result: "The answer box is open on the candidate's screen. Wait for their typed answer before asking anything new." } };
+}
