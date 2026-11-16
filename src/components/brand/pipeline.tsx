@@ -12,12 +12,34 @@ const GATES = [
   { label: "Final", x: 0.86, pass: 0.7 },
 ];
 
-/** Depth rows on the ground plane: far rows are higher, smaller and fainter. Drawn back to front. */
+/** Depth rows on the ground plane: far rows are higher and smaller. Drawn back to front. */
 const ROWS = [
-  { ground: 0.5, scale: 0.68, alpha: 0.5 },
-  { ground: 0.66, scale: 0.84, alpha: 0.75 },
-  { ground: 0.82, scale: 1, alpha: 1 },
+  { ground: 0.5, scale: 0.68 },
+  { ground: 0.66, scale: 0.84 },
+  { ground: 0.82, scale: 1 },
 ];
+
+/** Varied, everyday looks so the crowd reads as real people, not silhouettes. */
+const SKIN = ["#ffdbac", "#f1c27d", "#e0ac69", "#c68642", "#a0663d", "#8d5524"];
+const HAIR = ["#1b1b1b", "#2b1d14", "#3b2a1e", "#5a3825", "#8a6a4a"];
+const SHIRT = ["#ffffff", "#4a6fa5", "#8fb4d9", "#d9d4c7", "#6b8e6b", "#c97b63", "#8070b4", "#e8e2f0"];
+const PANTS = ["#2b2f3a", "#1f2a44", "#4a4a4a", "#6b5b45", "#3a3f4b"];
+const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)]!;
+
+/** Darken a #rrggbb colour; used for far-side limbs so depth reads without transparency. */
+const shade = (hex: string, f: number) => {
+  const n = parseInt(hex.slice(1), 16);
+  const c = (v: number) => Math.round(v * f);
+  return `rgb(${c(n >> 16)} ${c((n >> 8) & 255)} ${c(n & 255)})`;
+};
+
+interface Look {
+  skin: string;
+  hair: string;
+  shirt: string;
+  pants: string;
+  longHair: boolean;
+}
 
 interface Walker {
   row: number;
@@ -27,6 +49,7 @@ interface Walker {
   gate: number; // next gate to cross
   state: "walk" | "out" | "won";
   alpha: number;
+  look: Look;
 }
 
 interface Ripple {
@@ -56,7 +79,6 @@ export function Pipeline({ className }: { className?: string }) {
     const css = getComputedStyle(document.documentElement);
     const token = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
     const C = {
-      body: token("--ampera-lavender-500", "#8070b4"),
       win: token("--ampera-magenta-600", "#9c369a"),
       line: token("--ampera-cream", "#fffefa"),
     };
@@ -87,7 +109,8 @@ export function Pipeline({ className }: { className?: string }) {
       // Keep personal space: don't spawn on top of the last person entering this row.
       const crowded = walkers.some((p) => p.row === row && p.state !== "out" && p.x < H * 0.9);
       if (crowded) return;
-      walkers.push({ row, x: -H * 0.4, speed: H * (0.85 + Math.random() * 0.15), phase: Math.random() * 6.28, gate: 0, state: "walk", alpha: 1 });
+      walkers.push({ row, x: -H * 0.4, speed: H * (0.85 + Math.random() * 0.15), phase: Math.random() * 6.28, gate: 0, state: "walk", alpha: 1,
+        look: { skin: pick(SKIN), hair: pick(HAIR), shirt: pick(SHIRT), pants: pick(PANTS), longHair: Math.random() < 0.4 } });
     };
 
     const step = (dt: number) => {
@@ -125,57 +148,110 @@ export function Pipeline({ className }: { className?: string }) {
       walkers = walkers.filter((p) => p.alpha > 0 && p.x < w + 40 && p.x > -60);
     };
 
-    /** One limb as two segments (upper + lower) with a bend; angles are from vertical, positive = facing direction. */
-    const limb = (x: number, y: number, a1: number, len1: number, a2: number, len2: number, face: number) => {
+    /** One limb as two segments (upper + lower) with a bend; angles are from vertical, positive = facing direction. Returns the end point. */
+    const limb = (x: number, y: number, a1: number, len1: number, a2: number, len2: number, face: number, c1: string, c2: string) => {
       const kx = x + Math.sin(a1) * len1 * face;
       const ky = y + Math.cos(a1) * len1;
+      const ex = kx + Math.sin(a2) * len2 * face;
+      const ey = ky + Math.cos(a2) * len2;
+      ctx.strokeStyle = c1;
       ctx.beginPath();
       ctx.moveTo(x, y);
       ctx.lineTo(kx, ky);
-      ctx.lineTo(kx + Math.sin(a2) * len2 * face, ky + Math.cos(a2) * len2);
       ctx.stroke();
+      ctx.strokeStyle = c2;
+      ctx.beginPath();
+      ctx.moveTo(kx, ky);
+      ctx.lineTo(ex, ey);
+      ctx.stroke();
+      return [ex, ey] as const;
     };
 
     /** A walking person with feet at (x, ground), height H. face = 1 walks right, -1 walks left. */
-    const person = (x: number, ground: number, H: number, phase: number, color: string, alpha: number, face: number, halo: boolean) => {
+    const person = (x: number, ground: number, H: number, phase: number, look: Look, alpha: number, face: number) => {
       const bob = Math.abs(Math.sin(phase)) * H * 0.018;
       const hip = ground - H * 0.47 - bob;
-      const shoulder = ground - H * 0.77 - bob;
+      const shoulder = ground - H * 0.78 - bob;
       const legSwing = (q: number) => 0.42 * Math.sin(q);
       const kneeBend = (q: number) => 0.75 * Math.max(0, Math.sin(q + 1.3)); // knee folds as the leg swings forward
       const armSwing = (q: number) => -0.38 * Math.sin(q);
 
-      ctx.strokeStyle = color;
-      ctx.fillStyle = color;
+      ctx.globalAlpha = alpha;
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
-      ctx.shadowColor = color;
-      ctx.shadowBlur = halo ? 14 : 0;
 
-      // Far side limbs first, a touch dimmer for depth.
-      ctx.globalAlpha = alpha * 0.6;
-      ctx.lineWidth = H * 0.075;
-      limb(x, hip, legSwing(phase + Math.PI), H * 0.25, legSwing(phase + Math.PI) - kneeBend(phase + Math.PI), H * 0.24, face);
-      ctx.lineWidth = H * 0.06;
-      limb(x, shoulder + H * 0.02, armSwing(phase + Math.PI), H * 0.17, armSwing(phase + Math.PI) + 0.35, H * 0.16, face);
-
-      // Torso and head.
-      ctx.globalAlpha = alpha;
-      ctx.lineWidth = H * 0.15;
+      // Soft contact shadow grounds the figure.
+      ctx.fillStyle = "rgb(0 0 0 / 0.28)";
       ctx.beginPath();
-      ctx.moveTo(x + H * 0.01 * face, shoulder);
-      ctx.lineTo(x, hip);
+      ctx.ellipse(x, ground + H * 0.01, H * 0.14, H * 0.025, 0, 0, 6.28);
+      ctx.fill();
+
+      const leg = (q: number, f: number) => {
+        ctx.lineWidth = H * 0.085;
+        const pants = shade(look.pants, f);
+        const [fx, fy] = limb(x, hip, legSwing(q), H * 0.25, legSwing(q) - kneeBend(q), H * 0.23, face, pants, pants);
+        ctx.fillStyle = shade("#1a1a1a", f);
+        ctx.beginPath();
+        ctx.ellipse(fx + H * 0.03 * face, fy, H * 0.055, H * 0.028, 0, 0, 6.28);
+        ctx.fill();
+      };
+      const arm = (q: number, f: number) => {
+        ctx.lineWidth = H * 0.06;
+        const [hx, hy] = limb(x, shoulder + H * 0.03, armSwing(q), H * 0.16, armSwing(q) + 0.35, H * 0.15, face, shade(look.shirt, f), shade(look.skin, f));
+        ctx.fillStyle = shade(look.skin, f);
+        ctx.beginPath();
+        ctx.arc(hx, hy, H * 0.032, 0, 6.28);
+        ctx.fill();
+      };
+
+      // Far side limbs first, darker for depth.
+      leg(phase + Math.PI, 0.72);
+      arm(phase + Math.PI, 0.72);
+
+      // Torso: a shirt that is broader at the shoulders, tucked in at the hips.
+      ctx.fillStyle = look.shirt;
+      ctx.beginPath();
+      ctx.moveTo(x - H * 0.085, shoulder);
+      ctx.lineTo(x + H * 0.085, shoulder);
+      ctx.lineTo(x + H * 0.065, hip + H * 0.02);
+      ctx.lineTo(x - H * 0.065, hip + H * 0.02);
+      ctx.closePath();
+      ctx.fill();
+      ctx.lineWidth = H * 0.03;
+      ctx.strokeStyle = look.shirt;
+      ctx.stroke(); // rounds the shoulders
+      // Belt line.
+      ctx.fillStyle = shade(look.pants, 0.8);
+      ctx.fillRect(x - H * 0.068, hip - H * 0.005, H * 0.136, H * 0.025);
+
+      // Neck, head, hair.
+      const hx = x + H * 0.015 * face;
+      const hy = ground - H * 0.9 - bob;
+      const r = H * 0.068;
+      ctx.strokeStyle = look.skin;
+      ctx.lineWidth = H * 0.045;
+      ctx.beginPath();
+      ctx.moveTo(x, shoulder);
+      ctx.lineTo(hx, hy + r * 0.8);
       ctx.stroke();
+      ctx.fillStyle = look.hair;
+      if (look.longHair) {
+        ctx.beginPath();
+        ctx.ellipse(hx - r * 0.35 * face, hy + r * 0.5, r * 0.8, r * 1.15, 0, 0, 6.28);
+        ctx.fill();
+      }
+      ctx.fillStyle = look.skin;
       ctx.beginPath();
-      ctx.arc(x + H * 0.015 * face, ground - H * 0.9 - bob, H * 0.075, 0, 6.28);
+      ctx.arc(hx, hy, r, 0, 6.28);
+      ctx.fill();
+      ctx.fillStyle = look.hair;
+      ctx.beginPath();
+      ctx.arc(hx - r * 0.12 * face, hy - r * 0.1, r * 1.04, Math.PI * 0.95, Math.PI * 2.05); // hair cap over the top
       ctx.fill();
 
       // Near side limbs.
-      ctx.lineWidth = H * 0.075;
-      limb(x, hip, legSwing(phase), H * 0.25, legSwing(phase) - kneeBend(phase), H * 0.24, face);
-      ctx.lineWidth = H * 0.06;
-      limb(x, shoulder + H * 0.02, armSwing(phase), H * 0.17, armSwing(phase) + 0.35, H * 0.16, face);
-      ctx.shadowBlur = 0;
+      leg(phase, 1);
+      arm(phase, 1);
     };
 
     const draw = () => {
@@ -202,7 +278,8 @@ export function Pipeline({ className }: { className?: string }) {
           if (p.row !== row) continue;
           const won = p.state === "won";
           const out = p.state === "out";
-          person(p.x, ground, H, p.phase, won ? C.win : C.body, ROWS[row]!.alpha * Math.max(0, p.alpha) * (out ? 0.6 : 1), out ? -1 : 1, won);
+          // Hired candidates wear the brand magenta so they stand out without glowing.
+          person(p.x, ground, H, p.phase, won ? { ...p.look, shirt: C.win } : p.look, Math.max(0, p.alpha), out ? -1 : 1);
         }
       }
 
