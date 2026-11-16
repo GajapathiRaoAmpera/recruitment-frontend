@@ -1,0 +1,111 @@
+@use "@/styles/mixins" as *;
+
+// Mascot motion: transform + opacity only.
+.bot {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.lively {
+  animation: bob 2.4s ease-in-out infinite alternate;
+}
+
+.stroke,
+.band,
+.mic {
+  fill: none;
+  stroke: var(--ampera-lavender-500);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.band {
+  stroke: var(--ampera-navy-900);
+  stroke-width: 3;
+}
+
+.mic {
+  stroke: var(--ampera-navy-900);
+  stroke-width: 2;
+}
+
+.bulb {
+  fill: var(--ampera-magenta-600);
+  animation: glow 1.6s ease-in-out infinite alternate;
+}
+
+.ear {
+  fill: var(--ampera-magenta-600);
+}
+
+.head {
+  fill: var(--ampera-cream);
+  stroke: var(--ampera-lavender-500);
+  stroke-width: 2;
+}
+
+.screen {
+  fill: var(--ampera-navy-900);
+}
+
+.eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 4s infinite;
+}
+
+.eye {
+  fill: var(--ampera-cream);
+}
+
+.smile {
+  fill: none;
+  stroke: var(--ampera-cream);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.cheek {
+  fill: var(--ampera-magenta-600);
+  opacity: 0.35;
+}
+
+@include reduced-motion {
+  .lively,
+  .bulb,
+  .eyes {
+    animation: none;
+  }
+}
+
+@keyframes bob {
+  from {
+    transform: translateY(1px);
+  }
+  to {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes glow {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// A quick blink near the end of each cycle.
+@keyframes blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  95% {
+    transform: scaleY(0.1);
+  }
+}

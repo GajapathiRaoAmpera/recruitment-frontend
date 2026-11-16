@@ -24,11 +24,11 @@
   @include focus-ring;
   display: grid;
   place-items: center;
-  width: 3.25rem;
-  height: 3.25rem;
-  border: 0;
+  width: 3.75rem;
+  height: 3.75rem;
+  border: 3px solid var(--ui-color-primary);
   border-radius: 50%;
-  background: var(--ui-color-primary);
+  background: var(--ui-color-primary-subtle);
   color: var(--ui-color-primary-fg);
   box-shadow: var(--ui-shadow-md);
   cursor: pointer;
@@ -36,13 +36,18 @@
     background var(--ui-duration-fast) var(--ui-ease-out),
     transform var(--ui-duration-fast) var(--ui-ease-out);
   &:hover {
-    background: var(--ui-color-primary-hover);
+    border-color: var(--ui-color-primary-hover);
     transform: translateY(-2px);
   }
 }
 
+.launcherBot {
+  width: 2.75rem;
+}
+
 .launcherOpen {
   background: var(--ui-color-primary-hover);
+  border-color: var(--ui-color-primary-hover);
 }
 
 .panel {
@@ -87,11 +92,32 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 3px;
   border-radius: 50%;
-  background: var(--ui-color-primary);
-  color: var(--ui-color-primary-fg);
+  background: var(--ui-color-primary-subtle);
+}
+
+/* Bot replies: mascot on the left, bubble beside it */
+.botRow {
+  display: flex;
+  align-items: flex-end;
+  gap: sp(2);
+  max-width: 94%;
+  .msg {
+    max-width: none;
+  }
+}
+
+.msgAvatar {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 2px;
+  border: 1px solid var(--ui-color-border);
+  border-radius: 50%;
+  background: var(--ui-color-primary-subtle);
 }
 
 .headText {
