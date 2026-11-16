@@ -37,7 +37,9 @@
 .bars[data-v="offline"] i[data-on="true"] { background: var(--ui-color-danger); }
 .meter { height: 6px; border-radius: 3px; background: var(--ui-color-surface-muted); overflow: hidden; }
 .meter > div { height: 100%; background: var(--ui-color-primary); transition: width 80ms linear; }
-.answer { display: grid; gap: 8px; }
+.answer { display: grid; gap: 12px; }
+.answerDialog.answerDialog { max-width: 44rem; } // room for code answers; doubled to beat the dialog's own .centered width
+.question { margin: 0; font-weight: 500; white-space: pre-wrap; overflow-wrap: anywhere; }
 .answer textarea { font-family: var(--ui-font-mono); min-height: 9rem; width: 100%; }
 .center { max-width: 30rem; margin: 10vh auto; padding: 16px; display: grid; gap: 12px; }
 @media (prefers-reduced-motion: reduce) { .meter > div { transition: none; } }

@@ -362,8 +362,12 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
                 ))}
               </Select>
             </label>
-            <span style={{ opacity: 0.7 }} aria-live="polite">
+            <span style={{ opacity: 0.7 }}>
               {serverSaveFailed ? "Saved in this browser only" : savedAt ? `Saved ${savedAt.toLocaleTimeString()}` : "Drafts save per language"}
+            </span>
+            {/* Spoken only when the server save fails; a "Saved" announcement on every pause would interrupt typing. */}
+            <span role="status" className="sr-only">
+              {serverSaveFailed ? "Code saved in this browser only, not on the server yet" : ""}
             </span>
           </div>
           <CodeEditor

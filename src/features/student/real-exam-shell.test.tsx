@@ -128,7 +128,7 @@ describe("RealExamShell (server-driven)", () => {
     render(<RealExamShell student={student} roundId="r1" />);
     await screen.findByText("What is 2+2?");
     goAway();
-    expect(await screen.findByText(/Offline/)).toBeInTheDocument();
+    expect(await screen.findAllByText(/Offline/)).toHaveLength(2); // header + spoken status
     act(() => void window.dispatchEvent(new Event("online")));
     await waitFor(() => expect(api.reportViolation).toHaveBeenCalledTimes(2));
     await screen.findByText(/Tab switches 1 \/ 3/);
@@ -263,11 +263,28 @@ describe("navigation and saving", () => {
     expect(screen.getByRole("button", { name: "Question 2, answered" })).toBeInTheDocument();
   });
 
+  it("moves focus to the new question so a screen reader reads it, but not on first load", async () => {
+    render(<RealExamShell student={student} roundId="r1" />);
+    const first = await screen.findByRole("heading", { name: "What is 2+2?" });
+    expect(first).not.toHaveFocus();
+    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(screen.getByRole("heading", { name: "Pick one" })).toHaveFocus();
+  });
+
+  it("says 10, 5 and 1 minute left through a status region (a ticking timer isn't read out)", async () => {
+    api.getAttempt.mockResolvedValue(state({ deadlineAt: "2026-01-01T10:04:00Z" })); // 4 min left
+    render(<RealExamShell student={student} roundId="r1" />);
+    await screen.findByText("What is 2+2?");
+    expect(screen.getByText("5 minutes left")).toHaveAttribute("role", "status");
+    expect(screen.queryByText(/answer.* not saved/)).toBeNull(); // routine saves stay quiet
+  });
+
   it("keeps a failed save, says so, and retries until the server has it", async () => {
     api.saveAnswer.mockRejectedValueOnce(new ApiError(0, "NETWORK_ERROR", "offline")).mockResolvedValue(undefined);
     render(<RealExamShell student={student} roundId="r1" />);
     fireEvent.click(await screen.findByRole("radio", { name: /B\. 4/ }));
-    expect(await screen.findByText("1 answer not saved yet, retrying…")).toBeInTheDocument();
+    // shown in the header and spoken once through the status region
+    expect(await screen.findAllByText("1 answer not saved yet, retrying…")).toHaveLength(2);
     act(() => window.dispatchEvent(new Event("online")));
     await screen.findByText(/1 of 2 answered/);
     expect(api.saveAnswer).toHaveBeenLastCalledWith("ATT", "q1", 1);
@@ -356,7 +373,7 @@ describe("tab-switch warning (AC-7)", () => {
     render(<RealExamShell student={student} roundId="r1" />);
     await screen.findByText("What is 2+2?");
     goAway();
-    expect(await screen.findByText(/Offline/)).toBeInTheDocument();
+    expect(await screen.findAllByText(/Offline/)).toHaveLength(2); // header + spoken status
     expect(await screen.findByRole("alertdialog", { name: "Warning 1 of 3" })).toBeInTheDocument();
   });
 
