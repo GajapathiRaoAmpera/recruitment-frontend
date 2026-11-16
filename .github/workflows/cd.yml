@@ -1,0 +1,43 @@
+name: CD
+# After CI passes on main: build the image, push it to Artifact Registry, deploy it to Cloud Run.
+# GitHub signs in to GCP with Workload Identity Federation (no key file stored here).
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: # manual redeploy from the Actions tab
+permissions:
+  contents: read
+  id-token: write # lets GitHub prove its identity to GCP
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/web/recruitment-frontend
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.SHA }}
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Build and push image
+        run: |
+          gcloud auth configure-docker "${{ vars.GCP_REGION }}-docker.pkg.dev" --quiet
+          docker build --build-arg API_URL="${{ vars.API_URL }}" -t "$IMAGE:$SHA" .
+          docker push "$IMAGE:$SHA"
+      - uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: recruitment-frontend
+          region: ${{ vars.GCP_REGION }}
+          image: ${{ env.IMAGE }}:${{ env.SHA }}
+          flags: --port=3000 --allow-unauthenticated --timeout=300
