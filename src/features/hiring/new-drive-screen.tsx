@@ -8,7 +8,8 @@ import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { Input, Select, Textarea } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
+import { FormattedText, RichTextArea } from "@/components/ui/rich-text";
 import { useToast } from "@/components/ui/toast";
 import { DemoNote, hire as h } from "@/components/hire/ui";
 import { createDrive } from "@/api/hiring";
@@ -289,7 +290,7 @@ export function NewDriveScreen() {
               />
             )}
             <Field label="Job description" required error={errors.jd} hint={`Used to score how well each resume matches (keyword overlap, no AI). ${details.jd.trim().length < 20 ? `${details.jd.trim().length}/20 characters minimum.` : ""}`}>
-              <Textarea rows={8} value={details.jd} onChange={(e) => setDetail("jd", e.target.value)} />
+              <RichTextArea rows={10} value={details.jd} onChange={(v) => setDetail("jd", v)} />
             </Field>
           </div>
         )}
@@ -424,7 +425,9 @@ export function NewDriveScreen() {
                   </>
                 )}
                 <dt>Job description</dt>
-                <dd className={w.clamp}>{details.jd}</dd>
+                <dd className={w.jdPreview}>
+                  <FormattedText text={details.jd} />
+                </dd>
               </dl>
             </section>
             <section className={w.review} aria-labelledby="rv-rounds">

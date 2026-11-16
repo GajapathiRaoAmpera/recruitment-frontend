@@ -217,11 +217,10 @@
   }
 }
 
-.clamp {
-  display: -webkit-box;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+// Formatted JD (headings, lists) in the review step: scroll instead of a line clamp, which needs inline text.
+.jdPreview {
+  max-height: 16rem;
+  overflow: auto;
 }
 
 .actions {

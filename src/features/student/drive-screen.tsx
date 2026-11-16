@@ -3,6 +3,7 @@
 import { Maximize, MapPin, ShieldCheck, Timer } from "lucide-react";
 import { PageHeader } from "@/components/shell/page-header";
 import { hire as h } from "@/components/hire/ui";
+import { FormattedText } from "@/components/ui/rich-text";
 import { useStudent } from "@/components/student/hooks";
 import { driveRounds, MAX_TAB_SWITCHES, useStore } from "@/mock/store";
 
@@ -24,7 +25,7 @@ export function DriveScreen() {
         <h2 className={h.cardTitle} style={{ marginBottom: 8 }}>
           About the role
         </h2>
-        <p>{drive.jd}</p>
+        <FormattedText text={drive.jd} />
       </section>
       <div className={h.grid2}>
         <section className={h.card}>

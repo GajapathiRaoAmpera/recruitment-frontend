@@ -1,0 +1,80 @@
+@use "@/styles/mixins" as *;
+
+.editor {
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(1);
+  padding: sp(1);
+  border: 1px solid var(--ui-color-border-input);
+  border-bottom: 0;
+  border-radius: var(--ui-radius-input) var(--ui-radius-input) 0 0;
+  background: var(--ui-color-surface-muted);
+}
+
+.tool {
+  display: inline-grid;
+  place-items: center;
+  width: sp(9);
+  height: sp(9);
+  border: 0;
+  border-radius: var(--ui-radius-input);
+  background: transparent;
+  color: var(--ui-color-text-muted);
+  cursor: pointer;
+  transition:
+    background-color var(--ui-duration-fast) var(--ui-ease-out),
+    color var(--ui-duration-fast) var(--ui-ease-out);
+
+  &:hover {
+    background: var(--ui-color-surface);
+    color: var(--ui-color-text);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Doubled class beats the base control's radius regardless of stylesheet order.
+.editor .area {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.formatted {
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+
+  h3 {
+    margin: sp(1) 0 0;
+    @include text(base);
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  ul,
+  ol {
+    display: flex;
+    flex-direction: column;
+    gap: sp(1);
+    margin: 0;
+    padding-left: sp(5);
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+}
