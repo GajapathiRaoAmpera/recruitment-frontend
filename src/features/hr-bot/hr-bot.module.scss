@@ -1,0 +1,260 @@
+@use "@/styles/mixins" as *;
+
+// Floating HR assistant: launcher fixed bottom-right, panel opens above it.
+.root {
+  position: fixed;
+  right: sp(4);
+  bottom: sp(4);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: sp(3);
+  pointer-events: none; // only the launcher and panel take clicks
+  @include up(sm) {
+    right: sp(6);
+    bottom: sp(6);
+  }
+  > * {
+    pointer-events: auto;
+  }
+}
+
+.launcher {
+  @include focus-ring;
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ui-color-primary);
+  color: var(--ui-color-primary-fg);
+  box-shadow: var(--ui-shadow-md);
+  cursor: pointer;
+  transition:
+    background var(--ui-duration-fast) var(--ui-ease-out),
+    transform var(--ui-duration-fast) var(--ui-ease-out);
+  &:hover {
+    background: var(--ui-color-primary-hover);
+    transform: translateY(-2px);
+  }
+}
+
+.launcherOpen {
+  background: var(--ui-color-primary-hover);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: min(23.5rem, calc(100vw - #{sp(8)}));
+  height: min(34rem, calc(100dvh - #{sp(28)}));
+  overflow: hidden;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-md);
+  animation: rise var(--ui-duration-base) var(--ui-ease-out);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel {
+    animation: none;
+  }
+  .launcher:hover {
+    transform: none;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: sp(3);
+  padding: sp(3) sp(3) sp(3) sp(4);
+  background: var(--ui-color-sidebar-bg);
+  color: var(--ui-color-sidebar-fg);
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--ui-color-primary);
+  color: var(--ui-color-primary-fg);
+}
+
+.headText {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  @include text(sm);
+  font-weight: 600;
+}
+
+.subtitle {
+  @include text(xs);
+  color: var(--ui-color-sidebar-muted);
+}
+
+.iconBtn {
+  @include focus-ring(var(--ui-color-sidebar-fg));
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: var(--ui-radius-input);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  &:hover {
+    background: var(--ui-color-sidebar-active);
+  }
+}
+
+.body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: sp(3);
+  overflow-y: auto;
+  padding: sp(4);
+  background: var(--ui-color-surface-muted);
+}
+
+.msg {
+  @include text(sm);
+  max-width: 88%;
+  padding: sp(2.5) sp(3);
+  border-radius: var(--ui-radius-card);
+  overflow-wrap: anywhere;
+}
+
+.bot {
+  align-self: flex-start;
+  border: 1px solid var(--ui-color-border);
+  border-bottom-left-radius: 4px;
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+}
+
+.user {
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  background: var(--ui-color-primary);
+  color: var(--ui-color-primary-fg);
+}
+
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: sp(1.5);
+  margin: sp(2) 0 0;
+  padding-left: sp(5);
+  list-style: decimal;
+  li::marker {
+    color: var(--ui-color-primary);
+    font-weight: 600;
+  }
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(2);
+  margin-top: sp(3);
+}
+
+.link {
+  @include focus-ring;
+  @include text(xs);
+  display: inline-flex;
+  align-items: center;
+  gap: sp(1);
+  padding: sp(1.5) sp(3);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-primary-subtle);
+  color: var(--ui-color-primary-hover);
+  font-weight: 500;
+  text-decoration: none;
+  &:hover {
+    background: var(--ui-color-primary);
+    color: var(--ui-color-primary-fg);
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(2);
+}
+
+.chip {
+  @include focus-ring;
+  @include text(xs);
+  padding: sp(1.5) sp(3);
+  border: 1px solid var(--ui-color-border-strong);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  cursor: pointer;
+  text-align: left;
+  &:hover {
+    border-color: var(--ui-color-primary);
+    color: var(--ui-color-primary);
+  }
+}
+
+.form {
+  display: flex;
+  gap: sp(2);
+  padding: sp(3);
+  border-top: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+}
+
+.input {
+  @include text(sm);
+  flex: 1;
+  min-width: 0;
+  padding: sp(2) sp(3);
+  border: 1px solid var(--ui-color-border-input);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  &:focus-visible {
+    outline: 2px solid var(--ui-color-focus-ring);
+    outline-offset: 1px;
+  }
+}
+
+.send {
+  @include focus-ring;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ui-color-primary);
+  color: var(--ui-color-primary-fg);
+  cursor: pointer;
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
