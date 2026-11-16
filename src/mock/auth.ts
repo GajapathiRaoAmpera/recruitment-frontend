@@ -9,7 +9,7 @@ export const homePath: Record<Portal, string> = { student: "/student", hr: "/hr"
 export const portalOf = (role: Role): Portal => (role === "STUDENT" ? "student" : role === "SUPER_ADMIN" ? "admin" : "hr");
 
 /**
- * shortcut: any non-empty staff password is accepted; Supabase Auth checks it for real (D3).
+ * shortcut: any non-empty staff password is accepted; the API checks it for real (POST /auth/login, D3).
  */
 export function signIn(state: State, portal: Portal, identifier: string, secret: string): { session: Session; home: string } | { error: string } {
   const id = identifier.trim();

@@ -3,6 +3,7 @@
 import { createContext, useContext, useId, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import s from "./field.module.scss";
+import { InfoTip } from "./info-tip";
 
 interface FieldContextValue {
   id: string;
@@ -43,23 +44,23 @@ export function Field({ label, hint, error, required = false, className, childre
   return (
     <FieldContext.Provider value={{ id, describedBy, invalid: Boolean(error), required }}>
       <div className={cn(s.field, className)}>
-        <label htmlFor={id} className={s.label}>
-          {label}
-          {required && (
-            <span aria-hidden className={s.required}>
-              *
-            </span>
+        <span className={s.labelRow}>
+          <label htmlFor={id} className={s.label}>
+            {label}
+            {required && (
+              <span aria-hidden className={s.required}>
+                *
+              </span>
+            )}
+          </label>
+          {hint && (
+            <InfoTip id={hintId}>{hint}</InfoTip>
           )}
-        </label>
+        </span>
         {children}
         {error && (
           <p id={errorId} role="alert" className={s.error}>
             {error}
-          </p>
-        )}
-        {hint && (
-          <p id={hintId} className={s.hint}>
-            {hint}
           </p>
         )}
       </div>

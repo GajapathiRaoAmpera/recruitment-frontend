@@ -97,39 +97,12 @@ export const questions: Question[] = [
   { id: "q8", kind: "mcq", title: "HTTP status", body: "Which HTTP status code means the client is authenticated but not allowed to access the resource?", options: ["401", "403", "404", "409"], answer: 1, tags: ["technical", "web"], difficulty: "medium", marks: 1, aiGenerated: true, approved: true },
   { id: "q9", kind: "mcq", title: "Percentages", body: "A price rises by 20% and then falls by 20%. The net change is:", options: ["0%", "4% decrease", "4% increase", "2% decrease"], answer: 1, tags: ["quant"], difficulty: "medium", marks: 1, aiGenerated: true, approved: true },
   { id: "q10", kind: "mcq", title: "Hashing", body: "Average time complexity of lookup in a hash table with a good hash function is:", options: ["O(1)", "O(log n)", "O(n)", "O(n²)"], answer: 0, tags: ["technical", "dsa"], difficulty: "easy", marks: 1, aiGenerated: true, approved: true },
-  {
-    id: "c1", kind: "coding", title: "Two Sum", tags: ["arrays", "hashing"], difficulty: "easy", marks: 10, aiGenerated: false, approved: true, hiddenCount: 15,
-    body: "Given an array of integers and a target, print the indices (0-based, ascending) of the two numbers that add up to the target. Input: first line n and target, second line n integers.",
-    samples: [
-      { input: "4 9\n2 7 11 15", expected: "0 1" },
-      { input: "3 6\n3 2 4", expected: "1 2" },
-      { input: "2 6\n3 3", expected: "0 1" },
-    ],
-  },
-  {
-    id: "c2", kind: "coding", title: "Valid Brackets", tags: ["stack", "strings"], difficulty: "medium", marks: 15, aiGenerated: true, approved: true, hiddenCount: 15,
-    body: "Given a string of brackets ()[]{} print YES if every bracket is closed in the correct order, otherwise NO.",
-    samples: [
-      { input: "()[]{}", expected: "YES" },
-      { input: "([)]", expected: "NO" },
-      { input: "{[]}", expected: "YES" },
-    ],
-  },
-  {
-    id: "c3", kind: "coding", title: "Top Earners (SQL)", tags: ["sql"], difficulty: "advanced", marks: 20, aiGenerated: true, approved: true, hiddenCount: 15,
-    body: "Table employees(id, name, dept, salary). Return name and dept of the highest-paid employee in each department, ordered by dept.",
-    samples: [
-      { input: "3 rows, 2 depts", expected: "Asha|Eng\nRavi|Sales" },
-      { input: "1 row", expected: "Mina|Ops" },
-      { input: "ties", expected: "Kiran|Eng\nLeela|Eng" },
-    ],
-  },
   { id: "q11", kind: "mcq", title: "Deadlock", body: "Which condition is NOT required for a deadlock?", options: ["Mutual exclusion", "Hold and wait", "Preemption", "Circular wait"], answer: 2, tags: ["technical", "os"], difficulty: "medium", marks: 1, aiGenerated: true, approved: false },
   { id: "q12", kind: "mcq", title: "Clock angle", body: "What is the angle between the hands of a clock at 3:15?", options: ["0°", "7.5°", "15°", "22.5°"], answer: 1, tags: ["quant"], difficulty: "advanced", marks: 1, aiGenerated: true, approved: false },
 ];
 
 const MCQ_IDS = ["q1", "q2", "q3", "q4", "q5", "q6", "q7", "q8", "q9", "q10"];
-const CODING_IDS = ["c1", "c2", "c3"];
+const CODING_IDS: string[] = []; // coding questions come from the API (HR generates them); none are seeded
 
 function makeCandidates(driveId: string, prefix: string, count: number, seed: number): Candidate[] {
   const r = rng(seed);

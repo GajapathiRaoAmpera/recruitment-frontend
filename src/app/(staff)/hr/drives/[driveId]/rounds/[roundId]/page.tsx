@@ -15,15 +15,15 @@ import { useToast } from "@/components/ui/toast";
 import { hire as h, Person, Progress, ResultBadge, RoundStatusBadge, StatCard, Tabs } from "@/components/hire/ui";
 import { RoundActions } from "@/components/hire/round-actions";
 import { BuildPaperLink } from "@/features/papers/components/build-paper-link";
-import { RealRoundProgress } from "@/features/hiring/real-round-progress";
-import { supabase } from "@/lib/supabase";
+import { RealRoundPage } from "@/features/advance/real-round-page";
+import { liveApi } from "@/lib/auth";
 import { candidateById, pct, rank, roundResults, useStore } from "@/mock/store";
 
 type Tab = "overview" | "ranking" | "alerts" | "questions" | "emails";
 
 export default function RoundPage() {
   const { driveId, roundId } = useParams<{ driveId: string; roundId: string }>();
-  return <Suspense>{supabase ? <RealRoundProgress driveId={driveId} roundId={roundId} /> : <RoundDashboard />}</Suspense>;
+  return <Suspense>{liveApi ? <RealRoundPage driveId={driveId} roundId={roundId} /> : <RoundDashboard />}</Suspense>;
 }
 
 function RoundDashboard() {

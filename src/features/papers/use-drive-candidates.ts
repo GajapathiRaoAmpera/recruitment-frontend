@@ -2,7 +2,7 @@
 
 import { listCandidates } from "@/api/hiring";
 import { useAsync } from "@/features/papers/use-async";
-import { supabase } from "@/lib/supabase";
+import { liveApi } from "@/lib/auth";
 import { useStore } from "@/mock/store";
 import type { Candidate } from "@/mock/types";
 
@@ -12,8 +12,8 @@ import type { Candidate } from "@/mock/types";
  */
 export function useDriveCandidates(driveId: string): Candidate[] {
   const { state } = useStore();
-  const real = useAsync(async () => (supabase ? await listCandidates(driveId, { shortlisted: true }) : []), [driveId]);
-  if (!supabase) return state.candidates.filter((c) => c.driveId === driveId);
+  const real = useAsync(async () => (liveApi ? await listCandidates(driveId, { shortlisted: true }) : []), [driveId]);
+  if (!liveApi) return state.candidates.filter((c) => c.driveId === driveId);
   return (real.data ?? []).map((c) => ({
     id: c.id,
     driveId,

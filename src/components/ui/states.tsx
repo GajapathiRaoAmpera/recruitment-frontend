@@ -1,8 +1,11 @@
+"use client";
+
 import { AlertTriangle, Lock, SearchX } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { Button } from "./button";
 import s from "./states.module.scss";
+import { useToast } from "./toast";
 
 interface EmptyStateProps {
   title: string;
@@ -25,11 +28,14 @@ export function EmptyState({ title, description, action, icon, className }: Empt
   );
 }
 
+/** The error text goes to a toast; the box only holds the place and the retry button. */
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  const toast = useToast();
+  useEffect(() => toast({ tone: "danger", title: message }), [message, toast]);
   return (
-    <div role="alert" className={s.error}>
+    <div className={s.error}>
       <AlertTriangle aria-hidden size={24} className={s.errorIcon} />
-      <p>{message}</p>
+      <p>Couldn&apos;t load this.</p>
       {onRetry && (
         <Button variant="secondary" size="sm" onClick={onRetry}>
           Try again

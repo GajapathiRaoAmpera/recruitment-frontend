@@ -1,0 +1,21 @@
+// Coding results table + submitted-code panel. Tokens only.
+@use "@/styles/mixins" as *;
+
+.row {
+  cursor: pointer;
+  &:hover {
+    background: var(--ui-color-surface-muted);
+  }
+}
+
+// The shared side panel is 28rem; code needs more room.
+div.panel {
+  max-width: 48rem;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(3);
+  margin-block: sp(3);
+}

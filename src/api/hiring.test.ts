@@ -1,10 +1,8 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: { auth: { getSession: async () => ({ data: { session: { access_token: "tok" } } }), signOut: async () => ({ error: null }) } },
-}));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), getToken: () => "tok" }));
 
-import { fetchResumes, importCandidates, listCandidates, shortlist } from "./hiring";
+import { fetchResumes, getRoundProgress, importCandidates, listCandidates, resumeAttempt, shortlist } from "./hiring";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -55,4 +53,37 @@ it("sends the chosen rounds when creating a drive", async () => {
   const f = stub(reply({ id: "d1", company: "C", campus: "K", role_title: "R", jd_text: "J", status: "draft", candidates: 0 }));
   await createDrive({ company: "C", campus: "K", roleTitle: "R", jdText: "J", rounds: [{ type: "shortlist", mode: "auto" }, { type: "aptitude", mode: "auto", threshold: 60 }] });
   expect(JSON.parse(f.mock.calls[0]![1].body).rounds).toEqual([{ type: "shortlist", mode: "auto" }, { type: "aptitude", mode: "auto", threshold: 60 }]);
+});
+
+it("sends the chosen owner only when given, maps who runs a drive, and reassigns with PATCH", async () => {
+  const { createDrive, reassignDrive } = await import("./hiring");
+  const row = { id: "d1", company: "C", campus: "K", role_title: "R", jd_text: "J", status: "draft", candidates: 0, owner_id: "hr-1", owner_name: "Priya" };
+  let f = stub(reply(row));
+  const d = await createDrive({ company: "C", campus: "K", roleTitle: "R", jdText: "J", rounds: [], ownerId: "hr-1" });
+  expect(JSON.parse(f.mock.calls[0]![1].body).owner_id).toBe("hr-1");
+  expect(d).toMatchObject({ ownerId: "hr-1", ownerName: "Priya" });
+  f = stub(reply(row));
+  await createDrive({ company: "C", campus: "K", roleTitle: "R", jdText: "J", rounds: [] });
+  expect(JSON.parse(f.mock.calls[0]![1].body)).not.toHaveProperty("owner_id");
+  f = stub(reply({ ...row, owner_id: "hr-2", owner_name: "Sneha" }));
+  expect(await reassignDrive("d1", "hr-2")).toMatchObject({ ownerName: "Sneha" });
+  expect(f.mock.calls[0]![0]).toBe("/api/v1/drives/d1/owner");
+  expect(f.mock.calls[0]![1].method).toBe("PATCH");
+  expect(JSON.parse(f.mock.calls[0]![1].body)).toEqual({ owner_id: "hr-2" });
+});
+
+it("progress rows carry attempt_id and resume_count; resume posts the trimmed reason (AC-7)", async () => {
+  const c = { candidate_id: "c1", student_id: "S1", full_name: "A", status: "in_progress", steps: {}, attempt_status: "locked", started_at: null, submitted_at: null, marks: null, tab_switches: 6, attempt_id: "a1", resume_count: 1 };
+  const f = stub(reply({ round_id: "r1", type: "coding", status: "active", candidates: [c] }), reply({ attempt_id: "a1", status: "in_progress", deadline_at: "2026-01-01T11:00:00Z", tab_switches: 0 }));
+  const p = await getRoundProgress("d1", "r1");
+  expect(p.candidates[0]).toMatchObject({ attemptId: "a1", resumeCount: 1, tabSwitches: 6 });
+  expect(await resumeAttempt("a1", "  power cut ")).toEqual({ attemptId: "a1", status: "in_progress", deadlineAt: "2026-01-01T11:00:00Z", tabSwitches: 0 });
+  expect(f.mock.calls[1]![0]).toBe("/api/v1/attempts/a1/resume");
+  expect(f.mock.calls[1]![1].method).toBe("POST");
+  expect(JSON.parse(f.mock.calls[1]![1].body)).toEqual({ reason: "power cut" });
+});
+
+it("resume refusals keep their code", async () => {
+  stub(reply({ error: { code: "REMAINING_TIME_UNKNOWN", message: "no time", details: {} } }, 409));
+  await expect(resumeAttempt("a1", "abc")).rejects.toMatchObject({ status: 409, code: "REMAINING_TIME_UNKNOWN" });
 });

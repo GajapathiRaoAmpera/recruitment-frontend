@@ -1,0 +1,249 @@
+// Analytics page, on top of hire.module.scss. Tokens only — no hex values.
+@use "@/styles/mixins" as *;
+
+.controls {
+  display: grid;
+  gap: sp(3);
+  align-items: end;
+  @include up(md) {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+/* Charts */
+.chartBox {
+  display: flex;
+  flex-direction: column;
+  gap: sp(3);
+}
+
+.plot {
+  position: relative;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.grid {
+  stroke: var(--ui-color-border);
+  stroke-width: 1;
+  fill: none;
+}
+
+.axis {
+  stroke: var(--ui-color-border-strong);
+  stroke-width: 1;
+}
+
+.tick {
+  font-size: 11px;
+  fill: var(--ui-color-text-muted);
+}
+
+.axisLabel {
+  font-size: 11.5px;
+  fill: var(--ui-color-text-muted);
+}
+
+.value {
+  font-size: 11.5px;
+  font-weight: 600;
+  fill: var(--ui-color-text);
+}
+
+.bar {
+  transition: opacity 120ms;
+  @include reduced-motion;
+}
+
+.barOn {
+  opacity: 0.82;
+}
+
+.area {
+  fill-opacity: 0.1;
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.dot {
+  stroke: var(--ui-color-surface);
+  stroke-width: 2;
+}
+
+.tip {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 140px;
+  padding: sp(2) sp(3);
+  border: 1px solid var(--ui-color-border);
+  border-radius: 8px;
+  background: var(--ui-color-surface);
+  box-shadow: 0 6px 18px rgb(5 5 5 / 0.14);
+  font-size: 0.8125rem;
+  color: var(--ui-color-text-muted);
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  white-space: nowrap;
+}
+
+.tipHead {
+  margin-bottom: 2px;
+  font-weight: 600;
+  color: var(--ui-color-text);
+}
+
+.tipRow {
+  display: flex;
+  align-items: center;
+  gap: sp(2);
+  strong {
+    min-width: 2.2rem;
+    color: var(--ui-color-text);
+    font-variant-numeric: tabular-nums;
+  }
+  i {
+    width: 10px;
+    height: 3px;
+    border-radius: 2px;
+  }
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(2) sp(4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  color: var(--ui-color-text-muted);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: sp(1);
+  border-radius: 3px;
+}
+
+/* Ranked horizontal bars */
+.hbars {
+  display: flex;
+  flex-direction: column;
+  gap: sp(1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hbRow {
+  display: grid;
+  align-items: center;
+  gap: sp(3);
+  width: 100%;
+  padding: sp(2) sp(2);
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  grid-template-columns: minmax(110px, 190px) minmax(0, 1fr) 56px;
+}
+
+.hbBtn {
+  cursor: pointer;
+  &:hover {
+    background: var(--ui-color-console-hover);
+  }
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.hbOn {
+  background: var(--ui-color-primary-subtle);
+}
+
+.hbName {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+  small {
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: var(--ui-color-text-muted);
+  }
+}
+
+.hbTrack {
+  height: 12px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-color-surface-muted);
+}
+
+.hbFill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+}
+
+.hbValue {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Insights + methodology */
+.insights {
+  display: grid;
+  gap: sp(3);
+  @include up(md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.insightList {
+  display: flex;
+  flex-direction: column;
+  gap: sp(1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.method {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  th,
+  td {
+    padding: sp(2) sp(3);
+    border-top: 1px solid var(--ui-color-border);
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    border-top: 0;
+    font-weight: 600;
+    color: var(--ui-color-text-muted);
+  }
+}
+
+.note {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ui-color-text-muted);
+}

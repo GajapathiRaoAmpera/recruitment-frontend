@@ -1,0 +1,87 @@
+@use "@/styles/mixins" as *;
+
+/* Info tip: the hint shows in a white flyout (DESIGN.md "Flyouts") above a small ⓘ on hover, focus or tap */
+.tipWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.tipBtn {
+  display: inline-flex;
+  margin: -5px; /* 24px hit area without shifting the label */
+  border-radius: 999px;
+  padding: 5px;
+  color: var(--ui-color-text-muted);
+  cursor: default; /* the pointer stays as it is */
+  @include focus-ring;
+  &:hover,
+  &:focus-visible {
+    color: var(--ui-color-primary);
+  }
+}
+
+.tip {
+  position: absolute;
+  bottom: calc(100% + #{sp(2)});
+  left: -8px;
+  z-index: 20;
+  width: max-content;
+  max-width: 260px;
+  border-radius: var(--ui-radius-input);
+  padding: sp(2) sp(3);
+  border: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-md);
+  @include text(xs);
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ui-color-text);
+  white-space: normal;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(2px);
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out,
+    visibility 0s linear 120ms;
+  /* arrow: a border-coloured triangle with a white one on top, so the outline continues around it */
+  &::before,
+  &::after {
+    position: absolute;
+    top: 100%;
+    left: 11px;
+    border: 7px solid transparent;
+    border-top-color: var(--ui-color-border);
+    content: "";
+  }
+  &::after {
+    top: calc(100% - 1px); /* covers the bubble's bottom border where the arrow joins */
+    left: 12px;
+    border-width: 6px;
+    border-top-color: var(--ui-color-surface);
+  }
+}
+
+.tipWrap:hover .tip {
+  transition-delay: 150ms; /* passing the mouse over doesn't flash it */
+}
+
+.tipWrap:hover .tip,
+.tipWrap:focus-within .tip {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.tipWrap:focus-within .tip {
+  transition-delay: 0s;
+}
+
+@include reduced-motion {
+  .tip,
+  .tipWrap:hover .tip {
+    transform: none;
+    transition: opacity 0s;
+  }
+}

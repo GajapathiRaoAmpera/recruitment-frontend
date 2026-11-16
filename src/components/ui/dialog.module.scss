@@ -75,6 +75,7 @@
 
 .footer {
   display: flex;
+  flex-wrap: wrap; // three actions don't fit a phone-width dialog on one line
   justify-content: flex-end;
   gap: sp(3);
   border-top: 1px solid var(--ui-color-border);
@@ -113,6 +114,7 @@
 .alertActions {
   margin-top: sp(6);
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: sp(3);
 }

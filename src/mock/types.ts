@@ -167,7 +167,7 @@ import type { StudentSession } from "@/api/entry";
 export interface Session {
   role: Role;
   userId?: string; // staff
-  staff?: StaffUser; // real Supabase sign-in: the /me user, kept in the session so a refresh still knows them
+  staff?: StaffUser; // real staff sign-in: the /me user, kept in the session so a refresh still knows them
   candidateId?: string; // student (prototype)
   student?: StudentSession; // student signed in through the API
 }

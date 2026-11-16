@@ -1,18 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const auth = vi.hoisted(() => ({
-  getSession: vi.fn(),
-  signOut: vi.fn(async () => ({ error: null })),
-  listener: undefined as undefined | ((event: string) => void),
-  onAuthStateChange: vi.fn((cb: (event: string) => void) => {
-    auth.listener = cb;
-    return { data: { subscription: { unsubscribe() {} } } };
-  }),
-}));
-vi.mock("@/lib/supabase", () => ({ supabase: { auth }, linkHash: null }));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), liveApi: true }));
 
 import { api } from "@/api/client";
+import { clearToken, getToken, setToken } from "@/lib/auth";
 import { initialState, MockStoreProvider, reducer, useStore } from "@/mock/store";
 
 function Probe() {
@@ -23,41 +15,51 @@ function Probe() {
 beforeEach(() => {
   vi.clearAllMocks();
   window.sessionStorage.clear();
+  window.localStorage.clear();
 });
 
-describe("staff session follows Supabase (AC-1)", () => {
-  it("new tab: rebuilds the session from GET /me when Supabase is signed in", async () => {
-    auth.getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
+describe("staff session follows the staff token (AC-1)", () => {
+  it("new tab: rebuilds the session from GET /me when a token is saved", async () => {
+    setToken("tok", 600);
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ id: "u1", email: "a@x.com", full_name: "Asha", role: "hr" }), { status: 200 })));
     render(<MockStoreProvider><Probe /></MockStoreProvider>);
     await waitFor(() => expect(screen.getByText("in:HR:Asha")).toBeInTheDocument());
+    expect(new Headers(vi.mocked(fetch).mock.calls[0][1]?.headers).get("Authorization")).toBe("Bearer tok");
   });
 
-  it("no Supabase session: a stale tab session is dropped", async () => {
+  it("no token: a stale tab session is dropped", async () => {
     window.sessionStorage.setItem("ampera.session", JSON.stringify({ role: "HR", userId: "u1" }));
-    auth.getSession.mockResolvedValue({ data: { session: null } });
     render(<MockStoreProvider><Probe /></MockStoreProvider>);
     await waitFor(() => expect(screen.getByText("out")).toBeInTheDocument());
   });
 
-  it("Supabase SIGNED_OUT (other tab, dead refresh token) signs the staff user out", async () => {
-    auth.getSession.mockResolvedValue({ data: { session: { access_token: "tok" } } });
+  it("signing out (here or in another tab) drops the staff session", async () => {
+    setToken("tok", 600);
     window.sessionStorage.setItem("ampera.session", JSON.stringify({ role: "HR", userId: "u1", staff: { name: "Asha" } }));
     render(<MockStoreProvider><Probe /></MockStoreProvider>);
     await waitFor(() => expect(screen.getByText("in:HR:Asha")).toBeInTheDocument());
-    auth.listener!("SIGNED_OUT");
+    act(() => clearToken());
     await waitFor(() => expect(screen.getByText("out")).toBeInTheDocument());
   });
 
-  it("SIGNED_OUT leaves a student session alone", () => {
+  it("another tab removing the token signs this one out", async () => {
+    setToken("tok", 600);
+    window.sessionStorage.setItem("ampera.session", JSON.stringify({ role: "HR", userId: "u1", staff: { name: "Asha" } }));
+    render(<MockStoreProvider><Probe /></MockStoreProvider>);
+    await waitFor(() => expect(screen.getByText("in:HR:Asha")).toBeInTheDocument());
+    act(() => window.dispatchEvent(new StorageEvent("storage", { key: "campushire.staffToken", newValue: null })));
+    await waitFor(() => expect(screen.getByText("out")).toBeInTheDocument());
+  });
+
+  it("staff sign-out leaves a student session alone", () => {
     const student = reducer(initialState, { type: "login", session: { role: "STUDENT", candidateId: "c1" } });
     expect(reducer(student, { type: "staffSignedOut" }).session).toEqual({ role: "STUDENT", candidateId: "c1" });
   });
 
-  it("a 401 from the API ends this browser's Supabase session only", async () => {
-    auth.getSession.mockResolvedValue({ data: { session: { access_token: "expired" } } });
+  it("a 401 for a sent token clears it", async () => {
+    setToken("expired", 600);
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: { code: "INVALID_TOKEN", message: "Sign in again", details: {} } }), { status: 401 })));
     await expect(api("/me")).rejects.toThrow("Sign in again");
-    expect(auth.signOut).toHaveBeenCalledWith({ scope: "local" });
+    expect(getToken()).toBeNull();
   });
 });

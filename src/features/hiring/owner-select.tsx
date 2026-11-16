@@ -1,0 +1,57 @@
+"use client";
+
+import { useEffect } from "react";
+import { listHrOwners } from "@/api/hiring";
+import { Field } from "@/components/ui/field";
+import { Select } from "@/components/ui/input";
+import { RocketLoader } from "@/components/ui/rocket-loader";
+import { useToast } from "@/components/ui/toast";
+import { useAsync } from "@/features/papers/use-async";
+
+export const KEEP_WITH_ME = "me";
+
+interface OwnerSelectProps {
+  value: string;
+  /** The id, plus the option text so callers can show who they picked. */
+  onChange: (ownerId: string, label: string) => void;
+  error?: string;
+  /** Offer "Keep it with me" (creating a drive); reassigning needs a real HR. */
+  allowSelf?: boolean;
+  /** The current owner, left out of the list when reassigning. */
+  exclude?: string | null;
+}
+
+/**
+ * "Who runs this drive?" for a Super Admin. HR only see drives they own, so this decides
+ * whose portal the drive appears in.
+ */
+export function OwnerSelect({ value, onChange, error, allowSelf = false, exclude }: OwnerSelectProps) {
+  const owners = useAsync(listHrOwners, []);
+  const toast = useToast();
+  const loadError = owners.error?.message;
+  useEffect(() => {
+    if (loadError) toast({ tone: "danger", title: `Couldn't load HR users: ${loadError}` });
+  }, [loadError, toast]);
+  if (owners.loading && !owners.data) return <RocketLoader size="inline" label="Loading HR users" />;
+  const list = (owners.data ?? []).filter((o) => o.id !== exclude);
+  const hint = owners.error
+    ? "Couldn't load HR users."
+    : owners.data && list.length === 0
+      ? "No active HR users yet. Invite one from Users & roles."
+      : "The drive shows up in this person's HR portal. Only they (and Super Admins) can see it.";
+  return (
+    <Field label="Who runs this drive?" required error={error} hint={hint}>
+      <Select value={value} onChange={(e) => onChange(e.target.value, e.target.selectedOptions[0]?.text ?? "")}>
+        <option value="" disabled>
+          Choose an HR
+        </option>
+        {list.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.name} ({o.email})
+          </option>
+        ))}
+        {allowSelf && <option value={KEEP_WITH_ME}>Keep it with me (no HR will see it)</option>}
+      </Select>
+    </Field>
+  );
+}

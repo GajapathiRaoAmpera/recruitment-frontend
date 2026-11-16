@@ -4,16 +4,24 @@ import * as RD from "@radix-ui/react-dialog";
 import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useState, useSyncExternalStore } from "react";
 import { Logo, LogoMark } from "@/components/brand/logo";
 import { overlayClasses } from "@/components/ui/dialog";
 import { cn } from "@/lib/cn";
 import { isActive, navItems, type NavItem } from "@/lib/nav";
 import type { Role } from "@/mock/types";
 import { safeStorage } from "@/lib/storage";
+import { homePath, portalOf } from "@/mock/auth";
 import s from "./sidebar.module.scss";
 
 const COLLAPSED_KEY = "ampera.sidebar.collapsed";
+// Read through useSyncExternalStore so the server render (always expanded) and the first client render agree.
+const collapsedListeners = new Set<() => void>();
+const subscribeCollapsed = (l: () => void) => {
+  collapsedListeners.add(l);
+  return () => void collapsedListeners.delete(l);
+};
+const readCollapsed = () => safeStorage.get(COLLAPSED_KEY) === "1";
 
 interface NavListProps {
   role: Role;
@@ -79,13 +87,11 @@ function NavLinks({ role, collapsed = false, onNavigate, pathname }: NavListProp
 }
 
 export function Sidebar({ role }: { role: Role }) {
-  const [collapsed, setCollapsed] = useState(() => safeStorage.get(COLLAPSED_KEY) === "1");
+  const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, () => false);
 
   const toggle = () => {
-    setCollapsed((c) => {
-      safeStorage.set(COLLAPSED_KEY, c ? "0" : "1");
-      return !c;
-    });
+    safeStorage.set(COLLAPSED_KEY, collapsed ? "0" : "1");
+    collapsedListeners.forEach((l) => l());
   };
 
   return (
@@ -93,7 +99,7 @@ export function Sidebar({ role }: { role: Role }) {
       className={cn(s.aside, collapsed && s.asideCollapsed)}
     >
       <div className={cn(s.brand, collapsed && s.brandCollapsed)}>
-        <Link href="/hr" aria-label="Ampera Campus Hire home">
+        <Link href={homePath[portalOf(role)]} aria-label="Ampera Campus Hire home">
           {collapsed ? <LogoMark /> : <Logo height={26} />}
         </Link>
       </div>

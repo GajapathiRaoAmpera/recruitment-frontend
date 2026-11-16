@@ -1,16 +1,16 @@
 "use client";
 
-import { CheckCircle2, Clock, Lock, MapPin, Maximize, TimerOff } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Circle, Clock, MapPin, Maximize, TimerOff, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { entryStart, getAttempt, msLeft, reportViolation, saveAnswer, submitAttempt, type AttemptState } from "@/api/attempt";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { entryStart, getAttempt, msLeft, reportViolation, saveAnswer, submitAttempt, type AttemptQuestion, type AttemptState } from "@/api/attempt";
 import { entryStep, type StudentSession } from "@/api/entry";
 import { ApiError } from "@/api/client";
 import { Logo } from "@/components/brand/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel } from "@/components/ui/skeleton";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ErrorState, NotFoundState } from "@/components/ui/states";
 import { hire as h } from "@/components/hire/ui";
@@ -22,6 +22,10 @@ import s from "@/components/student/student.module.scss";
 import { TabSwitchBadge } from "@/components/student/tab-switch-badge";
 import { roundTitle } from "@/mock/data";
 import type { Round } from "@/mock/types";
+import { CodingWorkspace } from "@/features/test-runner/coding-workspace";
+import { AttemptClosedOverlay, AttemptClosedScreen, CLOSED_BY_CODE } from "./attempt-closed";
+
+const RETRY_MS = 5000;
 
 /** The test screen for a student signed in through the API. Timer, tab-switch count and lock come from the server. */
 export function RealExamShell({ student, roundId }: { student: StudentSession; roundId: string }) {
@@ -30,6 +34,7 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   const [error, setError] = useState<ApiError | Error>();
   const [tries, setTries] = useState(0);
   const [checked, setChecked] = useState(false); // location + full screen re-checked; the timer starts only after this
+  const [checking, setChecking] = useState(true); // start check running: shown on the same loader as "Starting your test"
 
   useEffect(() => {
     if (!round || !checked) return;
@@ -38,7 +43,10 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
       try {
         const token = await entryStart(student.entryToken, roundId); // repeating it keeps the same deadline
         const state = await getAttempt(token);
-        if (!stale) setAttempt({ token, state });
+        if (!stale) {
+          setError(undefined); // clears a "not open yet" wait once the round opens
+          setAttempt({ token, state });
+        }
       } catch (e) {
         if (!stale) setError(e as Error);
       }
@@ -49,6 +57,12 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
   }, [round, checked, student.entryToken, roundId, tries]);
 
   if (!round) return <NotFoundState title="Round not found" description="This round isn't open for you. Go back to your dashboard." />;
+  const notOpen = error instanceof ApiError && error.code === "ROUND_NOT_OPEN";
+  // Exam not opened yet (papers not ready / drive not started): wait here and retry quietly until the server opens it.
+  if (notOpen) return <WaitingRoom onRetry={() => setTries((n) => n + 1)} />;
+  // Submitted, paused or out of time: the same screens as re-entry from the dashboard, not an error.
+  const closedKind = error instanceof ApiError ? CLOSED_BY_CODE[error.code] : undefined;
+  if (closedKind) return <AttemptClosedScreen kind={closedKind} entryToken={student.entryToken} roundId={roundId} title={roundTitle[round.type as Round["type"]] ?? round.type} />;
   if (error) {
     const stepsMissing = error instanceof ApiError && error.code === "STEPS_MISSING";
     return (
@@ -62,14 +76,43 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
       </main>
     );
   }
-  if (!checked) return <StartCheck student={student} roundId={roundId} onPass={() => setChecked(true)} />;
-  if (!attempt) return <LoadingLabel label="Starting your test" />;
-  return <Shell student={student} roundId={roundId} type={round.type} token={attempt.token} initial={attempt.state} />;
+  // One loader for the whole start: it stays mounted and only its text changes (check → start), so it doesn't flash twice.
+  if (!attempt)
+    return (
+      <>
+        {!checked && <StartCheck student={student} roundId={roundId} busy={checking} setBusy={setChecking} onPass={() => setChecked(true)} />}
+        {(checked || checking) && <RocketLoader label={checked ? "Starting your test" : "Checking location and full screen"} />}
+      </>
+    );
+  // Keyed by attempt: a new round is a new attempt, so no timer, count or draft state carries over (AC-6).
+  return <Shell key={attempt.token} student={student} roundId={roundId} type={round.type} token={attempt.token} initial={attempt.state} />;
+}
+
+const POLL_MS = 5000;
+
+/** Shown when the server says the round can't be sat yet. Checks again every few seconds and starts by itself. */
+function WaitingRoom({ onRetry }: { onRetry: () => void }) {
+  useEffect(() => {
+    const id = window.setInterval(onRetry, POLL_MS);
+    return () => window.clearInterval(id);
+  }, [onRetry]);
+  return (
+    <main className={s.examBody} style={{ maxWidth: "36rem", marginInline: "auto", width: "100%" }}>
+      <section className={h.card} role="status" aria-live="polite">
+        <h1 className={h.cardTitle}>The exam hasn&apos;t started yet</h1>
+        <p className={h.muted}>Your system check is done. Please wait and follow your invigilator&apos;s instructions. Keep this page open and in full screen. You&apos;ll be taken to the exam automatically when it starts.</p>
+        <RocketLoader size="inline" still label="Waiting for the exam to start" />
+        <Button asChild variant="secondary" style={{ marginTop: 12 }}>
+          <Link href="/student">Back to dashboard</Link>
+        </Button>
+      </section>
+    </main>
+  );
 }
 
 /** Runs right when the test opens, before the timer starts: location and full screen must both be on. */
-function StartCheck({ student, roundId, onPass }: { student: StudentSession; roundId: string; onPass: () => void }) {
-  const [busy, setBusy] = useState(true);
+/** While busy the parent shows the shared loader; this card appears only when a check fails. */
+function StartCheck({ student, roundId, busy, setBusy, onPass }: { student: StudentSession; roundId: string; busy: boolean; setBusy: (b: boolean) => void; onPass: () => void }) {
   const [loc, setLoc] = useState(false);
   const [fs, setFs] = useState(false);
   const run = useCallback(
@@ -88,30 +131,51 @@ function StartCheck({ student, roundId, onPass }: { student: StudentSession; rou
       setBusy(false);
       if (locOk && fsOk) onPass();
     },
-    [student.entryToken, roundId, onPass],
+    [student.entryToken, roundId, onPass, setBusy],
   );
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- state is set after the async check, not synchronously
     void run(false);
   }, [run]);
+  const item = (ok: boolean, label: string, fix: string) => (
+    <li className={h.listItem} style={{ justifyContent: "flex-start", alignItems: "flex-start" }}>
+      {ok ? <CheckCircle2 aria-hidden size={20} color="var(--ui-color-success)" /> : <XCircle aria-hidden size={20} color="var(--ui-color-danger)" />}
+      <div>
+        <p style={{ fontWeight: 500 }}>
+          {label} {ok ? "on" : "off"}
+        </p>
+        {!ok && <p className={h.xs}>{fix}</p>}
+      </div>
+    </li>
+  );
+  if (busy) return null; // the parent's loader is showing
   return (
-    <main className={s.examBody} style={{ maxWidth: "36rem", marginInline: "auto" }}>
-      <section className={h.card}>
-        <h1 className={h.cardTitle}>Checking before you start</h1>
-        <p className={h.muted}>Location and full screen must be on. The timer starts after this check.</p>
-        {busy ? (
-          <LoadingLabel label="Checking…" />
-        ) : (
-          <>
-            <ul className={h.list}>
-              <li className={h.listItem}>{loc ? "✓" : "✗"} Location</li>
-              <li className={h.listItem}>{fs ? "✓" : "✗"} Full screen</li>
-            </ul>
-            <Button onClick={() => { setBusy(true); void run(true); }}>Check again</Button>
-          </>
-        )}
+    <main className={`${s.examBody} ${s.examGate}`}>
+      <section className={`${h.card} ${s.examGateCard}`}>
+        <h1 className={h.cardTitle}>Before you start</h1>
+        <p className={h.muted}>Location and full screen must both be on. Your timer starts only after this check passes.</p>
+        <ul className={h.list} style={{ alignSelf: "stretch" }}>
+          {item(loc, "Location", "Click the lock or pin icon in the address bar, allow location, then check again.")}
+          {item(fs, "Full screen", "The button below switches the test to full screen.")}
+        </ul>
+        <Button onClick={() => { setBusy(true); void run(true); }}>{fs ? "Check again" : "Enter full screen and check"}</Button>
       </section>
     </main>
+  );
+}
+
+/** Full-screen blocker shown over the test. The page behind it is inert, so focus can't wander there. */
+function Overlay({ id, icon, title, children }: { id: string; icon: ReactNode; title: string; children: ReactNode }) {
+  return (
+    <div className={s.overlay} role="alertdialog" aria-modal="true" aria-labelledby={`${id}-h`}>
+      <div className={s.overlayCard}>
+        {icon}
+        <h1 id={`${id}-h`} className={h.cardTitle}>
+          {title}
+        </h1>
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -122,13 +186,11 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   const [expired, setExpired] = useState(initial.status === "expired");
   const router = useRouter();
   const [submitted, setSubmitted] = useState(initial.status === "submitted");
-  const [timeTaken, setTimeTaken] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string>();
   const [confirm, setConfirm] = useState<"submit" | "leave">();
-  const [answers, setAnswers] = useState(initial.savedAnswers);
+  const [answers, setAnswers] = useState(initial.savedAnswers); // multiple choice only; coding saves itself
   const [current, setCurrent] = useState(0);
-  const [saveError, setSaveError] = useState<string>();
   // shortcut: "marked for review" is this browser's note to itself (the API has no field for it); it is not sent to HR.
   const markKey = `exam-marked:${roundId}`;
   const [marked, setMarked] = useState<string[]>(() => {
@@ -146,6 +208,14 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   const [offline, setOffline] = useState(false);
   const max = initial.maxTabSwitches;
   const switches = Math.min(max, confirmed + pending);
+  // AC-7 warning: only for a switch made in this session (the count on load is the baseline), never at the limit
+  // (the lock screen says it then). Offline switches count at once, as pending ones.
+  const [seenSwitches, setSeenSwitches] = useState(switches);
+  const [warning, setWarning] = useState<number | null>(null);
+  if (switches !== seenSwitches) {
+    setSeenSwitches(switches);
+    if (switches > seenSwitches) setWarning(switches < max ? switches : null);
+  }
   // Deadline from the server's clock, computed once: a wrong laptop clock changes nothing.
   const [deadline] = useState(() => Date.now() + msLeft(initial));
   const live = !locked && !expired && !submitted;
@@ -155,7 +225,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   // A dropped network can look like a tab switch, so unsent ones are kept and re-sent; it only ever locks.
   const unsent = useRef(0);
   const flushing = useRef(false);
-  const flush = async () => {
+  const flush = useCallback(async () => {
     if (flushing.current) return;
     flushing.current = true;
     try {
@@ -165,14 +235,39 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         setPending(unsent.current);
         setConfirmed(r.tabSwitches);
         if (r.locked) setLocked(true);
-        setOffline(false);
       }
+      setOffline(false);
     } catch {
       setOffline(true);
     } finally {
       flushing.current = false;
     }
-  };
+  }, [token]);
+
+  // Answers go through one queue: the latest choice per question is sent, in order, and kept until the server has it.
+  const queue = useRef(new Map<string, number>());
+  const saving = useRef(false);
+  const [unsaved, setUnsaved] = useState(0);
+  const [saveError, setSaveError] = useState(false);
+  const flushSaves = useCallback(async () => {
+    if (saving.current) return;
+    saving.current = true;
+    try {
+      while (queue.current.size > 0) {
+        const [qid, value] = queue.current.entries().next().value!;
+        await saveAnswer(token, qid, value);
+        if (queue.current.get(qid) === value) queue.current.delete(qid);
+        setUnsaved(queue.current.size);
+      }
+      setSaveError(false);
+    } catch {
+      setSaveError(true);
+    } finally {
+      saving.current = false;
+      setUnsaved(queue.current.size);
+    }
+  }, [token]);
+
   const { fullscreen, enterFullscreen } = useIntegrity(live, () => {
     unsent.current += 1;
     setPending(unsent.current); // shown at once; confirmed + pending never goes backwards
@@ -180,10 +275,20 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   }, () => {
     void reportViolation(token, "fullscreen_exit").catch(() => {}); // logged for HR; only tab/window trips count toward the lock
   });
+  const retry = useCallback(() => {
+    void flush();
+    void flushSaves();
+  }, [flush, flushSaves]);
   useEffect(() => {
-    window.addEventListener("online", flush);
-    return () => window.removeEventListener("online", flush);
-  });
+    window.addEventListener("online", retry);
+    return () => window.removeEventListener("online", retry);
+  }, [retry]);
+  // Keep retrying while something is unsent, so the student is never stuck waiting for an "online" event.
+  useEffect(() => {
+    if (!live || (!offline && !saveError)) return;
+    const id = setInterval(retry, RETRY_MS);
+    return () => clearInterval(id);
+  }, [live, offline, saveError, retry]);
 
   const { left, label } = useCountdown(deadline, () => setExpired(true));
   // Location must stay on for the whole test. Each change is logged on the server; a lost log never blocks the student.
@@ -199,27 +304,29 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
     return () => document.removeEventListener("fullscreenchange", exitFullscreen);
   }, [live]);
 
-  const questions = initial.questions;
-  const q = questions[current];
-  const choose = async (i: number) => {
-    if (!q) return;
-    setAnswers((a) => ({ ...a, [q.id]: i }));
-    try {
-      await saveAnswer(token, q.id, i);
-      setSaveError(undefined);
-    } catch (e) {
-      setSaveError((e as Error).message);
-    }
+  const mcqs = initial.questions;
+  const isCoding = type === "coding";
+
+  const choose = (qid: string, i: number) => {
+    setAnswers((a) => ({ ...a, [qid]: i }));
+    queue.current.set(qid, i);
+    setUnsaved(queue.current.size);
+    void flushSaves();
   };
 
-  // Submit makes the answers final. Until then they are saved but can still change. The same call runs
-  // by itself when time runs out. A locked attempt can't submit (HR has to let the student resume).
-  const submit = async () => {
+  // Submit makes the answers final. Unsaved answers are sent first. The same call runs by itself when time
+  // runs out. A locked attempt can't submit (HR has to let the student resume).
+  const submit = async (auto = false) => {
     setSubmitting(true);
     setSubmitError(undefined);
+    await flushSaves();
+    if (queue.current.size > 0 && !auto) {
+      setSubmitting(false);
+      setSubmitError("Some answers aren't saved yet. Check your connection and try again.");
+      return;
+    }
     try {
-      const r = await submitAttempt(token);
-      setTimeTaken(r.timeTakenSec);
+      await submitAttempt(token);
       setSubmitted(true);
       safeStorage.set(markKey, "[]");
       setConfirm(undefined);
@@ -234,22 +341,40 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   useEffect(() => {
     if (expired && !locked && !submitted && !autoSubmitted.current) {
       autoSubmitted.current = true;
-      void submit();
+      void submit(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [expired, locked, submitted]);
-  const unanswered = questions.length - Object.keys(answers).length;
-  const markedCount = questions.filter((x) => marked.includes(x.id)).length;
+
+  const answeredCount = mcqs.filter((x) => answers[x.id] !== undefined).length;
+  const unanswered = isCoding ? 0 : mcqs.length - answeredCount;
+  const markedCount = mcqs.filter((x) => marked.includes(x.id)).length;
   const closed = locked || expired || submitted;
+  // The location / full-screen / closed overlays come first; the warning waits until they clear.
+  const covered = closed || (live && (!locationOn || !fullscreen));
+  const showWarning = warning !== null && !covered;
+  // Anything covering the test; dialogs underneath close and the page behind goes inert.
+  const blocked = covered || showWarning;
+
+  const status = offline
+    ? "Offline: reconnecting…"
+    : unsaved > 0
+      ? saveError
+        ? `${unsaved} answer${unsaved === 1 ? "" : "s"} not saved yet, retrying…`
+        : "Saving…"
+      : isCoding
+        ? `${initial.coding.length} coding problem${initial.coding.length === 1 ? "" : "s"}`
+        : `${answeredCount} of ${mcqs.length} answered · ${markedCount} marked for review`;
 
   return (
     <>
-      <header className={s.examBar}>
+      <div className={isCoding ? s.codingRoot : s.mcqRoot}>
+      <header className={s.examBar} inert={blocked}>
         <Logo height={22} />
         <div className={s.examTitle}>
-          <p>{roundTitle[type as Round["type"]] ?? type}</p>
-          <p className={h.xs} aria-live="polite">
-            {offline ? "Offline: reconnecting…" : saveError ?? `${Object.keys(answers).length} of ${questions.length} answered · ${markedCount} marked for review`}
+          <p>{isCoding ? (roundTitle[type as Round["type"]] ?? type) : "Online Assessment – Round 1"}</p>
+          <p className={h.xs} aria-live="polite" style={saveError || offline ? { color: "var(--ui-color-danger)" } : undefined}>
+            {status}
           </p>
         </div>
         <Badge tone={locationOn ? "success" : "danger"}>
@@ -257,104 +382,60 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
           Location {locationOn ? "on" : "off"}
         </Badge>
         <TabSwitchBadge count={switches} max={max} />
-        <span className={s.timer} data-low={left < 5 * 60_000} role="timer" aria-label={`Time left ${label}`}>
-          <Clock aria-hidden size={16} /> {label}
-        </span>
+        {isCoding && (
+          <span className={s.timer} data-low={left < 5 * 60_000} role="timer" aria-label={`Time left ${label}`}>
+            <Clock aria-hidden size={16} /> {label}
+          </span>
+        )}
         <Button variant="secondary" disabled={submitting} onClick={() => (closed ? router.push("/student") : setConfirm("leave"))}>
           Leave
         </Button>
-        <Button variant="danger" disabled={closed || !!offline} loading={submitting} onClick={() => setConfirm("submit")}>
+        {isCoding && (
+        <Button variant="danger" disabled={closed || offline} title={offline ? "Reconnecting: submit unlocks when you're back online" : undefined} loading={submitting} onClick={() => setConfirm("submit")}>
           Submit test
         </Button>
+        )}
       </header>
 
-      <main className={s.examBody} style={{ maxWidth: "48rem", marginInline: "auto", width: "100%" }}>
-        {!q ? (
-          <section className={h.card}>
-            <h1 className={h.cardTitle}>No questions yet</h1>
-            <p className={h.muted}>HR hasn&apos;t added questions to this test.</p>
-          </section>
-        ) : (
-          <section className={h.card} aria-labelledby="q-h">
-            <p className={h.eyebrow} style={{ marginBottom: 8 }}>
-              Question {current + 1} of {questions.length} · +{q.marks} mark
-            </p>
-            <h1 id="q-h" style={{ fontSize: "1.25rem", lineHeight: 1.5 }}>
-              {q.body}
-            </h1>
-            <fieldset className={h.stackSm} style={{ marginTop: 24 }} disabled={!live}>
-              <legend className="sr-only">Options</legend>
-              {q.options.map((o, i) => (
-                <label key={i} className={s.option}>
-                  <input type="radio" name={q.id} checked={answers[q.id] === i} onChange={() => void choose(i)} />
-                  <span>
-                    <span className={s.optionKey}>{String.fromCharCode(65 + i)}.</span> {o}
-                  </span>
-                </label>
-              ))}
-            </fieldset>
-            <div className={h.between} style={{ marginTop: 24 }}>
-              <Button variant="secondary" disabled={current === 0} onClick={() => setCurrent(current - 1)}>
-                Previous
-              </Button>
-              <div className={h.row}>
-                <Button variant="secondary" disabled={!live} aria-pressed={marked.includes(q.id)} onClick={() => toggleMark(q.id)}>
-                  {marked.includes(q.id) ? "Unmark" : "Mark for review"}
-                </Button>
-                <Button disabled={current === questions.length - 1} onClick={() => setCurrent(current + 1)}>
-                  Next
-                </Button>
-              </div>
-            </div>
-          </section>
-        )}
-      </main>
-
-      {submitted && (
-        <div className={s.overlay} role="alertdialog" aria-labelledby="done-h">
-          <div className={s.overlayCard}>
-            <CheckCircle2 aria-hidden size={32} color="var(--ui-color-success)" />
-            <h1 id="done-h" className={h.cardTitle}>
-              Test submitted
-            </h1>
-            <p className={h.muted}>
-              Your answers are final.{timeTaken !== null && ` Time taken: ${Math.max(1, Math.round(timeTaken / 60))} min.`} HR will share the result after review.
-            </p>
-            <Button asChild variant="secondary">
-              <Link href="/student">Back to dashboard</Link>
-            </Button>
-          </div>
+      {isCoding ? (
+        // The workspace renders its own <main>; the wrapper makes it inert under an overlay.
+        <div inert={blocked} className={s.codingFrame}>
+          <CodingWorkspace token={token} attempt={initial} live={live} submitted={submitted} onClosed={(k) => (k === "expired" ? setExpired(true) : setLocked(true))} />
         </div>
+      ) : (
+        <main inert={blocked} className={s.mcqMain}>
+          <McqBody
+            questions={mcqs}
+            answers={answers}
+            marked={marked}
+            current={current}
+            live={live}
+            onGo={(i) => setCurrent(Math.max(0, Math.min(mcqs.length - 1, i)))}
+            onChoose={choose}
+            onToggleMark={toggleMark}
+            counts={{ answered: answeredCount, marked: markedCount, unanswered }}
+            left={left}
+            canSubmit={!closed && !offline}
+            submitting={submitting}
+            onSubmit={() => setConfirm("submit")}
+          />
+        </main>
       )}
-
-      {expired && !locked && !submitted && submitError && (
-        <div className={s.overlay} role="alertdialog" aria-labelledby="sub-h">
-          <div className={s.overlayCard}>
-            <TimerOff aria-hidden size={32} />
-            <h1 id="sub-h" className={h.cardTitle}>
-              Time is up
-            </h1>
-            <p className={h.muted}>Your answers are saved, but they couldn&apos;t be submitted yet: {submitError}</p>
-            <Button loading={submitting} onClick={() => void submit()}>
-              Try submitting again
-            </Button>
-          </div>
-        </div>
-      )}
+      </div>
 
       <ConfirmDialog
-        open={confirm === "submit"}
+        open={confirm === "submit" && !blocked}
         onOpenChange={(o) => !o && setConfirm(undefined)}
         destructive={false}
         title="Submit your test?"
-        description={`${unanswered ? `${unanswered} question(s) are unanswered. ` : ""}${markedCount ? `${markedCount} marked for review. ` : ""}Your answers become final and you can't change them after submitting.`}
+        description={`${unanswered ? `${unanswered} question(s) are unanswered. ` : ""}${markedCount ? `${markedCount} marked for review. ` : ""}${isCoding ? "Only code you submitted counts, not code you only ran. " : ""}Your answers become final and you can't change them after submitting.`}
         confirmLabel="Submit test"
         loading={submitting}
         error={submitError}
-        onConfirm={submit}
+        onConfirm={() => submit()}
       />
       <ConfirmDialog
-        open={confirm === "leave"}
+        open={confirm === "leave" && !blocked}
         onOpenChange={(o) => !o && setConfirm(undefined)}
         destructive={false}
         title="Leave the test?"
@@ -366,60 +447,194 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         }}
       />
 
-      {locked && (
-        <div className={s.overlay} role="alertdialog" aria-labelledby="lock-h" aria-describedby="lock-d">
-          <div className={s.overlayCard}>
-            <Lock aria-hidden size={32} />
-            <h1 id="lock-h" className={h.cardTitle}>
-              Your test is paused
-            </h1>
-            <p id="lock-d" className={h.muted}>
-              You left the test tab {max} times, so it closed. Your answers are saved. HR can let you resume with the time you had left.
-            </p>
-            <Button asChild variant="secondary">
-              <Link href="/student">Back to dashboard</Link>
-            </Button>
-          </div>
-        </div>
+      {submitted && <AttemptClosedOverlay kind="submitted" entryToken={student.entryToken} roundId={roundId} />}
+
+      {locked && !submitted && (
+        <AttemptClosedOverlay
+          kind="locked"
+          entryToken={student.entryToken}
+          roundId={roundId}
+          detail={`You left the test tab ${max} times, so it closed. Your answers and the time you had left are saved.`}
+        />
       )}
 
-      {expired && !locked && !submitted && !submitError && (
-        <div className={s.overlay} role="alertdialog" aria-labelledby="end-h">
-          <div className={s.overlayCard}>
-            <TimerOff aria-hidden size={32} />
-            <h1 id="end-h" className={h.cardTitle}>
-              Time is up
-            </h1>
-            <p className={h.muted}>Submitting your answers…</p>
-          </div>
-        </div>
+      {expired && !locked && !submitted && (
+        <Overlay id="end" icon={<TimerOff aria-hidden size={32} />} title="Time is up">
+          {submitError ? (
+            <>
+              <p className={h.muted}>Your answers are saved, but they couldn&apos;t be submitted yet.</p>
+              <Button loading={submitting} autoFocus onClick={() => void submit(true)}>
+                Try submitting again
+              </Button>
+            </>
+          ) : (
+            <RocketLoader size="inline" still label="Submitting your answers" />
+          )}
+        </Overlay>
       )}
 
       {live && !locationOn && (
-        <div className={s.overlay} role="alertdialog" aria-labelledby="loc-h">
-          <div className={s.overlayCard}>
-            <MapPin aria-hidden size={32} />
-            <h1 id="loc-h" className={h.cardTitle}>
-              Turn location back on
-            </h1>
-            <p className={h.muted}>The test needs your location for the whole test. Allow it from the address bar, then check again. Your timer is still running.</p>
-            <Button onClick={checkLocation}>Check again</Button>
-          </div>
-        </div>
+        <Overlay id="loc" icon={<MapPin aria-hidden size={32} />} title="Turn location back on">
+          <p className={h.muted}>The test needs your location for the whole test. Allow it from the address bar, then check again. Your timer is still running.</p>
+          <Button autoFocus onClick={checkLocation}>
+            Check again
+          </Button>
+        </Overlay>
+      )}
+
+      {showWarning && (
+        <Overlay id="warn" icon={<AlertTriangle aria-hidden size={32} color="var(--ui-color-warning)" />} title={warning === max - 1 ? "Final warning" : `Warning ${warning} of ${max}`}>
+          <p className={h.muted}>
+            {warning === max - 1
+              ? "One more switch locks your test and you won't be able to write code until HR resumes it."
+              : `Leaving the test tab is recorded. ${max - warning!} more switches will lock your test.`}
+          </p>
+          <Button autoFocus onClick={() => setWarning(null)}>
+            I understand
+          </Button>
+        </Overlay>
       )}
 
       {live && locationOn && !fullscreen && (
-        <div className={s.overlay} role="alertdialog" aria-labelledby="fs-h">
-          <div className={s.overlayCard}>
-            <Maximize aria-hidden size={32} />
-            <h1 id="fs-h" className={h.cardTitle}>
-              Return to full screen
-            </h1>
-            <p className={h.muted}>The test must stay in full screen. Your timer is still running.</p>
-            <Button onClick={enterFullscreen}>Enter full screen</Button>
-          </div>
-        </div>
+        <Overlay id="fs" icon={<Maximize aria-hidden size={32} />} title="Return to full screen">
+          <p className={h.muted}>The test must stay in full screen. Your timer is still running.</p>
+          <Button autoFocus onClick={enterFullscreen}>
+            Enter full screen
+          </Button>
+        </Overlay>
       )}
     </>
+  );
+}
+
+interface McqBodyProps {
+  questions: AttemptQuestion[];
+  answers: AttemptState["savedAnswers"];
+  marked: string[];
+  current: number;
+  live: boolean;
+  onGo: (i: number) => void;
+  onChoose: (qid: string, option: number) => void;
+  onToggleMark: (qid: string) => void;
+  counts: { answered: number; marked: number; unanswered: number };
+  left: number;
+  canSubmit: boolean;
+  submitting: boolean;
+  onSubmit: () => void;
+}
+
+const pad = (n: number) => String(n).padStart(2, "0");
+function hms(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return { h: pad(Math.floor(total / 3600)), m: pad(Math.floor((total % 3600) / 60)), s: pad(total % 60) };
+}
+
+/** Multiple choice: a question navigator beside the current question. */
+function McqBody({ questions, answers, marked, current, live, onGo, onChoose, onToggleMark, counts, left, canSubmit, submitting, onSubmit }: McqBodyProps) {
+  const q = questions[current];
+  const [rough, setRough] = useState(""); // one shared scratchpad for every question; stays in this tab and is never sent to the server
+  const [visited, setVisited] = useState<Set<string>>(() => new Set());
+  if (q && !visited.has(q.id)) setVisited(new Set(visited).add(q.id)); // mark visited while rendering
+  if (!q)
+    return (
+      <div className={s.examBody} style={{ maxWidth: "48rem", marginInline: "auto" }}>
+        <section className={h.card}>
+          <h1 className={h.cardTitle}>No questions yet</h1>
+          <p className={h.muted}>HR hasn&apos;t added questions to this test.</p>
+        </section>
+      </div>
+    );
+  const stateOf = (id: string) => (marked.includes(id) ? "marked" : typeof answers[id] === "number" ? "answered" : visited.has(id) || id === q.id ? "visited" : "todo");
+  const stateLabel = { marked: "marked for review", answered: "answered", visited: "visited, not answered", todo: "not visited" } as const;
+  const isMarked = marked.includes(q.id);
+
+  const t = hms(left);
+  const isLast = current === questions.length - 1;
+
+  return (
+    <div className={s.mcq}>
+      <section className={s.mcqLeft} aria-labelledby="q-h">
+        <div className={s.mcqScroll} tabIndex={0}>
+          <p className={h.eyebrow} style={{ marginBottom: 8 }}>
+            Question {current + 1} of {questions.length} · {q.marks} mark{q.marks === 1 ? "" : "s"}
+          </p>
+          <h1 id="q-h" style={{ fontSize: "1.125rem", lineHeight: 1.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {q.body}
+          </h1>
+          <fieldset className={h.stackSm} style={{ marginTop: 24 }} disabled={!live}>
+            <legend className="sr-only">Options</legend>
+            {q.options.map((o, i) => (
+              <label key={i} className={s.option}>
+                <input type="radio" name={q.id} checked={answers[q.id] === i} onChange={() => onChoose(q.id, i)} />
+                <span style={{ overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>
+                  <span className={s.optionKey}>{String.fromCharCode(65 + i)}.</span> {o}
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        </div>
+        <div className={s.mcqActions}>
+          <Button variant="secondary" disabled={!live} aria-pressed={isMarked} onClick={() => onToggleMark(q.id)}>
+            {isMarked ? <CheckCircle2 aria-hidden size={16} style={{ marginRight: 4 }} /> : <Circle aria-hidden size={16} style={{ marginRight: 4 }} />}
+            {isMarked ? "Marked for review" : "Mark for review"}
+          </Button>
+          <span className={s.mcqSpacer} />
+          <Button variant="secondary" disabled={current === 0} onClick={() => onGo(current - 1)}>
+            Previous
+          </Button>
+          {isLast ? (
+            <Button variant="danger" disabled={!canSubmit} loading={submitting} onClick={onSubmit}>
+              Submit test
+            </Button>
+          ) : (
+            <Button onClick={() => onGo(current + 1)}>Next</Button>
+          )}
+        </div>
+      </section>
+
+      <aside className={s.mcqSide} aria-label="Question navigator">
+        <div className={s.mcqTimer}>
+          <p className={h.eyebrow}>Time left</p>
+          <div role="timer" aria-label={`Time left ${t.h}:${t.m}:${t.s}`} data-low={left < 5 * 60_000} className={s.mcqClock}>
+            <span><b>{t.h}</b><small>Hours</small></span>
+            <span><b>{t.m}</b><small>Minutes</small></span>
+            <span><b>{t.s}</b><small>Seconds</small></span>
+          </div>
+        </div>
+        <div className={s.mcqNav}>
+          <p className={h.eyebrow} style={{ marginBottom: 12 }}>
+            Questions
+          </p>
+          <div className={s.palette}>
+            {questions.map((x, i) => (
+              <button
+                key={x.id}
+                type="button"
+                className={s.paletteBtn}
+                data-state={i === current ? "current" : stateOf(x.id)}
+                aria-current={i === current ? "step" : undefined}
+                aria-label={`Question ${i + 1}, ${stateLabel[stateOf(x.id)]}`}
+                onClick={() => onGo(i)}
+              >
+                {i + 1}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={s.mcqRough}>
+          <label htmlFor="rough-work" className={h.eyebrow}>
+            Rough work <span style={{ textTransform: "none", letterSpacing: 0 }}>(not saved or marked)</span>
+          </label>
+          <textarea id="rough-work" className={s.mcqRoughArea} value={rough} onChange={(e) => setRough(e.target.value)} placeholder="Use this space for your rough work…" spellCheck={false} />
+        </div>
+        <div className={s.legend} aria-hidden>
+          <span className={s.legendItem} data-state="current">Current</span>
+          <span className={s.legendItem} data-state="answered">Answered ({counts.answered})</span>
+          <span className={s.legendItem} data-state="visited">Not answered</span>
+          <span className={s.legendItem} data-state="marked">Marked ({counts.marked})</span>
+          <span className={s.legendItem} data-state="todo">Not visited</span>
+        </div>
+      </aside>
+    </div>
   );
 }

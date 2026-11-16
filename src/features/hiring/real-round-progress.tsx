@@ -1,18 +1,21 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, Clock, RefreshCw, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Hourglass, PlayCircle, RefreshCw, ThumbsDown, ThumbsUp, Users } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getRoundProgress, type ProgressRow, type StepName } from "@/api/hiring";
 import { useBreadcrumbs } from "@/components/shell/breadcrumbs";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { LoadingLabel, Skeleton } from "@/components/ui/skeleton";
-import { EmptyState, ErrorState, NotFoundState } from "@/components/ui/states";
+import { RocketLoader } from "@/components/ui/rocket-loader";
+import { EmptyState, ErrorState, ForbiddenState, NotFoundState } from "@/components/ui/states";
 import { Table, Td, Th } from "@/components/ui/table";
-import { hire as h, StatCard } from "@/components/hire/ui";
+import { hire as h, RoundStatusBadge, StatCard } from "@/components/hire/ui";
 import { useAsync } from "@/features/papers/use-async";
 import { roundTitle } from "@/mock/data";
+import { countOutcomes, statusLabel, statusTone } from "./round-outcome";
+import { ResumeDialog } from "./resume-dialog";
 import type { Round } from "@/mock/types";
 
 const AUTO_MS = 10_000;
@@ -35,32 +38,54 @@ const tick = (v: boolean | null) => (v === null ? "—" : v ? "✓" : "✗");
 export function RealRoundProgress({ driveId, roundId }: { driveId: string; roundId: string }) {
   const { data, error, loading, reload } = useAsync(() => getRoundProgress(driveId, roundId), [driveId, roundId]);
   const [auto, setAuto] = useState(true);
+  const [resuming, setResuming] = useState<ProgressRow | null>(null);
+  const pending = data?.status === "pending"; // not open: nothing to watch, so no refresh
+  const title = data ? (roundTitle[data.type as Round["type"]] ?? data.type) : "Round";
   // Quiet refresh while the tab is visible; the table keeps showing the last data meanwhile.
   useEffect(() => {
-    if (!auto) return;
+    if (!auto || pending) return;
     const id = setInterval(() => document.visibilityState === "visible" && reload(), AUTO_MS);
     return () => clearInterval(id);
-  }, [auto, reload]);
-  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: "Drive", href: `/hr/drives/${driveId}` }, { label: "Round progress" }]);
+  }, [auto, pending, reload]);
+  useBreadcrumbs([{ label: "Drives", href: "/hr/drives" }, { label: "Drive", href: `/hr/drives/${driveId}` }, { label: title }]);
 
   if (error?.status === 404) return <NotFoundState title="Round not found" />;
+  if (error?.status === 403) return <ForbiddenState />;
   if (error) return <ErrorState message={error.message} onRetry={reload} />;
-  if (!data)
+  if (!data) return <RocketLoader label="Loading progress" />;
+
+  if (pending) {
     return (
-      <div className={h.stackSm}>
-        <LoadingLabel label="Loading progress" />
-        <Skeleton style={{ height: 80 }} />
-        <Skeleton style={{ height: 200 }} />
+      <div className={h.stack}>
+        <PageHeader title={title} description={<RoundStatusBadge status="pending" />} />
+        <section className={h.card} aria-labelledby="pending-h">
+          <h2 id="pending-h" className={h.row} style={{ fontWeight: 600 }}>
+            <Clock aria-hidden size={18} /> This round isn&apos;t open yet
+          </h2>
+          <p className={h.muted} style={{ marginTop: 8 }}>
+            It opens when you advance the round before it. Students who pass that round join here automatically and get an email to start.
+          </p>
+          <p className={h.small} style={{ marginTop: 8 }}>
+            {data.type === "coding"
+              ? "Set up the coding test below first: the round before can't be advanced until this test has questions."
+              : "There's nothing to set up here before it opens."}
+          </p>
+        </section>
       </div>
     );
+  }
 
   const rows = data.candidates;
   const count = (f: (r: ProgressRow) => boolean) => rows.filter(f).length;
+  const result = countOutcomes(rows.map((r) => r.status));
+  const isFinal = data.type === "final";
+  const canResume = data.status === "active"; // the API refuses resumes once the round has moved on
+  const pct = (n: number) => (result.total ? `${Math.round((n / result.total) * 100)}% of the round` : undefined);
   return (
     <div className={h.stack}>
       <PageHeader
-        title={roundTitle[data.type as Round["type"]] ?? data.type}
-        description={`Round progress · ${data.status}`}
+        title={title}
+        description={<RoundStatusBadge status={data.status as Round["status"]} />}
         actions={
           <span className={h.row}>
             <Button variant={auto ? "primary" : "secondary"} aria-pressed={auto} onClick={() => setAuto((a) => !a)}>
@@ -78,12 +103,21 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
         <StatCard label="Submitted" value={count((r) => r.attemptStatus === "submitted")} icon={CheckCircle2} />
         <StatCard label="Locked" value={count((r) => r.attemptStatus === "locked")} icon={AlertTriangle} />
       </div>
+      <section aria-label="Round result" className={h.stackSm}>
+        <h2 className={h.cardTitle}>Round result</h2>
+        <div className={h.grid4}>
+          <StatCard label="Selected for this round" value={result.total} icon={Users} hint="Invited from the previous round" />
+          <StatCard label={isFinal ? "Selected" : "Passed"} value={result.cleared} icon={ThumbsUp} hint={pct(result.cleared)} />
+          <StatCard label={isFinal ? "Rejected" : "Not passed"} value={result.notCleared} icon={ThumbsDown} hint={result.notCleared ? "Failed, rejected or absent" : pct(result.notCleared)} />
+          <StatCard label="Awaiting result" value={result.open} icon={Hourglass} hint={result.open ? "Not decided yet" : "Everyone is decided"} />
+        </div>
+      </section>
       <section className={h.card}>
         <h2 className={h.cardTitle} style={{ marginBottom: 16 }}>
           Candidates
         </h2>
         {rows.length === 0 ? (
-          <EmptyState title="No candidates in this round" description="Shortlist candidates to invite them." />
+          <EmptyState title="No candidates in this round" description="Students join when they're shortlisted (Round 1) or pass the round before this one." />
         ) : (
           <Table>
             <thead>
@@ -93,8 +127,12 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
                   <Th key={s.id}>{s.label}</Th>
                 ))}
                 <Th>Status</Th>
-                <Th>Tab switches</Th>
+                <Th>Tab switches (all time)</Th>
                 <Th>Marks</Th>
+                <Th>Result</Th>
+                <Th>
+                  <span className="sr-only">Actions</span>
+                </Th>
               </tr>
             </thead>
             <tbody>
@@ -103,16 +141,35 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
                 return (
                   <tr key={r.candidateId}>
                     <Td>
-                      {r.fullName} <span className={h.xs}>{r.studentId}</span>
+                      <Link href={`/hr/candidates/${r.candidateId}`} className={h.link}>
+                        {r.fullName}
+                      </Link>{" "}
+                      <span className={h.xs}>{r.studentId}</span>
                     </Td>
                     {STEPS.map((s) => (
                       <Td key={s.id} aria-label={`${s.label}: ${r.steps[s.id] === null ? "not tried" : r.steps[s.id] ? "done" : "failed"}`}>
                         {tick(r.steps[s.id])}
                       </Td>
                     ))}
-                    <Td>{st ? <Badge tone={st.tone}>{st.label}</Badge> : <span className={h.xs}>Not started</span>}</Td>
-                    <Td>{r.tabSwitches}</Td>
+                    <Td>
+                      <span className={h.row}>
+                        {st ? <Badge tone={st.tone}>{st.label}</Badge> : <span className={h.xs}>Not started</span>}
+                        {r.resumeCount > 0 && <Badge tone="info">Resumed ×{r.resumeCount}</Badge>}
+                      </span>
+                    </Td>
+                    {/* every switch ever made: it never drops after a resume, so it isn't the student's current count */}
+                    <Td>{r.resumeCount > 0 ? `${r.tabSwitches} total (resumed ×${r.resumeCount})` : r.tabSwitches}</Td>
                     <Td>{r.marks ?? "—"}</Td>
+                    <Td>
+                      <Badge tone={statusTone(r.status)}>{statusLabel(r.status)}</Badge>
+                    </Td>
+                    <Td>
+                      {canResume && r.attemptStatus === "locked" && r.attemptId && (
+                        <Button size="sm" variant="secondary" onClick={() => setResuming(r)} aria-label={`Resume ${r.fullName}'s test`}>
+                          <PlayCircle aria-hidden size={14} style={{ marginRight: 4 }} /> Resume
+                        </Button>
+                      )}
+                    </Td>
                   </tr>
                 );
               })}
@@ -120,6 +177,7 @@ export function RealRoundProgress({ driveId, roundId }: { driveId: string; round
           </Table>
         )}
       </section>
+      <ResumeDialog row={resuming} onClose={() => setResuming(null)} onDone={reload} />
     </div>
   );
 }

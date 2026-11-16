@@ -1,8 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/supabase", () => ({
-  supabase: { auth: { getSession: async () => ({ data: { session: null } }), signOut: async () => ({ error: null }) } },
-}));
+vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), getToken: () => null }));
 
 import { ApiError } from "./client";
 import { acceptDraft, aiStatus, createDraft, editQuestion, getDraft, listDrafts, sendPapers, setSelection } from "./papers";

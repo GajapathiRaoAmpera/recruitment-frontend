@@ -7,7 +7,10 @@ FROM node:22-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* is baked in at build time; .env.local is dockerignored, so set it here (real API, not the prototype)
+ENV NEXT_TELEMETRY_DISABLED=1 NEXT_PUBLIC_LIVE_API=true
+# where /api/v1 is proxied to; next.config.ts bakes it into the build (docker build --build-arg API_URL=https://...)
+ARG API_URL
 RUN npm run build
 
 FROM node:22-alpine

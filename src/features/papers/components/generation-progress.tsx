@@ -6,15 +6,18 @@ import { useEffect, useState } from "react";
 import { getDraft } from "@/api/papers";
 import { Progress, hire as h } from "@/components/hire/ui";
 import { Button } from "@/components/ui/button";
+import { RocketLoader } from "@/components/ui/rocket-loader";
+import { cn } from "@/lib/cn";
 import type { DraftDetail } from "@/features/papers/types";
 import s from "./papers.module.scss";
 
 export const POLL_MS = 2000;
 
+// RocketLoader adds the trailing "…".
 function stage(done: number, total: number) {
-  if (done === 0) return "Starting the AI models…";
-  if (done < total) return "The AI is writing the Technical questions for the role. You check the answers in the next step.";
-  return "Building the sample paper…";
+  if (done === 0) return "Getting ready for launch";
+  if (done < total) return "Writing questions. You check every answer in the next step";
+  return "Picking the best mix for the paper";
 }
 
 /**
@@ -72,15 +75,22 @@ export function GenerationProgress({ draft, onUpdate }: { draft: DraftDetail; on
   const { done, total } = draft.progress;
   const pct = total ? (done / total) * 100 : 0;
   return (
-    <div className={h.card}>
-      <div className={h.stackSm} aria-live="polite">
+    <div className={cn(h.card, s.launch)}>
+      <RocketLoader size="inline" label={stage(done, total)} className={s.launchRocket} />
+      <div className={s.launchBody}>
         <p className={s.counter}>
-          {done} / {total} <span className={h.small}>questions generated and checked</span>
+          {total ? (
+            <>
+              {done} / {total} <span className={h.small}>questions written</span>
+            </>
+          ) : (
+            <span className={h.small}>Preparing…</span>
+          )}
+          <span className={s.pct}>{Math.round(pct)}%</span>
         </p>
         <Progress value={pct} label="Generation progress" />
-        <p className={s.stage}>{stage(done, total)}</p>
-        {lost && <p className={h.xs}>Lost connection to the server — retrying…</p>}
-        <p className={h.xs}>You can leave this page; generation keeps running and the draft will be waiting under Paper builder.</p>
+        {lost && <p className={h.xs}>Lost connection to the server. Retrying…</p>}
+        <p className={h.xs}>You can leave this page. Generation keeps running, and the paper waits on the aptitude round&apos;s Round 1 card.</p>
       </div>
     </div>
   );

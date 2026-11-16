@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { exitFullscreen, useStudent } from "@/components/student/hooks";
 import s from "@/components/student/student.module.scss";
 import { useStore } from "@/mock/store";
+import { RocketLoader } from "@/components/ui/rocket-loader";
 
 const NAV = [
   { href: "/student", label: "My dashboard" },
@@ -20,8 +21,9 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { dispatch } = useStore();
   const { candidate, drive, real } = useStudent();
+  if (!candidate && !real) return <RocketLoader size="screen" label="Opening your dashboard" />;
   return (
-    <>
+    <div className={s.portal}>
       <header className={s.top}>
         <Link href="/student" aria-label="Student portal home">
           <Logo height={24} />
@@ -34,14 +36,12 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
           ))}
         </nav>
         <span className={s.spacer} />
-        {(candidate || real) && (
-          <div className={s.who}>
-            <p style={{ fontWeight: 500 }}>{candidate?.name ?? real?.fullName}</p>
-            <p style={{ color: "var(--ui-color-text-muted)", fontSize: "0.75rem" }}>
-              {candidate?.studentId ?? real?.studentId}{drive ? ` · ${drive.campus}` : ""}
-            </p>
-          </div>
-        )}
+        <div className={s.who}>
+          <p style={{ fontWeight: 500 }}>{candidate?.name ?? real?.fullName}</p>
+          <p style={{ color: "var(--ui-color-text-muted)", fontSize: "0.75rem" }}>
+            {candidate?.studentId ?? real?.studentId}{drive ? ` · ${drive.campus}` : ""}
+          </p>
+        </div>
         <Button
           variant="secondary"
           size="sm"
@@ -55,8 +55,8 @@ export default function StudentLayout({ children }: { children: ReactNode }) {
         </Button>
       </header>
       <main id="main" className={s.main}>
-        {candidate || real ? children : null}
+        {children}
       </main>
-    </>
+    </div>
   );
 }

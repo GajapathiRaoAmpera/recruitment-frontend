@@ -1,0 +1,178 @@
+// Student page: details list and progress charts, on top of hire.module.scss. Tokens only — no hex values.
+@use "@/styles/mixins" as *;
+
+/* Student details: one row per fact, label on the left, value on the right */
+.details {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.detailRow {
+  display: grid;
+  gap: sp(1) sp(4);
+  padding: sp(3) 0;
+  border-top: 1px solid var(--ui-color-border);
+  grid-template-columns: minmax(0, 1fr);
+  @include up(md) {
+    grid-template-columns: 260px minmax(0, 1fr);
+  }
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.detailLabel {
+  color: var(--ui-color-text-muted);
+}
+
+.detailValue {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+/* Charts */
+.chartBox {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: sp(2);
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.grid {
+  stroke: var(--ui-color-border);
+  stroke-width: 1;
+}
+
+.axis {
+  stroke: var(--ui-color-border-strong);
+  stroke-width: 1;
+}
+
+.tick {
+  font-size: 11px;
+  fill: var(--ui-color-text-muted);
+}
+
+.axisLabel {
+  font-size: 11px;
+  fill: var(--ui-color-text-muted);
+}
+
+.value {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--ui-color-text);
+}
+
+/* Fill colours by result — used by columns, journey segments and legend swatches */
+.cleared {
+  fill: var(--ui-color-success);
+  background: var(--ui-color-success);
+}
+
+.notCleared {
+  fill: var(--ui-color-danger);
+  background: var(--ui-color-danger);
+}
+
+.pending {
+  fill: var(--ui-color-primary);
+  background: var(--ui-color-primary);
+}
+
+.unreached {
+  fill: var(--ui-color-surface-muted);
+  background: var(--ui-color-surface-muted);
+  box-shadow: inset 0 0 0 1px var(--ui-color-border-strong);
+}
+
+.bar {
+  transition: opacity 120ms;
+  @include reduced-motion;
+}
+
+.barOn {
+  opacity: 0.8;
+}
+
+.tip {
+  position: absolute;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: sp(2) sp(3);
+  border: 1px solid var(--ui-color-border);
+  border-radius: 8px;
+  background: var(--ui-color-surface);
+  box-shadow: 0 4px 14px rgb(5 5 5 / 0.12);
+  font-size: 0.8125rem;
+  color: var(--ui-color-text-muted);
+  pointer-events: none;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  strong {
+    font-size: 1rem;
+    color: var(--ui-color-text);
+  }
+}
+
+/* Journey: one segment per round with a 2px surface gap */
+.journey {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: sp(1);
+  min-width: 0;
+}
+
+.seg {
+  display: block;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.stepName {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.stepState {
+  font-size: 0.75rem;
+  color: var(--ui-color-text-muted);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: sp(2) sp(4);
+  margin: sp(3) 0 0;
+  font-size: 0.8125rem;
+  color: var(--ui-color-text-muted);
+}
+
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: sp(1);
+  border-radius: 3px;
+}
