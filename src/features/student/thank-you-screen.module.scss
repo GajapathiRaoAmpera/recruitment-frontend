@@ -112,10 +112,14 @@
 .step {
   display: grid;
   grid-template-columns: sp(7) 1fr;
-  align-items: center;
+  align-items: start; // the number lines up with the first line when the text wraps
   gap: sp(3);
   @include text(sm);
   color: var(--ui-color-text);
+}
+
+.stepText {
+  padding-top: sp(1); // centres the 20px line on the 28px number
 }
 
 .num {

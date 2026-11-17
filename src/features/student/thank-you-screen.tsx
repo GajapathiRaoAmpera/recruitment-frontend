@@ -88,7 +88,7 @@ export function ThankYouScreen({ name, roundType, roundTitle, timeUp = false, re
                     <span aria-hidden className={s.num}>
                       {i + 1}
                     </span>
-                    <span>{step}</span>
+                    <span className={s.stepText}>{step}</span>
                   </li>
                 ))}
               </ol>
