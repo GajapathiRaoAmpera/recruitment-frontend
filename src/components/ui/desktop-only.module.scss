@@ -1,0 +1,8 @@
+@use "@/styles/mixins" as *;
+
+.wrap {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: sp(4);
+}
