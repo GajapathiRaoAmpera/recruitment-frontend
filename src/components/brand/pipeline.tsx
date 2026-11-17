@@ -24,7 +24,20 @@ const SKIN = ["#ffdbac", "#f1c27d", "#e0ac69", "#c68642", "#a0663d", "#8d5524"];
 const HAIR = ["#1b1b1b", "#2b1d14", "#3b2a1e", "#5a3825", "#8a6a4a"];
 const SHIRT = ["#ffffff", "#4a6fa5", "#8fb4d9", "#d9d4c7", "#6b8e6b", "#c97b63", "#8070b4", "#e8e2f0"];
 const PANTS = ["#2b2f3a", "#1f2a44", "#4a4a4a", "#6b5b45", "#3a3f4b"];
+// Girls: a knee-length kurta over leggings. No magenta here: magenta is reserved for hired candidates.
+const KURTA = ["#e07a5f", "#f2cc8f", "#81b29a", "#4a6fa5", "#f4a261", "#ffffff", "#b5838d", "#8fb4d9"];
+const LEGGINGS = ["#2b2f3a", "#f5f0e6", "#1f2a44", "#d9d4c7", "#6b5b45"];
 const pick = (a: string[]) => a[Math.floor(Math.random() * a.length)]!;
+
+/** A random everyday look; about half the crowd are girls. */
+const lookFor = (girl: boolean): Look => ({
+  skin: pick(SKIN),
+  hair: pick(HAIR),
+  shirt: pick(girl ? KURTA : SHIRT),
+  pants: pick(girl ? LEGGINGS : PANTS),
+  girl,
+  hairStyle: girl ? (Math.random() < 0.5 ? "ponytail" : "long") : "short",
+});
 
 /** Darken a #rrggbb colour; used for far-side limbs so depth reads without transparency. */
 const shade = (hex: string, f: number) => {
@@ -38,7 +51,8 @@ interface Look {
   hair: string;
   shirt: string;
   pants: string;
-  longHair: boolean;
+  girl: boolean;
+  hairStyle: "short" | "long" | "ponytail";
 }
 
 interface Walker {
@@ -96,6 +110,8 @@ export function Pipeline({ className }: { className?: string }) {
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Keep everyone at the same spot relative to the gates when the width changes (layout settling, window resize).
+      if (w && canvas.clientWidth) for (const p of walkers) p.x *= canvas.clientWidth / w;
       w = canvas.clientWidth;
       h = canvas.clientHeight;
       canvas.width = Math.round(w * dpr);
@@ -110,7 +126,7 @@ export function Pipeline({ className }: { className?: string }) {
       const crowded = walkers.some((p) => p.row === row && p.state !== "out" && p.x < H * 0.9);
       if (crowded) return;
       walkers.push({ row, x: -H * 0.4, speed: H * (0.85 + Math.random() * 0.15), phase: Math.random() * 6.28, gate: 0, state: "walk", alpha: 1,
-        look: { skin: pick(SKIN), hair: pick(HAIR), shirt: pick(SHIRT), pants: pick(PANTS), longHair: Math.random() < 0.4 } });
+        look: lookFor(Math.random() < 0.5) });
     };
 
     const step = (dt: number) => {
@@ -208,21 +224,36 @@ export function Pipeline({ className }: { className?: string }) {
       leg(phase + Math.PI, 0.72);
       arm(phase + Math.PI, 0.72);
 
-      // Torso: a shirt that is broader at the shoulders, tucked in at the hips.
+      // A kurta covers the top of both legs, so the near leg goes under it.
+      if (look.girl) leg(phase, 1);
+
       ctx.fillStyle = look.shirt;
       ctx.beginPath();
-      ctx.moveTo(x - H * 0.085, shoulder);
-      ctx.lineTo(x + H * 0.085, shoulder);
-      ctx.lineTo(x + H * 0.065, hip + H * 0.02);
-      ctx.lineTo(x - H * 0.065, hip + H * 0.02);
+      if (look.girl) {
+        // Kurta: narrower shoulders, in at the waist, flaring to just above the knee.
+        ctx.moveTo(x - H * 0.075, shoulder);
+        ctx.lineTo(x + H * 0.075, shoulder);
+        ctx.lineTo(x + H * 0.058, hip - H * 0.06);
+        ctx.lineTo(x + H * 0.1, hip + H * 0.19);
+        ctx.lineTo(x - H * 0.1, hip + H * 0.19);
+        ctx.lineTo(x - H * 0.058, hip - H * 0.06);
+      } else {
+        // Shirt: broader at the shoulders, tucked in at the hips.
+        ctx.moveTo(x - H * 0.085, shoulder);
+        ctx.lineTo(x + H * 0.085, shoulder);
+        ctx.lineTo(x + H * 0.065, hip + H * 0.02);
+        ctx.lineTo(x - H * 0.065, hip + H * 0.02);
+      }
       ctx.closePath();
       ctx.fill();
       ctx.lineWidth = H * 0.03;
       ctx.strokeStyle = look.shirt;
       ctx.stroke(); // rounds the shoulders
-      // Belt line.
-      ctx.fillStyle = shade(look.pants, 0.8);
-      ctx.fillRect(x - H * 0.068, hip - H * 0.005, H * 0.136, H * 0.025);
+      if (!look.girl) {
+        // Belt line.
+        ctx.fillStyle = shade(look.pants, 0.8);
+        ctx.fillRect(x - H * 0.068, hip - H * 0.005, H * 0.136, H * 0.025);
+      }
 
       // Neck, head, hair.
       const hx = x + H * 0.015 * face;
@@ -235,9 +266,16 @@ export function Pipeline({ className }: { className?: string }) {
       ctx.lineTo(hx, hy + r * 0.8);
       ctx.stroke();
       ctx.fillStyle = look.hair;
-      if (look.longHair) {
+      if (look.hairStyle === "long") {
+        // Hangs down the back only; any further forward and it reads as a beard under the chin.
         ctx.beginPath();
-        ctx.ellipse(hx - r * 0.35 * face, hy + r * 0.5, r * 0.8, r * 1.15, 0, 0, 6.28);
+        ctx.ellipse(hx - r * 0.62 * face, hy + r * 0.6, r * 0.6, r * 1.15, 0.12 * face, 0, 6.28);
+        ctx.fill();
+      } else if (look.hairStyle === "ponytail") {
+        // Tied at the back of the head, swinging a little with each step.
+        const swing = Math.sin(phase * 2) * 0.18;
+        ctx.beginPath();
+        ctx.ellipse(hx - r * 1.05 * face, hy + r * 0.45, r * 0.38, r * 0.9, (0.45 + swing) * face, 0, 6.28);
         ctx.fill();
       }
       ctx.fillStyle = look.skin;
@@ -250,7 +288,7 @@ export function Pipeline({ className }: { className?: string }) {
       ctx.fill();
 
       // Near side limbs.
-      leg(phase, 1);
+      if (!look.girl) leg(phase, 1);
       arm(phase, 1);
     };
 
@@ -297,9 +335,20 @@ export function Pipeline({ className }: { className?: string }) {
 
     const paintCounts = () => counts.forEach((n, i) => countRefs.current[i] && (countRefs.current[i]!.textContent = String(n)));
 
+    // Warm up offscreen once the canvas has a real width, so the first frame shows people mid-walk, not an empty stage.
+    let warm = false;
+    const warmUp = () => {
+      if (warm || !w) return;
+      warm = true;
+      for (let i = 0; i < 400; i++) step(0.05); // ~20s: long enough for people to reach the final gate
+      paintCounts();
+    };
+
     resize();
+    warmUp();
     const ro = new ResizeObserver(() => {
       resize();
+      warmUp();
       draw();
     });
     ro.observe(canvas);

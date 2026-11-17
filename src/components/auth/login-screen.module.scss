@@ -4,7 +4,11 @@
 .page {
   display: grid;
   min-height: 100dvh;
-  background: var(--ui-color-sidebar-bg);
+  // Navy stage lit from behind the card (magenta) and from the floor (lavender), so the page has depth, not a flat fill.
+  background:
+    radial-gradient(42rem 34rem at 88% 50%, alpha(var(--ampera-magenta-600), 26%), transparent 70%),
+    radial-gradient(56rem 28rem at 25% 105%, alpha(var(--ampera-lavender-500), 20%), transparent 70%),
+    var(--ui-color-sidebar-bg);
   color: var(--ui-color-sidebar-fg);
   grid-template-rows: auto auto 1fr;
   @include up(lg) {
@@ -16,11 +20,13 @@
 }
 
 .brand {
+  order: -2; // small screens: logo, then the form, then the pipeline story; signing in is the job
   padding: sp(6) sp(4) 0;
   @include up(sm) {
     padding: sp(8) sp(8) 0;
   }
   @include up(lg) {
+    order: 0;
     grid-column: 1 / -1;
     padding: sp(10) sp(12) 0;
   }
@@ -30,13 +36,13 @@
   display: flex;
   min-width: 0;
   flex-direction: column;
-  justify-content: center;
   gap: sp(8);
   padding: sp(6) sp(4) sp(4);
   @include up(sm) {
     padding: sp(8);
   }
   @include up(lg) {
+    justify-content: center;
     padding: 0 0 sp(10) sp(12);
   }
 }
@@ -66,6 +72,7 @@
 }
 
 .side {
+  order: -1;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -75,47 +82,77 @@
     padding-inline: sp(8);
   }
   @include up(lg) {
+    order: 0;
     padding: 0 0 sp(10);
   }
 }
 
 .card {
+  // Solid white, not glass: the form is the one thing to read here, so it gets full contrast on the navy stage.
   border-radius: var(--ui-radius-card);
-  @include glass(true);
+  background: var(--ui-color-surface);
   color: var(--ui-color-text);
   padding: sp(8) sp(6);
-  // glass highlight + the deep lift the card needs on the navy stage
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 24px 60px alpha(var(--ampera-ink-950), 35%);
+  box-shadow:
+    0 0 0 1px alpha(var(--ampera-cream), 12%),
+    0 32px 80px alpha(var(--ampera-ink-950), 45%);
   @include up(sm) {
-    padding: sp(10) sp(8);
+    padding: sp(10);
   }
 }
 
 .title {
-  @include text(xl);
-  font-weight: 400;
+  @include text(2xl);
+  font-weight: 500;
+  letter-spacing: -0.015em;
 }
 
 .lead {
-  margin-top: sp(1);
+  margin-top: sp(2);
   @include text(sm);
   color: var(--ui-color-text-muted);
 }
 
 .form {
-  margin-top: sp(6);
+  margin-top: sp(8);
   display: flex;
   flex-direction: column;
-  gap: sp(4);
+  gap: sp(5);
 }
 
+.submit {
+  margin-top: sp(2);
+}
+
+// Prototype note under the form, with a one-click fill so demos never need typed credentials.
 .demo {
-  @include text(xs);
-  color: var(--ui-color-sidebar-muted);
-  line-height: 1.6;
-  strong {
-    font-weight: 500;
-    color: var(--ui-color-sidebar-fg);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: sp(1);
+  margin-top: sp(6);
+  padding-top: sp(5);
+  border-top: 1px solid var(--ui-color-border);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.demoFill {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--ui-color-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  @include hover {
+    color: var(--ui-color-primary-hover);
+  }
+  @include focus-ring;
+  &:focus-visible {
+    border-radius: 2px;
   }
 }
 
