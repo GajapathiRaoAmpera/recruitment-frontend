@@ -89,7 +89,7 @@ export function RealStudentHome({ student }: { student: StudentSession }) {
           </div>
         )}
         {status === "loading" ? (
-          <RocketLoader size="inline" still label="Loading your rounds" />
+          <RocketLoader size="inline" still center label="Loading your rounds" />
         ) : rounds.length === 0 ? (
           <EmptyState
             title="No open rounds"

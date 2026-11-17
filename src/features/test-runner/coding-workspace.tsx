@@ -181,7 +181,7 @@ export function CodingWorkspace({ token, attempt, live, submitted, onClosed }: P
       </main>
     );
   // One loader for the whole body until the drafts are in; still, because student test screens never animate.
-  if (!docs) return <RocketLoader still label="Loading your code" />;
+  if (!docs) return <RocketLoader still center label="Loading your code" />;
 
   const p = questions[Math.min(current, questions.length - 1)]!;
   const doc = docs[p.id]!;

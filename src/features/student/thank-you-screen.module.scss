@@ -1,0 +1,144 @@
+@use "@/styles/mixins" as *;
+
+// Calm, finished: the app's soft brand gradient behind one white card.
+.page {
+  display: flex;
+  min-height: 100dvh;
+  flex-direction: column;
+  background: var(--ui-color-bg-gradient), var(--ui-color-bg);
+}
+
+.body {
+  display: grid;
+  flex: 1;
+  place-items: center;
+  padding: sp(10) sp(4) sp(12);
+}
+
+.card {
+  width: 100%;
+  max-width: 34rem;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-md);
+  padding: sp(10) sp(6);
+  text-align: center;
+  @include up(sm) {
+    padding: sp(12) sp(10);
+  }
+}
+
+// The one moment of motion: the tick draws itself once. Reduced motion shows it already drawn.
+.mark {
+  display: block;
+  width: sp(20);
+  height: sp(20);
+  margin-inline: auto;
+}
+
+.disc {
+  fill: var(--ui-color-success-subtle);
+}
+
+.ring {
+  fill: none;
+  stroke: var(--ui-color-success);
+  stroke-width: 2.5;
+}
+
+.check {
+  fill: none;
+  stroke: var(--ui-color-success);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 0;
+  animation: draw 480ms var(--ui-ease-out) 180ms both;
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 40;
+  }
+}
+
+.title {
+  margin-top: sp(6);
+  font-size: 2rem;
+  line-height: 1.15;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  &:focus {
+    outline: none; // focused by script for screen readers, never by keyboard
+  }
+}
+
+.lead {
+  margin-top: sp(3);
+  @include text(body);
+  color: var(--ui-color-text);
+}
+
+.meta {
+  margin-top: sp(1);
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}
+
+.next {
+  margin-top: sp(8);
+  border-top: 1px solid var(--ui-color-border);
+  padding-top: sp(6);
+  text-align: left;
+}
+
+.nextTitle {
+  @include text(base);
+  font-weight: 500;
+}
+
+.steps {
+  display: grid;
+  gap: sp(3);
+  margin-top: sp(4);
+  list-style: none;
+}
+
+.step {
+  display: grid;
+  grid-template-columns: sp(7) 1fr;
+  align-items: center;
+  gap: sp(3);
+  @include text(sm);
+  color: var(--ui-color-text);
+}
+
+.num {
+  display: grid;
+  width: sp(7);
+  height: sp(7);
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ui-color-primary-subtle);
+  color: var(--ui-color-primary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: sp(3);
+  margin-top: sp(8);
+}
+
+.hint {
+  @include text(sm);
+  color: var(--ui-color-text-muted);
+}

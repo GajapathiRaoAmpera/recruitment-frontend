@@ -64,6 +64,8 @@ interface RocketLoaderProps {
   size?: "screen" | "page" | "inline";
   /** No motion at all: inside the student test screens (no animation there by rule). */
   still?: boolean;
+  /** Candidate screens: centre in the slot, even inside a flex row. Staff screens keep the default placement. */
+  center?: boolean;
   className?: string;
 }
 
@@ -76,6 +78,7 @@ export function RocketLoader({
   label = "Loading",
   size = "page",
   still = false,
+  center = false,
   className,
 }: RocketLoaderProps) {
   const gate = useContext(GateContext);
@@ -90,7 +93,7 @@ export function RocketLoader({
     <div
       role="status"
       aria-live="polite"
-      className={cn(s.loader, s[size], still && s.still, className)}
+      className={cn(s.loader, s[size], still && s.still, center && s.center, className)}
     >
       <svg viewBox="0 0 120 120" className={s.stage} aria-hidden>
         <defs>

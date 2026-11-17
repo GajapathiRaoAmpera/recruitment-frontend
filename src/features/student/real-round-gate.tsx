@@ -33,6 +33,6 @@ export function RealRoundGate({ student, roundId }: { student: StudentSession; r
     );
   // A live (or unknown) cached status waits for the server before opening the camera. If the check fails, the
   // cached list stands and POST /entry/start has the final word.
-  if (fresh.status === "loading") return <RocketLoader label="Checking your test" />;
+  if (fresh.status === "loading") return <RocketLoader center label="Checking your test" />;
   return <RealSystemCheck student={{ ...student, rounds: fresh.rounds }} roundId={roundId} />;
 }

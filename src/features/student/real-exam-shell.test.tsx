@@ -171,7 +171,7 @@ describe("RealExamShell (server-driven)", () => {
 });
 
 describe("Submit and Leave", () => {
-  it("Submit warns about unanswered questions, then makes the answers final and shows the recorded screen", async () => {
+  it("Submit warns about unanswered questions, then makes the answers final and shows the thank-you page", async () => {
     render(<RealExamShell student={student} roundId="r1" />);
     (await screen.findByRole("radio", { name: /B\. 4/ })).click();
     fireEvent.click(await screen.findByRole("button", { name: "Next" }));
@@ -179,11 +179,13 @@ describe("Submit and Leave", () => {
     expect(await screen.findByText(/1 question\(s\) are unanswered/)).toBeInTheDocument();
     expect(api.submitAttempt).not.toHaveBeenCalled(); // not until confirmed
     fireEvent.click(screen.getAllByRole("button", { name: "Submit test" }).at(-1)!);
-    expect(await screen.findByRole("alertdialog", { name: "Test recorded" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Thank you, Asha" })).toBeInTheDocument();
     expect(api.submitAttempt).toHaveBeenCalledWith("ATT");
-    // AC-7/F4: one shared "recorded" screen: no marks, no score, no time, no way back into the test
-    expect(screen.getByText("Your test has been recorded. Our team will review it and contact you soon.")).toBeInTheDocument();
+    // AC-7/F4: one shared thank-you page: no marks, no score, no time taken, no way back into the test
+    expect(screen.getByText("Your answers are submitted and saved.")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "What happens next" })).toBeInTheDocument();
     expect(screen.queryByText(/Time taken|marks|score/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument(); // the test itself is gone
     expect(screen.getByRole("link", { name: "Back to dashboard" })).toHaveAttribute("href", "/student");
   });
 
@@ -204,16 +206,17 @@ describe("Submit and Leave", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Submit test" }));
     fireEvent.click(screen.getAllByRole("button", { name: "Submit test" }).at(-1)!);
     expect(await screen.findByText(/Can't reach the server/)).toBeInTheDocument();
-    expect(screen.queryByRole("alertdialog", { name: "Test recorded" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: /Thank you/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getAllByRole("button", { name: "Submit test" }).at(-1)!);
-    expect(await screen.findByRole("alertdialog", { name: "Test recorded" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Thank you, Asha" })).toBeInTheDocument();
   });
 
   it("submits by itself when time runs out", async () => {
     api.getAttempt.mockResolvedValue(state({ status: "expired" }));
     render(<RealExamShell student={student} roundId="r1" />);
     await waitFor(() => expect(api.submitAttempt).toHaveBeenCalledWith("ATT"));
-    expect(await screen.findByRole("alertdialog", { name: "Test recorded" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Thank you, Asha" })).toBeInTheDocument();
+    expect(screen.getByText("Time ran out, so your answers were submitted automatically.")).toBeInTheDocument();
   });
 
   it("can't submit once locked, and a submitted attempt opens on the done screen", async () => {
@@ -224,7 +227,7 @@ describe("Submit and Leave", () => {
     unmount();
     api.getAttempt.mockResolvedValue(state({ status: "submitted" }));
     render(<RealExamShell student={student} roundId="r1" />);
-    expect(await screen.findByRole("alertdialog", { name: "Test recorded" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Thank you, Asha" })).toBeInTheDocument();
     expect(api.submitAttempt).not.toHaveBeenCalled();
   });
 

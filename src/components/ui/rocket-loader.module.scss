@@ -41,6 +41,14 @@
   }
 }
 
+// Candidate screens: fill the slot and sit in its middle, even inside a flex row (the exam frames lay out their body as a row).
+// After .inline so it wins at the same specificity.
+.center {
+  flex: 1 1 auto;
+  width: 100%;
+  justify-content: center;
+}
+
 .stage {
   display: block;
   height: auto;

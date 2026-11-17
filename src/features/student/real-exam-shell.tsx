@@ -25,6 +25,7 @@ import { roundTitle } from "@/mock/data";
 import type { Round } from "@/mock/types";
 import { CodingWorkspace } from "@/features/test-runner/coding-workspace";
 import { AttemptClosedOverlay, AttemptClosedScreen, CLOSED_BY_CODE } from "./attempt-closed";
+import { ThankYouScreen } from "./thank-you-screen";
 
 const RETRY_MS = 5000;
 
@@ -82,7 +83,7 @@ export function RealExamShell({ student, roundId }: { student: StudentSession; r
     return (
       <>
         {!checked && <StartCheck student={student} roundId={roundId} busy={checking} setBusy={setChecking} onPass={() => setChecked(true)} />}
-        {(checked || checking) && <RocketLoader label={checked ? "Starting your test" : "Checking location and full screen"} />}
+        {(checked || checking) && <RocketLoader center label={checked ? "Starting your test" : "Checking location and full screen"} />}
       </>
     );
   // Keyed by attempt: a new round is a new attempt, so no timer, count or draft state carries over (AC-6).
@@ -120,7 +121,7 @@ function WaitingRoom({ onRetry }: { onRetry: () => void }) {
             ))}
           </ul>
         </div>
-        <RocketLoader size="inline" still label="Waiting for the exam to start" />
+        <RocketLoader size="inline" still center label="Waiting for the exam to start" />
         <Button asChild variant="secondary">
           <Link href="/student">Back to dashboard</Link>
         </Button>
@@ -387,6 +388,10 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
   // Screen readers don't read a ticking role="timer", so say 10, 5 and 1 minute left once each.
   const minsLeft = live ? [1, 5, 10].find((m) => left > 0 && left <= m * 60_000) : undefined;
 
+  // The round is over: a page of its own replaces the test, so nothing of the test stays on screen.
+  if (submitted)
+    return <ThankYouScreen name={student.fullName} roundType={type} roundTitle={roundTitle[type as Round["type"]] ?? type} timeUp={expired} />;
+
   return (
     <>
       {/* Spoken only: save problems and time warnings. Routine "Saving…" / "Saved" would interrupt every answer. */}
@@ -475,8 +480,6 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
         }}
       />
 
-      {submitted && <AttemptClosedOverlay kind="submitted" entryToken={student.entryToken} roundId={roundId} />}
-
       {locked && !submitted && (
         <AttemptClosedOverlay
           kind="locked"
@@ -496,7 +499,7 @@ function Shell({ student, roundId, type, token, initial }: { student: StudentSes
               </Button>
             </>
           ) : (
-            <RocketLoader size="inline" still label="Submitting your answers" />
+            <RocketLoader size="inline" still center label="Submitting your answers" />
           )}
         </Overlay>
       )}

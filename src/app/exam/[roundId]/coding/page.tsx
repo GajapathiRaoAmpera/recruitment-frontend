@@ -77,11 +77,6 @@ function Runner({ roundId }: { roundId: string }) {
         timeTakenMin: minutesSince(draft.startedAt), passedCases: passed, totalCases: problems.length * TOTAL_CASES,
       });
     }
-    try {
-      window.sessionStorage.setItem(`done:${roundId}`, JSON.stringify(problems.map((x) => ({ title: x.title, passed: draft.data.passed[x.id] ?? 0 }))));
-    } catch {
-      /* summary is optional */
-    }
     clear();
     exitFullscreen();
     router.push(`/exam/${roundId}/done`);
