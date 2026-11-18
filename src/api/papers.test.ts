@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 vi.mock("@/lib/auth", async (orig) => ({ ...(await orig<typeof import("@/lib/auth")>()), getToken: () => null }));
 
 import { ApiError } from "./client";
-import { acceptDraft, aiStatus, createDraft, editQuestion, getDraft, listDrafts, sendPapers, setSelection } from "./papers";
+import { acceptDraft, aiStatus, createDraft, editQuestion, getDraft, listDrafts, regenerateQuestion, sendPapers, setSelection } from "./papers";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -71,6 +71,12 @@ it("maps detail, edits, accept, send and the simple calls", async () => {
   await editQuestion("d-1", "q1", { text: "t", options: ["a", "b", "c", "d"], answer: 0, why: "w" });
   expect(call(patch)[0]).toBe("/api/v1/papers/drafts/d-1/questions/q1");
   expect(call(patch)[1].method).toBe("PATCH");
+
+  const regen = stub({ ...wireDraft, status: "draft", checks: [], sample: [], overlap: null, issues: [], edited_count: 0 });
+  await regenerateQuestion("d-1", "q1", "too easy");
+  expect(call(regen)[0]).toBe("/api/v1/papers/drafts/d-1/questions/q1/regenerate");
+  expect(call(regen)[1].method).toBe("POST");
+  expect(JSON.parse(call(regen)[1].body as string)).toEqual({ reason: "too easy" });
 
   const acc = stub({ ...wireDraft, status: "accepted", accepted_at: "y" });
   expect((await acceptDraft("d-1")).acceptedAt).toBe("y");

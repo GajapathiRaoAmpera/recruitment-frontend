@@ -14,11 +14,13 @@ import { PaperView } from "./paper-view";
 import { PoolPicker } from "./pool-picker";
 import s from "./papers.module.scss";
 import { QuestionEditDialog } from "./question-edit-dialog";
+import { QuestionRegenerateDialog } from "./question-regenerate-dialog";
 
 /** Step 3: integrity checks + one editable sample paper + accept. Accepted drafts are read-only. */
 export function ReviewStep({ draft, onChange }: { draft: DraftDetail; onChange: (d: DraftDetail) => void }) {
   const toast = useToast();
   const [editing, setEditing] = useState<KeyItem>();
+  const [regenerating, setRegenerating] = useState<KeyItem>();
   const [confirming, setConfirming] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [acceptError, setAcceptError] = useState<string>();
@@ -52,7 +54,7 @@ export function ReviewStep({ draft, onChange }: { draft: DraftDetail; onChange: 
         </Notice>
       )}
 
-      {draft.pool.length > 0 && <PoolPicker draft={draft} onChange={onChange} onEdit={editable ? setEditing : undefined} onDirtyChange={setUnsaved} />}
+      {draft.pool.length > 0 && <PoolPicker draft={draft} onChange={onChange} onEdit={editable ? setEditing : undefined} onRegenerate={editable ? setRegenerating : undefined} onDirtyChange={setUnsaved} />}
 
       <section aria-labelledby="review-sample">
         <h2 id="review-sample" className={h.cardTitle} style={{ marginBottom: "0.75rem" }}>
@@ -62,7 +64,7 @@ export function ReviewStep({ draft, onChange }: { draft: DraftDetail; onChange: 
           {draft.sample.length} questions: one example of what a student receives.{" "}
           {(draft.selectedCount ?? draft.poolSize) > draft.sample.length ? "Each student gets their own mix from the selected questions." : "Every student gets these questions."}
         </p>
-        <PaperView items={draft.sample} onEdit={editable ? setEditing : undefined} />
+        <PaperView items={draft.sample} onEdit={editable ? setEditing : undefined} onRegenerate={editable ? setRegenerating : undefined} />
       </section>
 
       <section className={h.card} aria-labelledby="review-checks">
@@ -98,6 +100,7 @@ export function ReviewStep({ draft, onChange }: { draft: DraftDetail; onChange: 
       )}
 
       {editing && <QuestionEditDialog draftId={draft.id} question={editing} onClose={() => setEditing(undefined)} onSaved={onChange} />}
+      {regenerating && <QuestionRegenerateDialog draftId={draft.id} question={regenerating} onClose={() => setRegenerating(undefined)} onSaved={onChange} />}
       <ConfirmDialog
         open={confirming}
         onOpenChange={(o) => {

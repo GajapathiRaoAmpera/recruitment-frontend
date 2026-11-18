@@ -75,6 +75,7 @@ export function InterviewCheck({ info, onStart }: { info: InterviewStart; onStar
       <ul className={s.facts}>
         <li>A voice conversation with an AI interviewer, about {info.durationMin} minutes.</li>
         <li>HR can watch your camera live. Nothing is recorded.</li>
+        <li>Use headphones and a quiet room, so the interviewer hears only you.</li>
       </ul>
 
       <ol className={`${h.card} ${s.checklist}`} aria-label="Setup check">

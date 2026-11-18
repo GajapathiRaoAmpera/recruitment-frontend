@@ -33,7 +33,7 @@ export interface InterviewSession {
   protocol: { systemTag: string; typedPrefix: string; closingPhrase: string };
 }
 
-export type TurnKind = "spoken" | "typed" | "question" | "flag"; // flag: the interviewer's advisory note for HR
+export type TurnKind = "spoken" | "typed" | "question";
 export interface Turn {
   role: "ai" | "candidate";
   kind?: TurnKind;

@@ -12,14 +12,19 @@ import { useToast } from "@/components/ui/toast";
 import type { DraftDetail, KeyItem, QuestionEdit } from "@/features/papers/types";
 import { letter } from "./question-card";
 
-/** Mirrors the backend QuestionEdit validator so most mistakes are caught before the round trip. */
-export function validateEdit(q: QuestionEdit): string | undefined {
+/** Mirrors the backend QuestionEdit validator so most mistakes are caught before the round trip.
+ *  With `original`, also refuses a changed question that still carries its old explanation. */
+export function validateEdit(q: QuestionEdit, original?: QuestionEdit): string | undefined {
   const opts = q.options.map((o) => o.trim());
   if (!q.text.trim()) return "Enter the question text.";
   if (opts.some((o) => !o)) return "Fill in all four options.";
   if (new Set(opts.map((o) => o.toLowerCase())).size !== opts.length) return "Each option must be different.";
   if (!(q.answer >= 0 && q.answer < opts.length)) return "Pick the correct answer.";
   if (!q.why.trim()) return "Explain why the answer is correct.";
+  if (original && q.why.trim() === original.why.trim()) {
+    const changed = q.text.trim() !== original.text.trim() || q.answer !== original.answer || opts.some((o, i) => o !== original.options[i]?.trim());
+    if (changed) return "You changed the question. Update \"Why this is correct\" to match.";
+  }
 }
 
 interface Props {
@@ -42,7 +47,7 @@ export function QuestionEditDialog({ draftId, question, onClose, onSaved, save: 
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
-    const invalid = validateEdit(q);
+    const invalid = validateEdit(q, question);
     if (invalid) return setError(invalid);
     setSaving(true);
     setError(undefined);
@@ -100,7 +105,7 @@ export function QuestionEditDialog({ draftId, question, onClose, onSaved, save: 
               ))}
             </Select>
           </Field>
-          <Field label="Why this is correct" required>
+          <Field label="Why this is correct" required hint="If you change the question, options or answer, update this to match.">
             <Textarea rows={4} value={q.why} onChange={(e) => setQ({ ...q, why: e.target.value })} />
           </Field>
         </div>

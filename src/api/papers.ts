@@ -16,7 +16,10 @@ export const getDraft = async (id: string) => fromWire<DraftDetail>(await api<un
 export const editQuestion = async (id: string, questionId: string, body: QuestionEdit) =>
   fromWire<DraftDetail>(await api<unknown>(`${draftPath(id)}/questions/${encodeURIComponent(questionId)}`, json("PATCH", body)));
 
-export const setSelection = async (id: string, selectedIds: string[]) =>
+export const regenerateQuestion = async (id: string, questionId: string, reason?: string) =>
+  fromWire<DraftDetail>(await api<unknown>(`${draftPath(id)}/questions/${encodeURIComponent(questionId)}/regenerate`, json("POST", { reason })));
+
+export const setSelection =async (id: string, selectedIds: string[]) =>
   fromWire<DraftDetail>(await api<unknown>(`${draftPath(id)}/selection`, json("PUT", { selectedIds })));
 
 export const acceptDraft = async (id: string) => fromWire<Draft>(await api<unknown>(`${draftPath(id)}/accept`, { method: "POST" }));

@@ -1,4 +1,4 @@
-import { CheckCircle2, Pencil } from "lucide-react";
+import { CheckCircle2, Pencil, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { hire as h } from "@/components/hire/ui";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +32,7 @@ export function RichText({ text }: { text: string }) {
 }
 
 /** `tags` replaces the default Verified / Edited badges (e.g. bank questions show Approved / warnings). */
-export function QuestionCard({ q, n, onEdit, tags }: { q: KeyItem; n: number; onEdit?: () => void; tags?: ReactNode }) {
+export function QuestionCard({ q, n, onEdit, onRegenerate, tags }: { q: KeyItem; n: number; onEdit?: () => void; onRegenerate?: () => void; tags?: ReactNode }) {
   return (
     <li className={s.question} aria-labelledby={`q-${q.id}`}>
       <div className={s.questionHead}>
@@ -52,6 +52,11 @@ export function QuestionCard({ q, n, onEdit, tags }: { q: KeyItem; n: number; on
           {onEdit && (
             <Button variant="secondary" size="sm" onClick={onEdit} aria-label={`Edit question ${n}`}>
               <Pencil aria-hidden size={14} style={{ marginRight: 4 }} /> Edit
+            </Button>
+          )}
+          {onRegenerate && (
+            <Button variant="secondary" size="sm" onClick={onRegenerate} aria-label={`Regenerate question ${n}`}>
+              <RefreshCw aria-hidden size={14} style={{ marginRight: 4 }} /> Regenerate
             </Button>
           )}
         </span>

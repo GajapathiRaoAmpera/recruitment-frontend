@@ -123,12 +123,7 @@ describe("decideTool", () => {
     expect(d.action === "refuse" && d.response.error).toMatch(/still open/);
   });
 
-  it("turns flag_concern into an advisory line for HR, and ignores unknown tools", () => {
-    expect(decideTool("flag_concern", { kind: "multiple_voices", note: " A second voice read the answer " }, true)).toMatchObject({
-      action: "flag",
-      text: "multiple_voices: A second voice read the answer",
-    });
-    expect(decideTool("flag_concern", {}, false)).toMatchObject({ text: "concern: no detail" });
+  it("ignores unknown tools", () => {
     expect(decideTool("something_else", {}, false)).toEqual({ action: "ignore" });
   });
 });

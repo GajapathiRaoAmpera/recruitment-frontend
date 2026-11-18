@@ -52,3 +52,23 @@ it("validateEdit mirrors the backend rules", () => {
   expect(validateEdit({ ...ok, options: ["a", "", "c", "d"] })).toMatch(/four options/);
   expect(validateEdit({ ...ok, why: " " })).toMatch(/why/i);
 });
+
+it("a changed question cannot keep its old explanation", async () => {
+  api.editQuestion.mockResolvedValue({ pool: [] });
+  open();
+  fireEvent.change(screen.getByLabelText(/^question/i), { target: { value: "3+3?" } });
+  await save();
+  expect(screen.getByRole("alert")).toHaveTextContent(/update "why this is correct"/i);
+  expect(api.editQuestion).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText(/why this is correct/i), { target: { value: "3 + 3 = 6." } });
+  await save();
+  expect(api.editQuestion).toHaveBeenCalledWith("p-1", "q1", expect.objectContaining({ text: "3+3?", why: "3 + 3 = 6." }));
+});
+
+it("validateEdit checks the explanation against the original", () => {
+  const before = { text: "x", options: ["a", "b", "c", "d"], answer: 0, why: "w" };
+  expect(validateEdit(before, before)).toBeUndefined(); // nothing changed
+  expect(validateEdit({ ...before, answer: 1 }, before)).toMatch(/why this is correct/i);
+  expect(validateEdit({ ...before, options: ["a", "b", "c", "e"] }, before)).toMatch(/why this is correct/i);
+  expect(validateEdit({ ...before, answer: 1, why: "w2" }, before)).toBeUndefined();
+});

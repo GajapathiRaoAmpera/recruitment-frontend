@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, SearchX } from "lucide-react";
+import { Pencil, RefreshCw, SearchX } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { setSelection } from "@/api/papers";
 import { hire as h } from "@/components/hire/ui";
@@ -21,11 +21,12 @@ interface Props {
   draft: DraftDetail;
   onChange: (d: DraftDetail) => void;
   onEdit?: (q: PoolItem) => void;
+  onRegenerate?: (q: PoolItem) => void;
   /** Told whether there are unsaved picks, so the parent can hold Accept until they are saved. */
   onDirtyChange?: (dirty: boolean) => void;
 }
 
-export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
+export function PoolPicker({ draft, onChange, onEdit, onRegenerate, onDirtyChange }: Props) {
   const toast = useToast();
   const editable = draft.status === "draft";
   const saved = useMemo(() => new Set(draft.pool.filter((q) => q.selected).map((q) => q.id)), [draft.pool]);
@@ -184,8 +185,13 @@ export function PoolPicker({ draft, onChange, onEdit, onDirtyChange }: Props) {
                 </span>
               </label>
               {editable && onEdit && (
-                <Button variant="tertiary" size="sm" aria-label={`Edit: ${p.text.slice(0, 80)}`} onClick={() => onEdit(p)}>
+                <Button variant="tertiary" size="sm" aria-label={`Edit: ${p.text.slice(0, 80)}`} title="Edit" onClick={() => onEdit(p)}>
                   <Pencil aria-hidden size={14} />
+                </Button>
+              )}
+              {editable && onRegenerate && (
+                <Button variant="tertiary" size="sm" aria-label={`Regenerate: ${p.text.slice(0, 80)}`} title="Regenerate" onClick={() => onRegenerate(p)}>
+                  <RefreshCw aria-hidden size={14} />
                 </Button>
               )}
             </li>

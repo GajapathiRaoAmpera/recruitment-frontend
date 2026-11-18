@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, expect, it, vi } from "vitest";
 
-const api = vi.hoisted(() => ({ acceptDraft: vi.fn(), editQuestion: vi.fn() }));
+const api = vi.hoisted(() => ({ acceptDraft: vi.fn(), editQuestion: vi.fn(), regenerateQuestion: vi.fn() }));
 vi.mock("@/api/papers", () => api);
 
 import { ToastProvider } from "@/components/ui/toast";
@@ -34,6 +34,7 @@ const renderReview = (d = detail(), onChange = vi.fn()) => {
 beforeEach(() => {
   api.acceptDraft.mockReset();
   api.editQuestion.mockReset();
+  api.regenerateQuestion.mockReset();
 });
 
 it("shows exactly one sample paper", () => {
@@ -53,8 +54,9 @@ it("saving calls editQuestion and refreshes", async () => {
   const onChange = renderReview();
   fireEvent.click(screen.getByRole("button", { name: "Edit question 1" }));
   fireEvent.change(screen.getByLabelText(/^question/i), { target: { value: "Fixed?" } });
+  fireEvent.change(screen.getByLabelText(/why this is correct/i), { target: { value: "Because fixed." } });
   await act(async () => fireEvent.click(screen.getByRole("button", { name: "Save question" })));
-  expect(api.editQuestion).toHaveBeenCalledWith("p-1", "q1", { text: "Fixed?", options: ["10", "20", "30", "40"], answer: 1, why: "Because." });
+  expect(api.editQuestion).toHaveBeenCalledWith("p-1", "q1", { text: "Fixed?", options: ["10", "20", "30", "40"], answer: 1, why: "Because fixed." });
   expect(onChange).toHaveBeenCalledWith(fresh);
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
 });
@@ -86,6 +88,7 @@ it("confirm dialog before accept", async () => {
 it("accepted draft hides Edit and shows locked banner", () => {
   renderReview(detail({ status: "accepted" }));
   expect(screen.queryByRole("button", { name: /edit question/i })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /regenerate question/i })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Accept paper" })).not.toBeInTheDocument();
   expect(screen.getByText(/paper is accepted/i)).toBeInTheDocument();
 });
@@ -105,4 +108,35 @@ it("accept waits until the question selection is saved", () => {
   fireEvent.click(screen.getAllByRole("checkbox")[0]!);
   expect(screen.getByRole("button", { name: "Accept paper" })).toBeDisabled();
   expect(screen.getByText(/save or undo your question selection/i)).toBeInTheDocument();
+});
+
+it("every card has a Regenerate button; aptitude regenerates without asking a reason", async () => {
+  const fresh = detail({ sample: [item("q1", { text: "New one?" }), item("q2"), item("q3")] });
+  api.regenerateQuestion.mockResolvedValue(fresh);
+  const onChange = renderReview();
+  expect(screen.getAllByRole("button", { name: /regenerate question/i })).toHaveLength(3);
+  fireEvent.click(screen.getByRole("button", { name: "Regenerate question 1" }));
+  expect(screen.queryByLabelText(/what's wrong/i)).not.toBeInTheDocument();
+  await act(async () => fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Regenerate question" })));
+  expect(api.regenerateQuestion).toHaveBeenCalledWith("p-1", "q1", undefined);
+  expect(onChange).toHaveBeenCalledWith(fresh);
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+it("technical regenerate sends HR's reason to the AI", async () => {
+  api.regenerateQuestion.mockResolvedValue(detail());
+  renderReview(detail({ sample: [item("q1", { section: "technical" })] }));
+  fireEvent.click(screen.getByRole("button", { name: "Regenerate question 1" }));
+  fireEvent.change(screen.getByLabelText(/what's wrong/i), { target: { value: " too easy " } });
+  await act(async () => fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Regenerate question" })));
+  expect(api.regenerateQuestion).toHaveBeenCalledWith("p-1", "q1", "too easy");
+});
+
+it("a failed regenerate keeps the dialog open", async () => {
+  api.regenerateQuestion.mockRejectedValue(new Error("Could not write a different question. Try again."));
+  renderReview();
+  fireEvent.click(screen.getByRole("button", { name: "Regenerate question 1" }));
+  await act(async () => fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Regenerate question" })));
+  expect(await screen.findByText("Could not write a different question. Try again.")).toBeInTheDocument();
+  expect(screen.getByRole("dialog")).toBeInTheDocument();
 });

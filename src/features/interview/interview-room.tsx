@@ -25,6 +25,7 @@ import { useNetworkQuality, type Verdict } from "./use-network-quality";
 const FRAME_EVERY_MS = 3000;
 const WRAP_UP_AT_S = 180;
 const LANG_NUDGE_MS = 20_000;
+const TYPING_MUTE_MS = 800; // mic audio is dropped this long after a keypress in the answer box (key clatter read as words)
 
 type Box = AnswerBox;
 
@@ -54,6 +55,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   const [box, setBox] = useState<Box | null>(null);
   const [draft, setDraft] = useState("");
   const [boxHidden, setBoxHidden] = useState(false); // closed with X/Esc: the question stays open and can be reopened
+  const [submitted, setSubmitted] = useState(false); // answered once; the box stays reopenable so they can fix it after a hint
   const [finishing, setFinishing] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [voice, setVoice] = useState<AudioNode | null>(null); // AI voice playback, for the avatar's lips
@@ -71,6 +73,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
   const closingSeen = useRef(false);
   const openBox = useRef<Box | null>(null); // the written question awaiting a typed answer (read inside the Live handler)
   const langNudgeAt = useRef(0);
+  const lastKey = useRef(0);
   const done = useRef(false);
   const wrapSent = useRef(false);
 
@@ -152,14 +155,13 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
         const d = decideTool(fc.name, fc.args, openBox.current !== null);
         if (d.action === "ignore") continue;
         live.current?.respondTool(fc.id, fc.name!, d.response);
-        // Advisory note for HR (e.g. a possible second voice); the student sees nothing, the interviewer speaks to them.
-        if (d.action === "flag") uploader.current?.push({ role: "ai", kind: "flag", text: d.text, language: null, ts: new Date().toISOString() });
         if (d.action !== "open") continue; // "refuse": the first written question stays open until it is submitted
         col.close();
         uploader.current?.push({ role: "ai", kind: "question", text: d.box.question, language: d.box.language ?? null, ts: new Date().toISOString() });
         openBox.current = d.box;
         setBox(d.box);
         setDraft("");
+        setSubmitted(false);
         setBoxHidden(false);
       }
       showCaption();
@@ -197,7 +199,9 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
         });
         live.current = lk;
         await lk.open();
-        await eng.startMic(media, (b64) => lk.sendAudio(b64));
+        await eng.startMic(media, (b64) => {
+          if (Date.now() - lastKey.current > TYPING_MUTE_MS) lk.sendAudio(b64);
+        });
         lk.sendText(`${sess.protocol.systemTag} The candidate is ready. Begin the interview now.`);
         setChar("thinking");
       } catch (e) {
@@ -266,10 +270,11 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
     if (!box || !draft.trim() || !sess) return;
     const text = draft.trim();
     uploader.current?.push({ role: "candidate", kind: "typed", text, language: box.language ?? null, ts: new Date().toISOString() });
-    live.current?.sendText(`${sess.protocol.typedPrefix}${box.language ? ` (${box.language})` : ""}:\n${text}`);
-    setLines((l) => [...l, { role: "candidate", text: "(typed answer submitted)" }]);
-    openBox.current = null;
-    setBox(null);
+    live.current?.sendText(`${sess.protocol.typedPrefix}${box.language ? ` (${box.language})` : ""}${submitted ? " (revised)" : ""}:\n${text}`);
+    setLines((l) => [...l, { role: "candidate", text: submitted ? "(revised answer submitted)" : "(typed answer submitted)" }]);
+    openBox.current = null; // the interviewer may ask a new written question now; it replaces this box
+    setSubmitted(true);
+    setBoxHidden(true);
     setChar("thinking");
   };
 
@@ -332,9 +337,9 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
           </section>
           {box && boxHidden && (
             <div className={s.banner} data-tone="info">
-              <PenLine aria-hidden size={16} /> The interviewer is waiting for a typed answer.
+              <PenLine aria-hidden size={16} /> {submitted ? "Answer submitted. You can reopen it to fix and resubmit." : "The interviewer is waiting for a typed answer."}
               <Button size="sm" onClick={() => setBoxHidden(false)}>
-                Open answer box
+                {submitted ? "Edit answer" : "Open answer box"}
               </Button>
             </div>
           )}
@@ -370,6 +375,7 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
           <section className={h.card} aria-label="Tips">
             <p className={h.eyebrow}>Tips</p>
             <ul className={s.tips}>
+              <li>Use headphones if you can, so the interviewer doesn&apos;t hear its own voice.</li>
               <li>Wait for the interviewer to finish, then answer out loud.</li>
               <li>Ask it to repeat if you missed a question.</li>
               <li>Coding questions open a box to type into.</li>
@@ -396,13 +402,13 @@ export function InterviewRoom({ token, roleTitle, media, onDone }: { token: stri
             className={s.answerDialog}
             footer={
               <Button onClick={submitBox} disabled={!draft.trim()}>
-                <Send aria-hidden size={16} style={{ marginRight: 4 }} /> Submit answer
+                <Send aria-hidden size={16} style={{ marginRight: 4 }} /> {submitted ? "Resubmit answer" : "Submit answer"}
               </Button>
             }
           >
             <div className={s.answer}>
               <p className={s.question}>{box.question}</p>
-              <Textarea aria-label="Your answer" rows={10} maxLength={8000} value={draft} onChange={(e) => setDraft(e.target.value)} spellCheck={box.mode === "text"} autoFocus />
+              <Textarea aria-label="Your answer" rows={10} maxLength={8000} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={() => (lastKey.current = Date.now())} spellCheck={box.mode === "text"} autoFocus />
             </div>
           </DialogContent>
         )}

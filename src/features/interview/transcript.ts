@@ -128,19 +128,14 @@ export interface AnswerBox {
 export type ToolDecision =
   | { action: "open"; box: AnswerBox; response: Record<string, string> }
   | { action: "refuse"; response: Record<string, string> }
-  | { action: "flag"; text: string; response: Record<string, string> }
   | { action: "ignore" };
 
 /**
  * One written question at a time: a second show_answer_box while one is open is refused, so the interviewer waits
- * for the typed answer. flag_concern becomes an advisory "<kind>: <note>" line for HR.
+ * for the typed answer.
  */
 export function decideTool(name: string | undefined, args: Record<string, unknown> | undefined, boxOpen: boolean): ToolDecision {
   const a = args ?? {};
-  if (name === "flag_concern") {
-    const text = `${String(a.kind ?? "concern")}: ${String(a.note ?? "").trim() || "no detail"}`.slice(0, MAX_SPOKEN_CHARS);
-    return { action: "flag", text, response: { result: "Noted for HR. Continue the interview." } };
-  }
   if (name !== "show_answer_box") return { action: "ignore" };
   if (boxOpen) return { action: "refuse", response: { error: "A written question is still open. Wait for the candidate's typed answer before asking anything new." } };
   const box: AnswerBox = { question: String(a.question ?? ""), mode: a.mode === "code" ? "code" : "text", language: typeof a.language === "string" ? a.language : undefined };
